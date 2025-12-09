@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Demo Partners/Customers -->
+        <record id="partner_barry_brasil" model="res.partner">
+            <field name="name">Barry Brasil</field>
+            <field name="is_company">True</field>
+            <field name="country_id" ref="base.br"/>
+            <field name="city">Salvador</field>
+        </record>
+
+        <record id="partner_barry_usa" model="res.partner">
+            <field name="name">Barry USA</field>
+            <field name="is_company">True</field>
+            <field name="country_id" ref="base.us"/>
+            <field name="city">Philadelphia</field>
+        </record>
+
+        <record id="partner_barry_asia" model="res.partner">
+            <field name="name">Barry Asia</field>
+            <field name="is_company">True</field>
+            <field name="country_id" ref="base.my"/>
+            <field name="city">Pasir Gudang</field>
+        </record>
+
+        <record id="partner_main_customer" model="res.partner">
+            <field name="name">Barry Callebaut</field>
+            <field name="is_company">True</field>
+            <field name="country_id" ref="base.ch"/>
+        </record>
+
+        <!-- Demo Vessels -->
+        <record id="vessel_maersk" model="potting.vessel">
+            <field name="name">MAERSK</field>
+            <field name="code">MSK</field>
+            <field name="shipping_company">Maersk Line</field>
+        </record>
+
+        <record id="vessel_cma" model="potting.vessel">
+            <field name="name">CMA CGM</field>
+            <field name="code">CMA</field>
+            <field name="shipping_company">CMA CGM</field>
+        </record>
+
+        <!-- Demo Customer Order -->
+        <record id="customer_order_demo_1" model="potting.customer.order">
+            <field name="name">CMD/2024/00001</field>
+            <field name="customer_id" ref="partner_main_customer"/>
+            <field name="date_order" eval="time.strftime('%Y-%m-01')"/>
+            <field name="date_expected" eval="(datetime.now() + relativedelta(months=1)).strftime('%Y-%m-%d')"/>
+            <field name="state">in_progress</field>
+        </record>
+
+        <!-- Demo Transit Orders based on the provided table -->
+        <record id="transit_order_ot3708" model="potting.transit.order">
+            <field name="name">OT3708</field>
+            <field name="customer_order_id" ref="customer_order_demo_1"/>
+            <field name="consignee_id" ref="partner_barry_brasil"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="tonnage">60</field>
+            <field name="vessel_name">MAERSK</field>
+            <field name="pod">Salvador</field>
+            <field name="container_size">20</field>
+            <field name="state">in_progress</field>
+        </record>
+
+        <record id="transit_order_ot3709" model="potting.transit.order">
+            <field name="name">OT3709</field>
+            <field name="customer_order_id" ref="customer_order_demo_1"/>
+            <field name="consignee_id" ref="partner_barry_usa"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="tonnage">200</field>
+            <field name="vessel_name">CMA CGM</field>
+            <field name="pod">Philadelphia</field>
+            <field name="container_size">20</field>
+            <field name="state">lots_generated</field>
+        </record>
+
+        <record id="transit_order_ot3710" model="potting.transit.order">
+            <field name="name">OT3710</field>
+            <field name="customer_order_id" ref="customer_order_demo_1"/>
+            <field name="consignee_id" ref="partner_barry_brasil"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="tonnage">60</field>
+            <field name="vessel_name">CMA CGM</field>
+            <field name="pod">Salvador</field>
+            <field name="container_size">20</field>
+            <field name="state">lots_generated</field>
+        </record>
+
+        <record id="transit_order_ot3711" model="potting.transit.order">
+            <field name="name">OT3711</field>
+            <field name="customer_order_id" ref="customer_order_demo_1"/>
+            <field name="consignee_id" ref="partner_barry_brasil"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="tonnage">60</field>
+            <field name="vessel_name">MAERSK</field>
+            <field name="pod">Salvador</field>
+            <field name="container_size">20</field>
+            <field name="state">draft</field>
+        </record>
+
+        <record id="transit_order_ot3712" model="potting.transit.order">
+            <field name="name">OT3712</field>
+            <field name="customer_order_id" ref="customer_order_demo_1"/>
+            <field name="consignee_id" ref="partner_barry_usa"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="tonnage">200</field>
+            <field name="vessel_name">CMA CGM</field>
+            <field name="pod">Philadelphia</field>
+            <field name="container_size">20</field>
+            <field name="state">draft</field>
+        </record>
+
+        <record id="transit_order_ot3714" model="potting.transit.order">
+            <field name="name">OT3714</field>
+            <field name="customer_order_id" ref="customer_order_demo_1"/>
+            <field name="consignee_id" ref="partner_barry_asia"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake"/>
+            <field name="tonnage">200</field>
+            <field name="vessel_name">MAERSK</field>
+            <field name="pod">Pasir Gudang</field>
+            <field name="container_size">20</field>
+            <field name="state">draft</field>
+        </record>
+
+        <!-- Demo Lots for OT3708 -->
+        <record id="lot_t10582ra" model="potting.lot">
+            <field name="name">T10582RA</field>
+            <field name="transit_order_id" ref="transit_order_ot3708"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="target_tonnage">25</field>
+            <field name="state">potted</field>
+        </record>
+
+        <record id="lot_t10583ra" model="potting.lot">
+            <field name="name">T10583RA</field>
+            <field name="transit_order_id" ref="transit_order_ot3708"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="target_tonnage">25</field>
+            <field name="state">in_production</field>
+        </record>
+
+        <record id="lot_t10584ra" model="potting.lot">
+            <field name="name">T10584RA</field>
+            <field name="transit_order_id" ref="transit_order_ot3708"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="target_tonnage">10</field>
+            <field name="state">draft</field>
+        </record>
+
+        <!-- Demo Lots for OT3709 -->
+        <record id="lot_t10585ra" model="potting.lot">
+            <field name="name">T10585RA</field>
+            <field name="transit_order_id" ref="transit_order_ot3709"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="target_tonnage">25</field>
+            <field name="state">draft</field>
+        </record>
+
+        <record id="lot_t10586ra" model="potting.lot">
+            <field name="name">T10586RA</field>
+            <field name="transit_order_id" ref="transit_order_ot3709"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="target_tonnage">25</field>
+            <field name="state">draft</field>
+        </record>
+
+        <record id="lot_t10587ra" model="potting.lot">
+            <field name="name">T10587RA</field>
+            <field name="transit_order_id" ref="transit_order_ot3709"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="target_tonnage">25</field>
+            <field name="state">draft</field>
+        </record>
+
+        <!-- Demo Container -->
+        <record id="container_demo_1" model="potting.container">
+            <field name="name">MSKU1234567</field>
+            <field name="container_type">20</field>
+            <field name="seal_number">SEAL001</field>
+            <field name="tare_weight">2200</field>
+            <field name="max_payload">28000</field>
+            <field name="vessel_name">MAERSK</field>
+            <field name="port_loading">Abidjan</field>
+            <field name="port_discharge">Salvador</field>
+            <field name="state">loading</field>
+        </record>
+
+        <!-- Link lot to container -->
+        <record id="lot_t10582ra" model="potting.lot">
+            <field name="container_id" ref="container_demo_1"/>
+            <field name="date_potted" eval="time.strftime('%Y-%m-%d %H:%M:%S')"/>
+        </record>
+
+        <!-- Demo Production Lines -->
+        <record id="production_line_1" model="potting.production.line">
+            <field name="lot_id" ref="lot_t10582ra"/>
+            <field name="date" eval="time.strftime('%Y-%m-%d')"/>
+            <field name="tonnage">12.5</field>
+            <field name="batch_number">BATCH001</field>
+            <field name="shift">morning</field>
+        </record>
+
+        <record id="production_line_2" model="potting.production.line">
+            <field name="lot_id" ref="lot_t10582ra"/>
+            <field name="date" eval="time.strftime('%Y-%m-%d')"/>
+            <field name="tonnage">12.5</field>
+            <field name="batch_number">BATCH002</field>
+            <field name="shift">afternoon</field>
+        </record>
+
+        <record id="production_line_3" model="potting.production.line">
+            <field name="lot_id" ref="lot_t10583ra"/>
+            <field name="date" eval="time.strftime('%Y-%m-%d')"/>
+            <field name="tonnage">15</field>
+            <field name="batch_number">BATCH003</field>
+            <field name="shift">morning</field>
+        </record>
+
+        <!-- Set default customer in settings -->
+        <record id="set_default_customer" model="ir.config_parameter">
+            <field name="key">potting_management.default_customer_id</field>
+            <field name="value" eval="ref('partner_main_customer')"/>
+        </record>
+
+    </data>
+</odoo>

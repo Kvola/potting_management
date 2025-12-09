@@ -1,0 +1,356 @@
+/* ====================================
+   POTTING DASHBOARD - PROFESSIONAL STYLE
+   ==================================== */
+
+/* Main Dashboard Container - Scrollable */
+.o_potting_dashboard {
+    background-color: #f5f6f8;
+    min-height: 100%;
+    height: calc(100vh - 46px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.5rem;
+}
+
+/* Scrollbar Styling */
+.o_potting_dashboard::-webkit-scrollbar {
+    width: 8px;
+}
+
+.o_potting_dashboard::-webkit-scrollbar-track {
+    background: #e9ecef;
+    border-radius: 4px;
+}
+
+.o_potting_dashboard::-webkit-scrollbar-thumb {
+    background: #adb5bd;
+    border-radius: 4px;
+}
+
+.o_potting_dashboard::-webkit-scrollbar-thumb:hover {
+    background: #868e96;
+}
+
+/* Header */
+.o_potting_dashboard .dashboard-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.o_potting_dashboard .dashboard-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0;
+}
+
+.o_potting_dashboard .dashboard-subtitle {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Cards - Clean and Minimal */
+.o_potting_dashboard .card {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    box-shadow: none;
+    background: #ffffff;
+    transition: border-color 0.15s ease;
+}
+
+.o_potting_dashboard .card:hover {
+    border-color: #ced4da;
+}
+
+.o_potting_dashboard .card.cursor-pointer:hover {
+    border-color: #adb5bd;
+}
+
+.o_potting_dashboard .cursor-pointer {
+    cursor: pointer;
+}
+
+/* Stat Cards */
+.o_potting_dashboard .stat-card {
+    text-align: center;
+    padding: 1.25rem 1rem;
+}
+
+.o_potting_dashboard .stat-value {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+
+.o_potting_dashboard .stat-label {
+    font-size: 0.8125rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Color Variants - Subtle */
+.o_potting_dashboard .stat-value.text-draft { color: #6c757d; }
+.o_potting_dashboard .stat-value.text-warning { color: #e67e22; }
+.o_potting_dashboard .stat-value.text-info { color: #3498db; }
+.o_potting_dashboard .stat-value.text-success { color: #27ae60; }
+.o_potting_dashboard .stat-value.text-primary { color: #2980b9; }
+.o_potting_dashboard .stat-value.text-secondary { color: #6c757d; }
+
+/* Section Headers */
+.o_potting_dashboard .section-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.o_potting_dashboard .section-title i {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Card Headers - Minimal */
+.o_potting_dashboard .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0.875rem 1rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+.o_potting_dashboard .card-header h6 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.o_potting_dashboard .card-header i {
+    color: #6c757d;
+}
+
+/* Tables - Clean */
+.o_potting_dashboard .table {
+    font-size: 0.8125rem;
+    margin-bottom: 0;
+}
+
+.o_potting_dashboard .table th {
+    font-weight: 600;
+    color: #495057;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    border-top: none;
+    padding: 0.75rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.o_potting_dashboard .table td {
+    padding: 0.625rem 0.75rem;
+    vertical-align: middle;
+    border-color: #f1f3f4;
+}
+
+.o_potting_dashboard .table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Progress Bars - Subtle */
+.o_potting_dashboard .progress {
+    height: 6px;
+    border-radius: 3px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.o_potting_dashboard .progress-bar {
+    border-radius: 3px;
+}
+
+.o_potting_dashboard .progress-bar.bg-success { background-color: #27ae60 !important; }
+.o_potting_dashboard .progress-bar.bg-warning { background-color: #e67e22 !important; }
+.o_potting_dashboard .progress-bar.bg-info { background-color: #3498db !important; }
+
+/* Progress with Text */
+.o_potting_dashboard .progress-lg {
+    height: 18px;
+    border-radius: 4px;
+}
+
+.o_potting_dashboard .progress-lg .progress-bar {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 18px;
+}
+
+/* Badges - Minimal */
+.o_potting_dashboard .badge {
+    font-weight: 500;
+    font-size: 0.6875rem;
+    padding: 0.35em 0.65em;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.o_potting_dashboard .badge.bg-secondary { background-color: #6c757d !important; }
+.o_potting_dashboard .badge.bg-info { background-color: #3498db !important; }
+.o_potting_dashboard .badge.bg-warning { background-color: #e67e22 !important; color: #fff !important; }
+.o_potting_dashboard .badge.bg-success { background-color: #27ae60 !important; }
+.o_potting_dashboard .badge.bg-primary { background-color: #2980b9 !important; }
+.o_potting_dashboard .badge.bg-danger { background-color: #c0392b !important; }
+
+/* Buttons - Professional */
+.o_potting_dashboard .btn {
+    border-radius: 4px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border: none;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.o_potting_dashboard .btn:active {
+    transform: scale(0.98);
+}
+
+.o_potting_dashboard .btn-primary {
+    background-color: #2980b9;
+}
+
+.o_potting_dashboard .btn-primary:hover {
+    background-color: #2472a4;
+}
+
+.o_potting_dashboard .btn-secondary {
+    background-color: #6c757d;
+}
+
+.o_potting_dashboard .btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.o_potting_dashboard .btn-success {
+    background-color: #27ae60;
+}
+
+.o_potting_dashboard .btn-success:hover {
+    background-color: #219a52;
+}
+
+.o_potting_dashboard .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+/* Summary Card */
+.o_potting_dashboard .summary-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.o_potting_dashboard .summary-card .summary-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+/* Empty State */
+.o_potting_dashboard .empty-state {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+.o_potting_dashboard .empty-state i {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    color: #adb5bd;
+}
+
+.o_potting_dashboard .empty-state p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Accent Borders - Subtle */
+.o_potting_dashboard .border-accent-warning {
+    border-left: 3px solid #e67e22 !important;
+}
+
+.o_potting_dashboard .border-accent-info {
+    border-left: 3px solid #3498db !important;
+}
+
+.o_potting_dashboard .border-accent-success {
+    border-left: 3px solid #27ae60 !important;
+}
+
+.o_potting_dashboard .border-accent-primary {
+    border-left: 3px solid #2980b9 !important;
+}
+
+/* Product Stats */
+.o_potting_dashboard .product-stat {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 1rem;
+    background: #fff;
+    transition: border-color 0.15s ease;
+}
+
+.o_potting_dashboard .product-stat:hover {
+    border-color: #ced4da;
+}
+
+.o_potting_dashboard .product-stat-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.o_potting_dashboard .product-stat-value {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.o_potting_dashboard .product-stat-value strong {
+    color: #212529;
+    font-weight: 600;
+}
+
+/* Quick Actions */
+.o_potting_dashboard .quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .o_potting_dashboard {
+        padding: 1rem;
+    }
+
+    .o_potting_dashboard .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .o_potting_dashboard .dashboard-title {
+        font-size: 1.25rem;
+    }
+}
+
+/* Fix for Odoo action container */
+.o_action_manager .o_potting_dashboard {
+    height: calc(100vh - 46px);
+}

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Product Category for Cocoa Products -->
+        <record id="product_category_cocoa" model="product.category">
+            <field name="name">Produits semi-finis cacao</field>
+        </record>
+
+        <!-- Add potting_product_type field to product.product -->
+    </data>
+    
+    <data>
+        <!-- Cocoa Mass Product -->
+        <record id="product_cocoa_mass" model="product.product">
+            <field name="name">Masse de cacao</field>
+            <field name="default_code">COCOA-MASS</field>
+            <field name="detailed_type">consu</field>
+            <field name="categ_id" ref="product_category_cocoa"/>
+            <field name="uom_id" ref="uom.product_uom_ton"/>
+            <field name="uom_po_id" ref="uom.product_uom_ton"/>
+            <field name="potting_product_type">cocoa_mass</field>
+        </record>
+
+        <!-- Cocoa Butter Product -->
+        <record id="product_cocoa_butter" model="product.product">
+            <field name="name">Beurre de cacao</field>
+            <field name="default_code">COCOA-BUTTER</field>
+            <field name="detailed_type">consu</field>
+            <field name="categ_id" ref="product_category_cocoa"/>
+            <field name="uom_id" ref="uom.product_uom_ton"/>
+            <field name="uom_po_id" ref="uom.product_uom_ton"/>
+            <field name="potting_product_type">cocoa_butter</field>
+        </record>
+
+        <!-- Cocoa Cake Product -->
+        <record id="product_cocoa_cake" model="product.product">
+            <field name="name">Cake (Tourteau) de cacao</field>
+            <field name="default_code">COCOA-CAKE</field>
+            <field name="detailed_type">consu</field>
+            <field name="categ_id" ref="product_category_cocoa"/>
+            <field name="uom_id" ref="uom.product_uom_ton"/>
+            <field name="uom_po_id" ref="uom.product_uom_ton"/>
+            <field name="potting_product_type">cocoa_cake</field>
+        </record>
+
+        <!-- Cocoa Cake Fine Product -->
+        <record id="product_cocoa_cake_fine" model="product.product">
+            <field name="name">Cake (Tourteau) de cacao - Fine</field>
+            <field name="default_code">COCOA-CAKE-FINE</field>
+            <field name="detailed_type">consu</field>
+            <field name="categ_id" ref="product_category_cocoa"/>
+            <field name="uom_id" ref="uom.product_uom_ton"/>
+            <field name="uom_po_id" ref="uom.product_uom_ton"/>
+            <field name="potting_product_type">cocoa_cake</field>
+        </record>
+
+        <!-- Cocoa Powder Product -->
+        <record id="product_cocoa_powder" model="product.product">
+            <field name="name">Poudre de cacao</field>
+            <field name="default_code">COCOA-POWDER</field>
+            <field name="detailed_type">consu</field>
+            <field name="categ_id" ref="product_category_cocoa"/>
+            <field name="uom_id" ref="uom.product_uom_ton"/>
+            <field name="uom_po_id" ref="uom.product_uom_ton"/>
+            <field name="potting_product_type">cocoa_powder</field>
+        </record>
+    </data>
+</odoo>

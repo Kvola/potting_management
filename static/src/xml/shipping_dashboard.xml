@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Shipping Dashboard Template -->
+    <t t-name="potting_management.ShippingDashboard">
+        <div class="o_potting_dashboard">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">
+                    <i class="fa fa-ship me-2"/>Tableau de bord Shipping
+                </h1>
+                <p class="dashboard-subtitle">Gestion des commandes et Ordres de Transit</p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions mb-4">
+                <button class="btn btn-primary" t-on-click="createCustomerOrder">
+                    <i class="fa fa-plus me-1"/>Nouvelle commande
+                </button>
+                <button class="btn btn-secondary" t-on-click="createTransitOrder">
+                    <i class="fa fa-plus me-1"/>Nouvel OT
+                </button>
+            </div>
+
+            <!-- Customer Orders Stats -->
+            <div class="mb-4">
+                <div class="section-title">
+                    <i class="fa fa-file-text-o"/>Commandes clients
+                </div>
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card cursor-pointer" t-on-click="() => this.openCustomerOrders('draft')">
+                            <div class="stat-card">
+                                <div class="stat-value text-secondary" t-esc="state.orders.draft"/>
+                                <div class="stat-label">Brouillon</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card cursor-pointer border-accent-info" t-on-click="() => this.openCustomerOrders('confirmed')">
+                            <div class="stat-card">
+                                <div class="stat-value text-info" t-esc="state.orders.confirmed"/>
+                                <div class="stat-label">Confirmées</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card cursor-pointer border-accent-warning" t-on-click="() => this.openCustomerOrders('in_progress')">
+                            <div class="stat-card">
+                                <div class="stat-value text-warning" t-esc="state.orders.in_progress"/>
+                                <div class="stat-label">En cours</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card cursor-pointer border-accent-success" t-on-click="() => this.openCustomerOrders('done')">
+                            <div class="stat-card">
+                                <div class="stat-value text-success" t-esc="state.orders.done"/>
+                                <div class="stat-label">Terminées</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transit Orders Stats -->
+            <div class="mb-4">
+                <div class="section-title">
+                    <i class="fa fa-truck"/>Ordres de Transit
+                </div>
+                <div class="row g-3">
+                    <div class="col-6 col-lg">
+                        <div class="card cursor-pointer" t-on-click="() => this.openTransitOrders('draft')">
+                            <div class="stat-card">
+                                <div class="stat-value text-secondary" t-esc="state.transitOrders.draft"/>
+                                <div class="stat-label">Brouillon</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg">
+                        <div class="card cursor-pointer border-accent-primary" t-on-click="() => this.openTransitOrders('lots_generated')">
+                            <div class="stat-card">
+                                <div class="stat-value text-primary" t-esc="state.transitOrders.lots_generated"/>
+                                <div class="stat-label">Lots générés</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg">
+                        <div class="card cursor-pointer border-accent-warning" t-on-click="() => this.openTransitOrders('in_progress')">
+                            <div class="stat-card">
+                                <div class="stat-value text-warning" t-esc="state.transitOrders.in_progress"/>
+                                <div class="stat-label">En cours</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg">
+                        <div class="card cursor-pointer border-accent-info" t-on-click="() => this.openTransitOrders('ready_validation')">
+                            <div class="stat-card">
+                                <div class="stat-value text-info" t-esc="state.transitOrders.ready_validation"/>
+                                <div class="stat-label">Prêt validation</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg">
+                        <div class="card cursor-pointer border-accent-success" t-on-click="() => this.openTransitOrders('done')">
+                            <div class="stat-card">
+                                <div class="stat-value text-success" t-esc="state.transitOrders.done"/>
+                                <div class="stat-label">Validés</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Statistics -->
+            <div class="mb-4">
+                <div class="section-title">
+                    <i class="fa fa-pie-chart"/>Statistiques par produit
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <t t-foreach="state.productStats" t-as="product" t-key="product.type">
+                                <div class="col-6 col-md-3">
+                                    <div class="product-stat cursor-pointer" 
+                                         t-on-click="() => this.openTransitOrdersByProduct(product.type)">
+                                        <div class="product-stat-label" t-esc="product.label"/>
+                                        <div class="product-stat-value d-flex justify-content-between">
+                                            <span><strong t-esc="product.count"/> OT</span>
+                                            <span><strong t-esc="product.tonnage.toFixed(2)"/> T</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                        <div class="mt-3 pt-3 border-top text-center">
+                            <span class="text-muted">Tonnage total:</span>
+                            <strong class="ms-2" style="font-size: 1.125rem;" t-esc="state.totalTonnage.toFixed(2)"/> T
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Data -->
+            <div class="row g-3 mb-4">
+                <!-- Recent Customer Orders -->
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <i class="fa fa-clock-o me-2"/>Commandes récentes
+                        </div>
+                        <div class="card-body p-0">
+                            <t t-if="state.recentOrders.length > 0">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Réf</th>
+                                            <th>Client</th>
+                                            <th>Tonnage</th>
+                                            <th>État</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.recentOrders" t-as="order" t-key="order.id">
+                                            <tr>
+                                                <td><strong t-esc="order.name"/></td>
+                                                <td t-esc="order.customer_id[1]"/>
+                                                <td><t t-esc="order.total_tonnage.toFixed(2)"/> T</td>
+                                                <td>
+                                                    <span t-attf-class="badge #{getStateBadgeClass(order.state)}"
+                                                          t-esc="getStateLabel(order.state)"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div class="empty-state">
+                                    <i class="fa fa-inbox"/>
+                                    <p>Aucune commande récente</p>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transit Orders -->
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <i class="fa fa-truck me-2"/>OT récents
+                        </div>
+                        <div class="card-body p-0">
+                            <t t-if="state.recentTransitOrders.length > 0">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>N° OT</th>
+                                            <th>Destinataire</th>
+                                            <th>Produit</th>
+                                            <th style="width: 25%;">Progression</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.recentTransitOrders" t-as="ot" t-key="ot.id">
+                                            <tr>
+                                                <td><strong t-esc="ot.name"/></td>
+                                                <td t-esc="ot.consignee_id[1]"/>
+                                                <td t-esc="getProductTypeLabel(ot.product_type)"/>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="progress progress-lg flex-grow-1">
+                                                            <div class="progress-bar bg-success" 
+                                                                 t-attf-style="width: #{ot.progress_percentage}%">
+                                                                <t t-esc="ot.progress_percentage.toFixed(0)"/>%
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div class="empty-state">
+                                    <i class="fa fa-inbox"/>
+                                    <p>Aucun OT récent</p>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

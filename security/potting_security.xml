@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Module Category -->
+        <record id="module_category_potting" model="ir.module.category">
+            <field name="name">Gestion des Empotages</field>
+            <field name="description">Module de gestion des empotages de produits cacao</field>
+            <field name="sequence">50</field>
+        </record>
+
+        <!-- Base User Group - All other groups inherit from this -->
+        <record id="group_potting_user" model="res.groups">
+            <field name="name">Utilisateur empotage</field>
+            <field name="comment">Utilisateur de base - Accès en lecture aux données d'empotage</field>
+            <field name="category_id" ref="module_category_potting"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- Shipping User Group -->
+        <record id="group_potting_shipping" model="res.groups">
+            <field name="name">Shipping - Utilisateur</field>
+            <field name="comment">Utilisateur Shipping - Peut créer et gérer les commandes et OT</field>
+            <field name="category_id" ref="module_category_potting"/>
+            <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
+        </record>
+
+        <!-- CEO Agent Group -->
+        <record id="group_potting_ceo_agent" model="res.groups">
+            <field name="name">Agent PDG</field>
+            <field name="comment">Agent du PDG - Peut gérer les lots et valider les OT</field>
+            <field name="category_id" ref="module_category_potting"/>
+            <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
+        </record>
+
+        <!-- Manager Group -->
+        <record id="group_potting_manager" model="res.groups">
+            <field name="name">Responsable</field>
+            <field name="comment">Responsable - Accès complet au module</field>
+            <field name="category_id" ref="module_category_potting"/>
+            <field name="implied_ids" eval="[(4, ref('group_potting_shipping')), (4, ref('group_potting_ceo_agent'))]"/>
+            <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        </record>
+
+        <!-- Record Rules -->
+        <!-- Company rule for all models -->
+        <record id="potting_customer_order_company_rule" model="ir.rule">
+            <field name="name">Commandes client: multi-société</field>
+            <field name="model_id" ref="model_potting_customer_order"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="potting_transit_order_company_rule" model="ir.rule">
+            <field name="name">OT: multi-société</field>
+            <field name="model_id" ref="model_potting_transit_order"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="potting_lot_company_rule" model="ir.rule">
+            <field name="name">Lots: multi-société</field>
+            <field name="model_id" ref="model_potting_lot"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="potting_container_company_rule" model="ir.rule">
+            <field name="name">Conteneurs: multi-société</field>
+            <field name="model_id" ref="model_potting_container"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="potting_production_line_company_rule" model="ir.rule">
+            <field name="name">Lignes de production: multi-société</field>
+            <field name="model_id" ref="model_potting_production_line"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>

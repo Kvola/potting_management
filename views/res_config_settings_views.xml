@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue de configuration pour la gestion des empotages -->
+    <record id="res_config_settings_view_form_potting" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.potting</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Gestion des Empotages" string="Gestion des Empotages" name="potting_management">
+                    
+                    <!-- Configuration Générale -->
+                    <block title="Configuration Générale" name="potting_general_config">
+                        <setting id="potting_default_customer_setting" 
+                                 title="Client par défaut" 
+                                 help="Client qui sera sélectionné par défaut lors de la création d'une commande">
+                            <field name="potting_default_customer_id" 
+                                   placeholder="Sélectionner un client..."/>
+                        </setting>
+                        
+                        <setting id="potting_cc_partners_setting" 
+                                 title="Destinataires en copie par défaut" 
+                                 help="Liste des personnes à mettre en copie par défaut lors de l'envoi des rapports">
+                            <field name="potting_default_cc_partner_ids" 
+                                   widget="many2many_tags"
+                                   placeholder="Ajouter des destinataires..."/>
+                        </setting>
+                    </block>
+                    
+                    <!-- Tonnage Maximum - Masse de cacao -->
+                    <block title="Tonnage Maximum par Lot" name="potting_tonnage_config">
+                        <setting id="potting_tonnage_mass_setting" 
+                                 title="Masse de cacao" 
+                                 help="Tonnage maximum par lot pour la Masse de cacao">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label string="Standard (T)" 
+                                           for="potting_max_tonnage_cocoa_mass" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_max_tonnage_cocoa_mass" class="col-lg-3"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label string="Alternatif (T)" 
+                                           for="potting_max_tonnage_cocoa_mass_alt" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_max_tonnage_cocoa_mass_alt" class="col-lg-3"/>
+                                </div>
+                                <div class="row mt8">
+                                    <div class="col-12">
+                                        <small class="text-muted">
+                                            Le tonnage alternatif est utilisé pour certains conteneurs spécifiques
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <setting id="potting_tonnage_butter_setting" 
+                                 title="Beurre de cacao" 
+                                 help="Tonnage maximum par lot pour le Beurre de cacao">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label string="Maximum (T)" 
+                                           for="potting_max_tonnage_cocoa_butter" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_max_tonnage_cocoa_butter" class="col-lg-3"/>
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <setting id="potting_tonnage_cake_setting" 
+                                 title="Cake (Tourteau) de cacao" 
+                                 help="Tonnage maximum par lot pour le Cake de cacao">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label string="Maximum (T)" 
+                                           for="potting_max_tonnage_cocoa_cake" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_max_tonnage_cocoa_cake" class="col-lg-3"/>
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <setting id="potting_tonnage_powder_setting" 
+                                 title="Poudre de cacao" 
+                                 help="Tonnage maximum par lot pour la Poudre de cacao">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label string="Maximum (T)" 
+                                           for="potting_max_tonnage_cocoa_powder" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_max_tonnage_cocoa_powder" class="col-lg-3"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                    
+                    <!-- Bloc Informations -->
+                    <block title="ℹ️ Aide" name="potting_help">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info" role="alert">
+                                    <h5 class="alert-heading">📚 Information sur les tonnages</h5>
+                                    <ul class="mb-0">
+                                        <li>
+                                            <strong>Masse de cacao:</strong> 
+                                            Tonnage standard 25T, alternatif 20T selon conteneur
+                                        </li>
+                                        <li>
+                                            <strong>Beurre de cacao:</strong> 
+                                            Tonnage maximum recommandé 22T
+                                        </li>
+                                        <li>
+                                            <strong>Cake (Tourteau):</strong> 
+                                            Tonnage maximum recommandé 25T
+                                        </li>
+                                        <li>
+                                            <strong>Poudre de cacao:</strong> 
+                                            Tonnage maximum recommandé 22.5T
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </block>
+                    
+                </app>
+            </xpath>
+        </field>
+    </record>
+    
+    <!-- Action pour ouvrir les settings -->
+    <record id="action_potting_config_settings" model="ir.actions.act_window">
+        <field name="name">⚙️ Configuration Empotages</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'potting_management'}</field>
+    </record>
+    
+</odoo>

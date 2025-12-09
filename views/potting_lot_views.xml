@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="potting_lot_view_tree" model="ir.ui.view">
+        <field name="name">potting.lot.tree</field>
+        <field name="model">potting.lot</field>
+        <field name="arch" type="xml">
+            <tree string="Lots" decoration-info="state == 'draft'" decoration-warning="state == 'in_production'" decoration-primary="state == 'ready'" decoration-success="state == 'potted'">
+                <field name="name"/>
+                <field name="transit_order_id"/>
+                <field name="customer_id"/>
+                <field name="consignee_id"/>
+                <field name="product_type"/>
+                <field name="target_tonnage"/>
+                <field name="current_tonnage"/>
+                <field name="remaining_tonnage"/>
+                <field name="fill_percentage" widget="progressbar"/>
+                <field name="is_full"/>
+                <field name="container_id"/>
+                <field name="date_potted"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'in_production'" decoration-primary="state == 'ready'" decoration-success="state == 'potted'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="potting_lot_view_form" model="ir.ui.view">
+        <field name="name">potting.lot.form</field>
+        <field name="model">potting.lot</field>
+        <field name="arch" type="xml">
+            <form string="Lot">
+                <header>
+                    <button name="action_start_production" type="object" string="Démarrer production" invisible="state != 'draft'" groups="potting_management.group_potting_ceo_agent"/>
+                    <button name="action_mark_ready" type="object" string="Prêt pour empotage" invisible="state != 'in_production' or not is_full" class="btn-primary" groups="potting_management.group_potting_ceo_agent"/>
+                    <button name="action_pot" type="object" string="Empoter" invisible="state != 'ready'" class="btn-success" groups="potting_management.group_potting_ceo_agent"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_production,ready,potted"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_productions" type="object" class="oe_stat_button" icon="fa-industry">
+                            <field name="production_line_ids" widget="statinfo" string="Productions"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" string="Numéro de lot"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Informations générales">
+                            <field name="transit_order_id"/>
+                            <field name="customer_order_id"/>
+                            <field name="customer_id"/>
+                            <field name="consignee_id"/>
+                        </group>
+                        <group string="Produit">
+                            <field name="product_type"/>
+                            <field name="product_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Tonnage">
+                            <field name="target_tonnage"/>
+                            <field name="current_tonnage"/>
+                            <field name="remaining_tonnage"/>
+                            <field name="fill_percentage" widget="progressbar"/>
+                            <field name="is_full"/>
+                        </group>
+                        <group string="Empotage">
+                            <field name="container_id"/>
+                            <field name="date_potted"/>
+                            <field name="quality_check"/>
+                            <field name="quality_note" invisible="not quality_check"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Productions" name="productions">
+                            <field name="production_line_ids">
+                                <tree string="Productions" editable="bottom">
+                                    <field name="date"/>
+                                    <field name="tonnage" sum="Total"/>
+                                    <field name="batch_number"/>
+                                    <field name="shift"/>
+                                    <field name="operator_id"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="note" placeholder="Ajoutez des notes ici..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="potting_lot_view_kanban" model="ir.ui.view">
+        <field name="name">potting.lot.kanban</field>
+        <field name="model">potting.lot</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="transit_order_id"/>
+                <field name="product_type"/>
+                <field name="target_tonnage"/>
+                <field name="current_tonnage"/>
+                <field name="fill_percentage"/>
+                <field name="is_full"/>
+                <field name="container_id"/>
+                <field name="state"/>
+                <progressbar field="state" colors='{"draft": "secondary", "in_production": "warning", "ready": "info", "potted": "success"}'/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click #{record.is_full.raw_value ? 'border-success' : ''}">
+                            <div class="o_kanban_record_top mb8">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                </div>
+                                <field name="state" widget="label_selection" options="{'classes': {'draft': 'secondary', 'in_production': 'warning', 'ready': 'info', 'potted': 'success'}}"/>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div><field name="transit_order_id"/></div>
+                                <div><field name="product_type"/></div>
+                                <div class="mt4">
+                                    <span class="badge bg-primary"><t t-out="record.current_tonnage.raw_value"/>/<t t-out="record.target_tonnage.raw_value"/> T</span>
+                                    <span t-if="record.is_full.raw_value" class="badge bg-success ms-1">Plein</span>
+                                </div>
+                                <div class="mt8">
+                                    <field name="fill_percentage" widget="progressbar"/>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom" t-if="record.container_id.value">
+                                <div class="oe_kanban_bottom_left">
+                                    <i class="fa fa-cube"/> <field name="container_id"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="potting_lot_view_search" model="ir.ui.view">
+        <field name="name">potting.lot.search</field>
+        <field name="model">potting.lot</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher lots">
+                <field name="name"/>
+                <field name="transit_order_id"/>
+                <field name="customer_id"/>
+                <field name="consignee_id"/>
+                <field name="container_id"/>
+                <separator/>
+                <filter string="Brouillon" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="En production" name="in_production" domain="[('state', '=', 'in_production')]"/>
+                <filter string="Prêt pour empotage" name="ready" domain="[('state', '=', 'ready')]"/>
+                <filter string="Empoté" name="potted" domain="[('state', '=', 'potted')]"/>
+                <separator/>
+                <filter string="Capacité atteinte" name="full" domain="[('is_full', '=', True)]"/>
+                <filter string="En cours de remplissage" name="not_full" domain="[('is_full', '=', False), ('state', '=', 'in_production')]"/>
+                <separator/>
+                <filter string="Masse de cacao" name="cocoa_mass" domain="[('product_type', '=', 'cocoa_mass')]"/>
+                <filter string="Beurre de cacao" name="cocoa_butter" domain="[('product_type', '=', 'cocoa_butter')]"/>
+                <filter string="Cake de cacao" name="cocoa_cake" domain="[('product_type', '=', 'cocoa_cake')]"/>
+                <filter string="Poudre de cacao" name="cocoa_powder" domain="[('product_type', '=', 'cocoa_powder')]"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="OT" name="transit_order" context="{'group_by': 'transit_order_id'}"/>
+                    <filter string="Client" name="customer" context="{'group_by': 'customer_id'}"/>
+                    <filter string="Type de produit" name="product_type" context="{'group_by': 'product_type'}"/>
+                    <filter string="Conteneur" name="container" context="{'group_by': 'container_id'}"/>
+                    <filter string="État" name="state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_potting_lot" model="ir.actions.act_window">
+        <field name="name">Lots</field>
+        <field name="res_model">potting.lot</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun lot créé
+            </p>
+            <p>
+                Les lots sont générés automatiquement à partir des Ordres de Transit.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for CEO Agent - Lots to manage -->
+    <record id="action_potting_lot_ceo_agent" model="ir.actions.act_window">
+        <field name="name">Lots - Gestion production</field>
+        <field name="res_model">potting.lot</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="context">{'search_default_in_production': 1, 'search_default_ready': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucun lot en cours
+            </p>
+            <p>
+                Les lots en production ou prêts pour empotage apparaîtront ici.
+            </p>
+        </field>
+    </record>
+
+    <!-- Production Line Views -->
+    <record id="potting_production_line_view_tree" model="ir.ui.view">
+        <field name="name">potting.production.line.tree</field>
+        <field name="model">potting.production.line</field>
+        <field name="arch" type="xml">
+            <tree string="Lignes de production" editable="bottom">
+                <field name="date"/>
+                <field name="lot_id"/>
+                <field name="transit_order_id"/>
+                <field name="tonnage" sum="Total"/>
+                <field name="batch_number"/>
+                <field name="shift"/>
+                <field name="operator_id"/>
+                <field name="note"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="potting_production_line_view_search" model="ir.ui.view">
+        <field name="name">potting.production.line.search</field>
+        <field name="model">potting.production.line</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher productions">
+                <field name="lot_id"/>
+                <field name="transit_order_id"/>
+                <field name="batch_number"/>
+                <field name="operator_id"/>
+                <filter string="Aujourd'hui" name="today" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Cette semaine" name="this_week" domain="[('date', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="Lot" name="lot" context="{'group_by': 'lot_id'}"/>
+                    <filter string="OT" name="transit_order" context="{'group_by': 'transit_order_id'}"/>
+                    <filter string="Date" name="date" context="{'group_by': 'date:day'}"/>
+                    <filter string="Équipe" name="shift" context="{'group_by': 'shift'}"/>
+                    <filter string="Opérateur" name="operator" context="{'group_by': 'operator_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_potting_production_line" model="ir.actions.act_window">
+        <field name="name">Productions</field>
+        <field name="res_model">potting.production.line</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_today': 1}</field>
+    </record>
+</odoo>

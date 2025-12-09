@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Dashboard Actions (must be defined before menus that reference them) -->
+    <record id="action_potting_dashboard_shipping" model="ir.actions.client">
+        <field name="name">Tableau de bord Shipping</field>
+        <field name="tag">potting_shipping_dashboard</field>
+    </record>
+
+    <record id="action_potting_dashboard_ceo_agent" model="ir.actions.client">
+        <field name="name">Tableau de bord Agent PDG</field>
+        <field name="tag">potting_ceo_agent_dashboard</field>
+    </record>
+
+    <!-- Main Menu - Now uses base group -->
+    <menuitem id="menu_potting_root" 
+              name="Empotages" 
+              sequence="3"
+              web_icon="potting_management,static/description/icon.png"
+              groups="potting_management.group_potting_user"/>
+
+    <!-- Dashboards Menu -->
+    <menuitem id="menu_potting_dashboards" 
+              name="Tableaux de bord" 
+              parent="menu_potting_root" 
+              sequence="5"
+              groups="potting_management.group_potting_user"/>
+
+    <menuitem id="menu_potting_dashboard_shipping" 
+              name="Shipping" 
+              parent="menu_potting_dashboards" 
+              action="potting_management.action_potting_dashboard_shipping" 
+              sequence="10"
+              groups="potting_management.group_potting_shipping"/>
+
+    <menuitem id="menu_potting_dashboard_ceo_agent" 
+              name="Agent PDG" 
+              parent="menu_potting_dashboards" 
+              action="action_potting_dashboard_ceo_agent" 
+              sequence="20"
+              groups="potting_management.group_potting_ceo_agent"/>
+
+    <!-- Operations Menu -->
+    <menuitem id="menu_potting_operations" 
+              name="Opérations" 
+              parent="menu_potting_root" 
+              sequence="10"
+              groups="potting_management.group_potting_user"/>
+
+    <menuitem id="menu_potting_customer_order" 
+              name="Commandes clients" 
+              parent="menu_potting_operations" 
+              action="action_potting_customer_order" 
+              sequence="10"
+              groups="potting_management.group_potting_user"/>
+
+    <menuitem id="menu_potting_transit_order" 
+              name="Ordres de Transit" 
+              parent="menu_potting_operations" 
+              action="action_potting_transit_order" 
+              sequence="20"
+              groups="potting_management.group_potting_user"/>
+
+    <menuitem id="menu_potting_lot" 
+              name="Lots" 
+              parent="menu_potting_operations" 
+              action="action_potting_lot" 
+              sequence="30"
+              groups="potting_management.group_potting_user"/>
+
+    <menuitem id="menu_potting_container" 
+              name="Conteneurs" 
+              parent="menu_potting_operations" 
+              action="action_potting_container" 
+              sequence="40"
+              groups="potting_management.group_potting_user"/>
+
+    <menuitem id="menu_potting_production_line" 
+              name="Productions" 
+              parent="menu_potting_operations" 
+              action="action_potting_production_line" 
+              sequence="50"
+              groups="potting_management.group_potting_ceo_agent"/>
+
+    <!-- CEO Agent Menu -->
+    <menuitem id="menu_potting_ceo_agent" 
+              name="Validation" 
+              parent="menu_potting_root" 
+              sequence="20"
+              groups="potting_management.group_potting_ceo_agent"/>
+
+    <menuitem id="menu_potting_ceo_transit_order" 
+              name="OT à valider" 
+              parent="menu_potting_ceo_agent" 
+              action="action_potting_transit_order_ceo_agent" 
+              sequence="10"/>
+
+    <menuitem id="menu_potting_ceo_lot" 
+              name="Lots à gérer" 
+              parent="menu_potting_ceo_agent" 
+              action="action_potting_lot_ceo_agent" 
+              sequence="20"/>
+
+    <menuitem id="menu_potting_ceo_send_report" 
+              name="Envoyer rapport" 
+              parent="menu_potting_ceo_agent" 
+              action="action_potting_send_report_wizard" 
+              sequence="30"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="menu_potting_config"
+        name="Configuration"
+        parent="menu_potting_root"  
+        action="action_potting_config_settings"
+        sequence="100"
+        groups="potting_management.group_potting_manager"/>
+</odoo>

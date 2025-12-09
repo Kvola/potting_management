@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Pot Lot Wizard Form View -->
+    <record id="potting_pot_lot_wizard_view_form" model="ir.ui.view">
+        <field name="name">potting.pot.lot.wizard.form</field>
+        <field name="model">potting.pot.lot.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Empoter le lot">
+                <group>
+                    <field name="lot_id"/>
+                    <field name="create_new_container"/>
+                </group>
+                <group invisible="create_new_container">
+                    <field name="container_id" required="not create_new_container"/>
+                </group>
+                <group invisible="not create_new_container">
+                    <field name="new_container_name" required="create_new_container"/>
+                    <field name="new_container_type" required="create_new_container"/>
+                    <field name="new_seal_number"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Confirmer l'empotage" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Send Report Wizard Form View -->
+    <record id="potting_send_report_wizard_view_form" model="ir.ui.view">
+        <field name="name">potting.send.report.wizard.form</field>
+        <field name="model">potting.send.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Envoyer le rapport">
+                <group>
+                    <group>
+                        <field name="report_type"/>
+                    </group>
+                </group>
+                <group invisible="report_type != 'daily'">
+                    <group>
+                        <field name="date_from"/>
+                    </group>
+                    <group>
+                        <field name="date_to"/>
+                    </group>
+                </group>
+                <group invisible="report_type != 'ot'">
+                    <field name="transit_order_ids" widget="many2many_tags"/>
+                </group>
+                <group invisible="report_type != 'summary'">
+                    <field name="customer_order_id"/>
+                </group>
+                <group>
+                    <group>
+                        <field name="recipient_id"/>
+                    </group>
+                    <group>
+                        <field name="cc_partner_ids" widget="many2many_tags"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="include_pdf"/>
+                    <field name="note" placeholder="Message personnalisé (optionnel)..."/>
+                </group>
+                <footer>
+                    <button name="action_send_report" type="object" string="Envoyer" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Send Report Wizard Action -->
+    <record id="action_potting_send_report_wizard" model="ir.actions.act_window">
+        <field name="name">Envoyer un rapport</field>
+        <field name="res_model">potting.send.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- CEO Agent Dashboard Template -->
+    <t t-name="potting_management.CeoAgentDashboard">
+        <div class="o_potting_dashboard">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">
+                    <i class="fa fa-tachometer me-2"/>Tableau de bord Agent PDG
+                </h1>
+                <p class="dashboard-subtitle">Gestion des productions et validations</p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions mb-4">
+                <button class="btn btn-primary" t-on-click="addProduction">
+                    <i class="fa fa-plus me-1"/>Ajouter production
+                </button>
+                <button class="btn btn-secondary" t-on-click="openSendReportWizard">
+                    <i class="fa fa-envelope me-1"/>Envoyer rapport
+                </button>
+            </div>
+
+            <!-- Lots Stats -->
+            <div class="mb-4">
+                <div class="section-title">
+                    <i class="fa fa-cubes"/>État des lots
+                </div>
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card cursor-pointer" t-on-click="() => this.openLots('draft')">
+                            <div class="stat-card">
+                                <div class="stat-value text-draft" t-esc="state.lots.draft"/>
+                                <div class="stat-label">Brouillon</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card cursor-pointer border-accent-warning" t-on-click="() => this.openLots('in_production')">
+                            <div class="stat-card">
+                                <div class="stat-value text-warning" t-esc="state.lots.in_production"/>
+                                <div class="stat-label">En production</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card cursor-pointer border-accent-info" t-on-click="() => this.openLots('ready')">
+                            <div class="stat-card">
+                                <div class="stat-value text-info" t-esc="state.lots.ready"/>
+                                <div class="stat-label">Prêt empotage</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card cursor-pointer border-accent-success" t-on-click="() => this.openLots('potted')">
+                            <div class="stat-card">
+                                <div class="stat-value text-success" t-esc="state.lots.potted"/>
+                                <div class="stat-label">Empotés</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OT Validation Stats -->
+            <div class="mb-4">
+                <div class="section-title">
+                    <i class="fa fa-check-circle"/>Validation des OT
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="card cursor-pointer" t-on-click="() => this.openTransitOrders('in_progress')">
+                            <div class="stat-card">
+                                <div class="stat-value text-warning" t-esc="state.transitOrders.in_progress"/>
+                                <div class="stat-label">En cours de production</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card cursor-pointer border-accent-primary" t-on-click="() => this.openTransitOrders('ready_validation')">
+                            <div class="stat-card">
+                                <div class="stat-value text-primary" t-esc="state.transitOrders.ready_validation"/>
+                                <div class="stat-label">OT à valider</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Production Summary -->
+            <div class="mb-4">
+                <div class="card summary-card">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="section-title mb-0">
+                                    <i class="fa fa-calendar"/>Production du jour
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="summary-value">
+                                    <t t-esc="state.todayProductions.length"/> entrées
+                                </span>
+                                <span class="mx-2 text-muted">|</span>
+                                <span class="summary-value text-success">
+                                    <t t-esc="state.totalTodayTonnage.toFixed(2)"/> T
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="row g-3 mb-4">
+                <!-- Lots in Production -->
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <i class="fa fa-industry me-2"/>Lots en production
+                        </div>
+                        <div class="card-body p-0">
+                            <t t-if="state.lotsInProduction.length > 0">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Lot</th>
+                                            <th>OT</th>
+                                            <th>Produit</th>
+                                            <th>Remplissage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.lotsInProduction" t-as="lot" t-key="lot.id">
+                                            <tr class="cursor-pointer" t-on-click="() => this.openLot(lot.id)">
+                                                <td><strong t-esc="lot.name"/></td>
+                                                <td t-esc="lot.transit_order_id[1]"/>
+                                                <td t-esc="getProductTypeLabel(lot.product_type)"/>
+                                                <td style="width: 35%;">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="progress progress-lg flex-grow-1">
+                                                            <div t-attf-class="progress-bar #{lot.is_full ? 'bg-success' : 'bg-warning'}" 
+                                                                 t-attf-style="width: #{lot.fill_percentage}%">
+                                                                <t t-esc="lot.fill_percentage.toFixed(0)"/>%
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <small class="text-muted">
+                                                        <t t-esc="lot.current_tonnage.toFixed(2)"/>/<t t-esc="lot.target_tonnage.toFixed(2)"/> T
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div class="empty-state">
+                                    <i class="fa fa-inbox"/>
+                                    <p>Aucun lot en production</p>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lots Ready to Pot -->
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <i class="fa fa-cube me-2"/>Lots prêts pour empotage
+                        </div>
+                        <div class="card-body p-0">
+                            <t t-if="state.lotsReadyToPot.length > 0">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Lot</th>
+                                            <th>OT</th>
+                                            <th>Produit</th>
+                                            <th>Tonnage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.lotsReadyToPot" t-as="lot" t-key="lot.id">
+                                            <tr class="cursor-pointer" t-on-click="() => this.openLot(lot.id)">
+                                                <td><strong t-esc="lot.name"/></td>
+                                                <td t-esc="lot.transit_order_id[1]"/>
+                                                <td t-esc="getProductTypeLabel(lot.product_type)"/>
+                                                <td><t t-esc="lot.current_tonnage.toFixed(2)"/> T</td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+                            <t t-else="">
+                                <div class="empty-state">
+                                    <i class="fa fa-inbox"/>
+                                    <p>Aucun lot prêt pour empotage</p>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OT to Validate -->
+            <div class="mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fa fa-clipboard me-2"/>OT à valider
+                    </div>
+                    <div class="card-body p-0">
+                        <t t-if="state.otToValidate.length > 0">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>N° OT</th>
+                                        <th>Destinataire</th>
+                                        <th>Produit</th>
+                                        <th>Tonnage</th>
+                                        <th>Lots</th>
+                                        <th style="width: 100px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.otToValidate" t-as="ot" t-key="ot.id">
+                                        <tr>
+                                            <td><strong t-esc="ot.name"/></td>
+                                            <td t-esc="ot.consignee_id[1]"/>
+                                            <td t-esc="getProductTypeLabel(ot.product_type)"/>
+                                            <td><t t-esc="ot.tonnage.toFixed(2)"/> T</td>
+                                            <td>
+                                                <span class="badge bg-success">
+                                                    <t t-esc="ot.potted_lot_count"/>/<t t-esc="ot.lot_count"/>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-success" 
+                                                        t-on-click="() => this.openTransitOrder(ot.id)">
+                                                    <i class="fa fa-check me-1"/>Valider
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                        <t t-else="">
+                            <div class="empty-state">
+                                <i class="fa fa-check-circle"/>
+                                <p>Aucun OT à valider</p>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Productions Detail -->
+            <div class="mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fa fa-list me-2"/>Détail des productions du jour
+                    </div>
+                    <div class="card-body p-0">
+                        <t t-if="state.todayProductions.length > 0">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Lot</th>
+                                        <th>Tonnage</th>
+                                        <th>Batch</th>
+                                        <th>Équipe</th>
+                                        <th>Opérateur</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.todayProductions" t-as="prod" t-key="prod.id">
+                                        <tr>
+                                            <td><strong t-esc="prod.lot_id[1]"/></td>
+                                            <td><t t-esc="prod.tonnage.toFixed(2)"/> T</td>
+                                            <td t-esc="prod.batch_number || '-'"/>
+                                            <td t-esc="getShiftLabel(prod.shift)"/>
+                                            <td t-esc="prod.operator_id ? prod.operator_id[1] : '-'"/>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                        <t t-else="">
+                            <div class="empty-state">
+                                <i class="fa fa-calendar-o"/>
+                                <p>Aucune production enregistrée aujourd'hui</p>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

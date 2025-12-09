@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Transit Order Report Template -->
+    <template id="report_potting_transit_order_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="o.with_context(lang=lang)"/>
+            <div class="page">
+                <h2 class="text-center">Rapport d'Ordre de Transit</h2>
+                <h3 class="text-center"><t t-esc="o.name"/></h3>
+                
+                <div class="row mt32">
+                    <div class="col-6">
+                        <strong>Client:</strong> <t t-esc="o.customer_id.name"/><br/>
+                        <strong>Destinataire:</strong> <t t-esc="o.consignee_id.name"/><br/>
+                        <strong>Date:</strong> <t t-esc="o.date_created" t-options='{"widget": "date"}'/><br/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Produit:</strong> <t t-esc="dict(o._fields['product_type'].selection).get(o.product_type, '')"/><br/>
+                        <strong>Tonnage:</strong> <t t-esc="o.tonnage"/> T<br/>
+                        <strong>État:</strong> <t t-esc="dict(o._fields['state'].selection).get(o.state, '')"/><br/>
+                    </div>
+                </div>
+                
+                <div class="row mt16">
+                    <div class="col-6">
+                        <strong>Navire:</strong> <t t-esc="o.vessel_name or '-'"/><br/>
+                        <strong>Port (POD):</strong> <t t-esc="o.pod or '-'"/><br/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Taille conteneur:</strong> <t t-esc="o.container_size"/>'<br/>
+                        <strong>Booking:</strong> <t t-esc="o.booking_number or '-'"/><br/>
+                    </div>
+                </div>
+                
+                <h4 class="mt32">Progression</h4>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 t-attf-style="width: #{o.progress_percentage}%"
+                                 t-att-aria-valuenow="o.progress_percentage" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                <t t-esc="'%.1f' % o.progress_percentage"/>%
+                            </div>
+                        </div>
+                        <p class="mt8">
+                            <strong>Lots empotés:</strong> <t t-esc="o.potted_lot_count"/> / <t t-esc="o.lot_count"/>
+                        </p>
+                    </div>
+                </div>
+                
+                <h4 class="mt32">Liste des Lots</h4>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>N° Lot</th>
+                            <th>Tonnage cible (T)</th>
+                            <th>Tonnage actuel (T)</th>
+                            <th>Remplissage (%)</th>
+                            <th>Conteneur</th>
+                            <th>Date empotage</th>
+                            <th>État</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="o.lot_ids" t-as="lot">
+                            <tr>
+                                <td><t t-esc="lot.name"/></td>
+                                <td class="text-end"><t t-esc="'%.2f' % lot.target_tonnage"/></td>
+                                <td class="text-end"><t t-esc="'%.2f' % lot.current_tonnage"/></td>
+                                <td class="text-end"><t t-esc="'%.1f' % lot.fill_percentage"/>%</td>
+                                <td><t t-esc="lot.container_id.name or '-'"/></td>
+                                <td><t t-esc="lot.date_potted" t-options='{"widget": "datetime"}' t-if="lot.date_potted"/></td>
+                                <td><t t-esc="dict(lot._fields['state'].selection).get(lot.state, '')"/></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td>Total</td>
+                            <td class="text-end"><t t-esc="'%.2f' % sum(o.lot_ids.mapped('target_tonnage'))"/></td>
+                            <td class="text-end"><t t-esc="'%.2f' % sum(o.lot_ids.mapped('current_tonnage'))"/></td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <t t-if="o.note">
+                    <h4 class="mt32">Notes</h4>
+                    <p><t t-esc="o.note"/></p>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_potting_transit_order">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="potting_management.report_potting_transit_order_document"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- Customer Order Summary Report Template -->
+    <template id="report_potting_customer_order_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="o.with_context(lang=lang)"/>
+            <div class="page">
+                <h2 class="text-center">Rapport de synthèse - Commande client</h2>
+                <h3 class="text-center"><t t-esc="o.name"/></h3>
+                
+                <div class="row mt32">
+                    <div class="col-6">
+                        <strong>Client:</strong> <t t-esc="o.customer_id.name"/><br/>
+                        <strong>Date de commande:</strong> <t t-esc="o.date_order" t-options='{"widget": "date"}'/><br/>
+                        <strong>Date livraison prévue:</strong> <t t-esc="o.date_expected" t-options='{"widget": "date"}' t-if="o.date_expected"/><br/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Responsable:</strong> <t t-esc="o.user_id.name"/><br/>
+                        <strong>Nombre d'OT:</strong> <t t-esc="o.transit_order_count"/><br/>
+                        <strong>Tonnage total:</strong> <t t-esc="o.total_tonnage"/> T<br/>
+                        <strong>État:</strong> <t t-esc="dict(o._fields['state'].selection).get(o.state, '')"/><br/>
+                    </div>
+                </div>
+                
+                <h4 class="mt32">Ordres de Transit</h4>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>N° OT</th>
+                            <th>Destinataire</th>
+                            <th>Produit</th>
+                            <th>Tonnage (T)</th>
+                            <th>Navire</th>
+                            <th>Port (POD)</th>
+                            <th>Progression</th>
+                            <th>État</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="o.transit_order_ids" t-as="ot">
+                            <tr>
+                                <td><t t-esc="ot.name"/></td>
+                                <td><t t-esc="ot.consignee_id.name"/></td>
+                                <td><t t-esc="dict(ot._fields['product_type'].selection).get(ot.product_type, '')"/></td>
+                                <td class="text-end"><t t-esc="'%.2f' % ot.tonnage"/></td>
+                                <td><t t-esc="ot.vessel_name or '-'"/></td>
+                                <td><t t-esc="ot.pod or '-'"/></td>
+                                <td class="text-end"><t t-esc="'%.1f' % ot.progress_percentage"/>%</td>
+                                <td><t t-esc="dict(ot._fields['state'].selection).get(ot.state, '')"/></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td colspan="3">Total</td>
+                            <td class="text-end"><t t-esc="'%.2f' % o.total_tonnage"/></td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <t t-if="o.note">
+                    <h4 class="mt32">Notes</h4>
+                    <p><t t-esc="o.note"/></p>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_potting_customer_order">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="potting_management.report_potting_customer_order_document"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- Daily Report Template -->
+    <template id="report_potting_daily_document">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <h2 class="text-center">Rapport journalier d'empotage</h2>
+                <h4 class="text-center">Date: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y')"/></h4>
+                
+                <t t-foreach="docs" t-as="o">
+                    <div class="mt32 border-bottom pb-3 mb-3">
+                        <h5><t t-esc="o.name"/> - <t t-esc="o.consignee_id.name"/></h5>
+                        <div class="row">
+                            <div class="col-4">
+                                <strong>Produit:</strong> <t t-esc="dict(o._fields['product_type'].selection).get(o.product_type, '')"/>
+                            </div>
+                            <div class="col-4">
+                                <strong>Tonnage:</strong> <t t-esc="o.tonnage"/> T
+                            </div>
+                            <div class="col-4">
+                                <strong>Progression:</strong> <t t-esc="'%.1f' % o.progress_percentage"/>%
+                            </div>
+                        </div>
+                        <div class="row mt8">
+                            <div class="col-4">
+                                <strong>Lots:</strong> <t t-esc="o.potted_lot_count"/>/<t t-esc="o.lot_count"/>
+                            </div>
+                            <div class="col-4">
+                                <strong>Navire:</strong> <t t-esc="o.vessel_name or '-'"/>
+                            </div>
+                            <div class="col-4">
+                                <strong>Port:</strong> <t t-esc="o.pod or '-'"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_potting_daily">
+        <t t-call="web.html_container">
+            <t t-call="potting_management.report_potting_daily_document"/>
+        </t>
+    </template>
+</odoo>

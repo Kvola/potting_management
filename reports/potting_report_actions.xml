@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Transit Order Report Action -->
+    <record id="action_report_potting_transit_order" model="ir.actions.report">
+        <field name="name">Rapport OT</field>
+        <field name="model">potting.transit.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">potting_management.report_potting_transit_order</field>
+        <field name="report_file">potting_management.report_potting_transit_order</field>
+        <field name="print_report_name">'Rapport_OT_%s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_potting_transit_order"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Customer Order Report Action -->
+    <record id="action_report_potting_customer_order" model="ir.actions.report">
+        <field name="name">Rapport Commande</field>
+        <field name="model">potting.customer.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">potting_management.report_potting_customer_order</field>
+        <field name="report_file">potting_management.report_potting_customer_order</field>
+        <field name="print_report_name">'Rapport_Commande_%s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_potting_customer_order"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Daily Report Action -->
+    <record id="action_report_potting_daily" model="ir.actions.report">
+        <field name="name">Rapport journalier</field>
+        <field name="model">potting.transit.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">potting_management.report_potting_daily</field>
+        <field name="report_file">potting_management.report_potting_daily</field>
+        <field name="print_report_name">'Rapport_Journalier_%s' % (context_timestamp(datetime.datetime.now()).strftime('%%Y%%m%%d'))</field>
+    </record>
+</odoo>

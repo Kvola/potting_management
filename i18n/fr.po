@@ -1,0 +1,436 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* potting_management
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"PO-Revision-Date: 2024-01-01 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: \n"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_customer_order__name
+msgid "Reference"
+msgstr "Référence"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_customer_order__customer_id
+msgid "Customer"
+msgstr "Client"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_customer_order__date_order
+msgid "Order Date"
+msgstr "Date de commande"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_customer_order__date_expected
+msgid "Expected Delivery Date"
+msgstr "Date de livraison prévue"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_customer_order__transit_order_ids
+msgid "Transit Orders"
+msgstr "Ordres de Transit"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_customer_order__transit_order_count
+msgid "Number of TO"
+msgstr "Nombre d'OT"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_customer_order__total_tonnage
+msgid "Total Tonnage (T)"
+msgstr "Tonnage total (T)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_customer_order__state
+msgid "State"
+msgstr "État"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_customer_order__state__draft
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_transit_order__state__draft
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_lot__state__draft
+msgid "Draft"
+msgstr "Brouillon"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_customer_order__state__confirmed
+msgid "Confirmed"
+msgstr "Confirmée"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_customer_order__state__in_progress
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_transit_order__state__in_progress
+msgid "In Progress"
+msgstr "En cours"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_customer_order__state__done
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_transit_order__state__done
+msgid "Done"
+msgstr "Terminée"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_customer_order__state__cancelled
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_transit_order__state__cancelled
+msgid "Cancelled"
+msgstr "Annulée"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__name
+msgid "TO Number"
+msgstr "Numéro OT"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__customer_order_id
+msgid "Customer Order"
+msgstr "Commande client"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__consignee_id
+msgid "Consignee"
+msgstr "Destinataire (Consignee)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__product_type
+#: model:ir.model.fields,field_description:potting_management.field_potting_lot__product_type
+msgid "Product Type"
+msgstr "Type de produit"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_transit_order__product_type__cocoa_mass
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_lot__product_type__cocoa_mass
+msgid "Cocoa Mass"
+msgstr "Masse de cacao"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_transit_order__product_type__cocoa_butter
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_lot__product_type__cocoa_butter
+msgid "Cocoa Butter"
+msgstr "Beurre de cacao"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_transit_order__product_type__cocoa_cake
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_lot__product_type__cocoa_cake
+msgid "Cocoa Cake"
+msgstr "Cake (Tourteau) de cacao"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_transit_order__product_type__cocoa_powder
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_lot__product_type__cocoa_powder
+msgid "Cocoa Powder"
+msgstr "Poudre de cacao"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__tonnage
+msgid "Tonnage (T)"
+msgstr "Tonnage (T)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__vessel_name
+msgid "Vessel Name"
+msgstr "Nom du navire"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__pod
+msgid "Port of Discharge (POD)"
+msgstr "Port de déchargement (POD)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__container_size
+msgid "Container Size (TC)"
+msgstr "Taille conteneur (TC)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__lot_range
+msgid "Lot Range"
+msgstr "Plage de lots"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__booking_number
+msgid "Booking Number"
+msgstr "Numéro de réservation (Booking)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__lot_count
+msgid "Number of Lots"
+msgstr "Nombre de lots"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__potted_lot_count
+msgid "Potted Lots"
+msgstr "Lots empotés"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_transit_order__progress_percentage
+msgid "Progress (%)"
+msgstr "Progression (%)"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_transit_order__state__lots_generated
+msgid "Lots Generated"
+msgstr "Lots générés"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_transit_order__state__ready_validation
+msgid "Ready for Validation"
+msgstr "Prêt pour validation"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_lot__name
+msgid "Lot Number"
+msgstr "Numéro de lot"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_lot__target_tonnage
+msgid "Target Tonnage (T)"
+msgstr "Tonnage cible (T)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_lot__current_tonnage
+msgid "Current Tonnage (T)"
+msgstr "Tonnage actuel (T)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_lot__remaining_tonnage
+msgid "Remaining Tonnage (T)"
+msgstr "Tonnage restant (T)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_lot__fill_percentage
+msgid "Fill Percentage (%)"
+msgstr "Remplissage (%)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_lot__is_full
+msgid "Capacity Reached"
+msgstr "Capacité atteinte"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_lot__container_id
+msgid "Container"
+msgstr "Conteneur"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_lot__date_potted
+msgid "Potting Date"
+msgstr "Date d'empotage"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_lot__state__in_production
+msgid "In Production"
+msgstr "En production"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_lot__state__ready
+msgid "Ready for Potting"
+msgstr "Prêt pour empotage"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_lot__state__potted
+msgid "Potted"
+msgstr "Empoté"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_container__name
+msgid "Container Number"
+msgstr "Numéro de conteneur"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_container__container_type
+msgid "Container Type"
+msgstr "Type de conteneur"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_container__seal_number
+msgid "Seal Number"
+msgstr "Numéro de scellé"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_container__tare_weight
+msgid "Tare Weight (kg)"
+msgstr "Tare (kg)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_container__max_payload
+msgid "Max Payload (kg)"
+msgstr "Charge utile max (kg)"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_container__state__available
+msgid "Available"
+msgstr "Disponible"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_container__state__loading
+msgid "Loading"
+msgstr "En chargement"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_container__state__loaded
+msgid "Loaded"
+msgstr "Chargé"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_container__state__shipped
+msgid "Shipped"
+msgstr "Expédié"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_production_line__date
+msgid "Production Date"
+msgstr "Date de production"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_production_line__batch_number
+msgid "Batch Number"
+msgstr "Numéro de batch"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_production_line__shift
+msgid "Shift"
+msgstr "Équipe"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_production_line__shift__morning
+msgid "Morning"
+msgstr "Matin"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_production_line__shift__afternoon
+msgid "Afternoon"
+msgstr "Après-midi"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_production_line__shift__night
+msgid "Night"
+msgstr "Nuit"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_production_line__operator_id
+msgid "Operator"
+msgstr "Opérateur"
+
+#. module: potting_management
+#: model:res.groups,name:potting_management.group_potting_shipping
+msgid "Shipping - User"
+msgstr "Shipping - Utilisateur"
+
+#. module: potting_management
+#: model:res.groups,name:potting_management.group_potting_ceo_agent
+msgid "CEO Agent"
+msgstr "Agent PDG"
+
+#. module: potting_management
+#: model:res.groups,name:potting_management.group_potting_manager
+msgid "Manager"
+msgstr "Responsable"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_root
+msgid "Potting"
+msgstr "Empotages"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_operations
+msgid "Operations"
+msgstr "Opérations"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_customer_order
+msgid "Customer Orders"
+msgstr "Commandes clients"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_transit_order
+msgid "Transit Orders"
+msgstr "Ordres de Transit"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_lot
+msgid "Lots"
+msgstr "Lots"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_container
+msgid "Containers"
+msgstr "Conteneurs"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_production_line
+msgid "Productions"
+msgstr "Productions"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_config
+msgid "Configuration"
+msgstr "Configuration"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_config_settings
+msgid "Settings"
+msgstr "Paramètres"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_config_vessel
+msgid "Vessels"
+msgstr "Navires"
+
+#. module: potting_management
+#: model_terms:ir.ui.view,arch_db:potting_management.res_config_settings_view_form_potting
+msgid "Default Customer"
+msgstr "Client par défaut"
+
+#. module: potting_management
+#: model_terms:ir.ui.view,arch_db:potting_management.res_config_settings_view_form_potting
+msgid "Default CC Recipients"
+msgstr "Destinataires en copie par défaut"
+
+#. module: potting_management
+#: model_terms:ir.ui.view,arch_db:potting_management.res_config_settings_view_form_potting
+msgid "Maximum Tonnage per Lot"
+msgstr "Tonnage maximum par lot"
+
+#. module: potting_management
+#: model:ir.actions.act_window,name:potting_management.action_potting_send_report_wizard
+msgid "Send a Report"
+msgstr "Envoyer un rapport"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_send_report_wizard__report_type
+msgid "Report Type"
+msgstr "Type de rapport"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_send_report_wizard__report_type__daily
+msgid "Daily Report"
+msgstr "Rapport journalier"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_send_report_wizard__report_type__ot
+msgid "TO Report"
+msgstr "Rapport par OT"
+
+#. module: potting_management
+#: model:ir.model.fields.selection,name:potting_management.selection__potting_send_report_wizard__report_type__summary
+msgid "Summary Report"
+msgstr "Rapport de synthèse"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_send_report_wizard__recipient_id
+msgid "Main Recipient"
+msgstr "Destinataire principal"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_potting_send_report_wizard__cc_partner_ids
+msgid "CC Recipients"
+msgstr "En copie (CC)"
