@@ -7,3 +7,4 @@ from . import potting_lot
 from . import potting_container
 from . import potting_production_line
 from . import product_product
+from . import potting_consignee

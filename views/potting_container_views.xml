@@ -5,19 +5,32 @@
         <field name="name">potting.container.tree</field>
         <field name="model">potting.container</field>
         <field name="arch" type="xml">
-            <tree string="Conteneurs" decoration-info="state == 'available'" decoration-warning="state == 'loading'" decoration-primary="state == 'loaded'" decoration-success="state == 'shipped'">
-                <field name="name"/>
-                <field name="container_type"/>
-                <field name="seal_number"/>
-                <field name="lot_count"/>
-                <field name="total_tonnage" sum="Total"/>
-                <field name="vessel_name"/>
-                <field name="booking_number"/>
-                <field name="port_loading"/>
-                <field name="port_discharge"/>
-                <field name="date_potting"/>
-                <field name="date_departure"/>
-                <field name="state" widget="badge" decoration-info="state == 'available'" decoration-warning="state == 'loading'" decoration-primary="state == 'loaded'" decoration-success="state == 'shipped'"/>
+            <tree string="Conteneurs" 
+                  decoration-info="state == 'available'" 
+                  decoration-warning="state == 'loading'" 
+                  decoration-primary="state == 'loaded'" 
+                  decoration-success="state == 'shipped'"
+                  multi_edit="1"
+                  sample="1">
+                <field name="name" decoration-bf="1"/>
+                <field name="container_type" widget="badge"
+                       decoration-info="container_type == '20'"
+                       decoration-primary="container_type == '40'"
+                       decoration-success="container_type == '40hc'"/>
+                <field name="seal_number" optional="show"/>
+                <field name="lot_count" string="Lots"/>
+                <field name="total_tonnage" sum="Total" decoration-bf="1" class="text-primary"/>
+                <field name="vessel_name" optional="show"/>
+                <field name="booking_number" optional="hide"/>
+                <field name="port_loading" optional="show"/>
+                <field name="port_discharge" optional="show"/>
+                <field name="date_potting" widget="date" optional="show"/>
+                <field name="date_departure" widget="date" optional="show"/>
+                <field name="state" widget="badge" 
+                       decoration-info="state == 'available'" 
+                       decoration-warning="state == 'loading'" 
+                       decoration-primary="state == 'loaded'" 
+                       decoration-success="state == 'shipped'"/>
             </tree>
         </field>
     </record>
@@ -39,35 +52,41 @@
                         <button name="action_view_lots" type="object" class="oe_stat_button" icon="fa-cubes">
                             <field name="lot_count" widget="statinfo" string="Lots"/>
                         </button>
+                        <button name="action_view_transit_orders" type="object" class="oe_stat_button" icon="fa-truck">
+                            <span class="o_stat_text">Ordres Transit</span>
+                        </button>
                     </div>
+                    <widget name="web_ribbon" title="Expédié" bg_color="bg-success" invisible="state != 'shipped'"/>
+                    <widget name="web_ribbon" title="Chargé" bg_color="bg-primary" invisible="state != 'loaded'"/>
                     <div class="oe_title">
                         <label for="name" string="Numéro de conteneur"/>
                         <h1>
-                            <field name="name" placeholder="Ex: MSKU1234567"/>
+                            <i class="fa fa-archive me-2 text-primary"/>
+                            <field name="name" placeholder="Ex: MSKU1234567" class="text-primary"/>
                         </h1>
                     </div>
                     <group>
-                        <group string="Informations conteneur">
-                            <field name="container_type"/>
-                            <field name="seal_number"/>
+                        <group string="📦 Informations conteneur">
+                            <field name="container_type" widget="radio" options="{'horizontal': True}"/>
+                            <field name="seal_number" placeholder="Numéro de plomb..."/>
                             <field name="tare_weight"/>
                             <field name="max_payload"/>
                         </group>
-                        <group string="Chargement">
-                            <field name="lot_count"/>
-                            <field name="total_tonnage"/>
-                            <field name="date_potting"/>
+                        <group string="⚖️ Chargement">
+                            <field name="lot_count" readonly="1"/>
+                            <field name="total_tonnage" widget="float" class="fw-bold text-primary" readonly="1"/>
+                            <field name="date_potting" widget="date"/>
                         </group>
                     </group>
                     <group>
-                        <group string="Transport">
-                            <field name="vessel_name"/>
-                            <field name="booking_number"/>
-                            <field name="date_departure"/>
+                        <group string="🚢 Transport">
+                            <field name="vessel_name" placeholder="Nom du navire..."/>
+                            <field name="booking_number" placeholder="N° Booking..."/>
+                            <field name="date_departure" widget="date"/>
                         </group>
-                        <group string="Ports">
-                            <field name="port_loading"/>
-                            <field name="port_discharge"/>
+                        <group string="🏢 Ports">
+                            <field name="port_loading" placeholder="Port de chargement..."/>
+                            <field name="port_discharge" placeholder="Port de destination..."/>
                         </group>
                     </group>
                     <notebook>
@@ -122,22 +141,30 @@
                 <templates>
                     <t t-name="kanban-box">
                         <div t-attf-class="oe_kanban_global_click">
-                            <div class="o_kanban_record_top mb8">
+                            <div class="o_kanban_record_top mb-2">
                                 <div class="o_kanban_record_headings">
-                                    <strong class="o_kanban_record_title">
-                                        <field name="name"/>
+                                    <strong class="o_kanban_record_title fs-5">
+                                        <i class="fa fa-archive me-1 text-primary"/> <field name="name"/>
                                     </strong>
                                 </div>
                                 <field name="state" widget="label_selection" options="{'classes': {'available': 'info', 'loading': 'warning', 'loaded': 'primary', 'shipped': 'success'}}"/>
                             </div>
                             <div class="o_kanban_record_body">
-                                <div><field name="container_type"/></div>
-                                <div class="mt4">
-                                    <span class="badge bg-primary"><t t-out="record.lot_count.raw_value"/> Lots</span>
-                                    <span class="badge bg-secondary ms-1"><t t-out="record.total_tonnage.raw_value"/> T</span>
+                                <div class="mb-1">
+                                    <span class="badge bg-secondary rounded-pill">
+                                        <field name="container_type"/>
+                                    </span>
                                 </div>
-                                <div t-if="record.vessel_name.value" class="mt4">
-                                    <i class="fa fa-ship"/> <field name="vessel_name"/>
+                                <div class="mt-2 d-flex gap-2 flex-wrap">
+                                    <span class="badge bg-primary rounded-pill">
+                                        <i class="fa fa-cubes me-1"/><t t-out="record.lot_count.raw_value"/> Lots
+                                    </span>
+                                    <span class="badge bg-info rounded-pill">
+                                        <i class="fa fa-balance-scale me-1"/><t t-out="record.total_tonnage.raw_value"/> T
+                                    </span>
+                                </div>
+                                <div t-if="record.vessel_name.value" class="mt-2 text-muted small">
+                                    <i class="fa fa-ship me-1"/> <field name="vessel_name"/>
                                 </div>
                             </div>
                         </div>

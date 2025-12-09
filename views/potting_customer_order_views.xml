@@ -5,15 +5,26 @@
         <field name="name">potting.customer.order.tree</field>
         <field name="model">potting.customer.order</field>
         <field name="arch" type="xml">
-            <tree string="Commandes clients" decoration-info="state == 'draft'" decoration-warning="state == 'in_progress'" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'">
-                <field name="name"/>
+            <tree string="Commandes clients" 
+                  decoration-info="state == 'draft'" 
+                  decoration-warning="state == 'in_progress'" 
+                  decoration-success="state == 'done'" 
+                  decoration-muted="state == 'cancelled'"
+                  multi_edit="1"
+                  sample="1">
+                <field name="company_id" column_invisible="1"/>
+                <field name="name" decoration-bf="1"/>
                 <field name="customer_id"/>
-                <field name="date_order"/>
-                <field name="date_expected"/>
-                <field name="transit_order_count"/>
-                <field name="total_tonnage" sum="Total"/>
-                <field name="user_id"/>
-                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state in ('confirmed', 'in_progress')" decoration-success="state == 'done'" decoration-danger="state == 'cancelled'"/>
+                <field name="date_order" widget="date"/>
+                <field name="date_expected" widget="date" optional="show"/>
+                <field name="transit_order_count" string="OT"/>
+                <field name="total_tonnage" sum="Total" decoration-bf="1" class="text-primary"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="state" widget="badge" 
+                       decoration-info="state == 'draft'" 
+                       decoration-warning="state in ('confirmed', 'in_progress')" 
+                       decoration-success="state == 'done'" 
+                       decoration-danger="state == 'cancelled'"/>
             </tree>
         </field>
     </record>
@@ -29,7 +40,7 @@
                     <button name="action_start" type="object" string="Démarrer" class="btn-primary" invisible="state != 'confirmed'"/>
                     <button name="action_done" type="object" string="Terminer" class="btn-primary" invisible="state != 'in_progress'"/>
                     <button name="action_cancel" type="object" string="Annuler" invisible="state in ('done', 'cancelled')"/>
-                    <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state != 'cancelled'"/>
+                    <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state in ('draft', 'done')" groups="potting_management.group_potting_manager" confirm="Êtes-vous sûr de vouloir remettre cette commande en brouillon ? Les OT associés seront également remis en brouillon."/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,in_progress,done"/>
                 </header>
                 <sheet>
@@ -37,28 +48,34 @@
                         <button name="action_view_transit_orders" type="object" class="oe_stat_button" icon="fa-truck">
                             <field name="transit_order_count" widget="statinfo" string="Ordres de Transit"/>
                         </button>
+                        <button name="action_view_lots" type="object" class="oe_stat_button" icon="fa-cubes">
+                            <span class="o_stat_text">Lots</span>
+                        </button>
                     </div>
+                    <widget name="web_ribbon" title="Terminée" bg_color="bg-success" invisible="state != 'done'"/>
+                    <widget name="web_ribbon" title="Annulée" bg_color="bg-danger" invisible="state != 'cancelled'"/>
                     <div class="oe_title">
                         <h1>
-                            <field name="name" readonly="1"/>
+                            <field name="name" readonly="1" class="text-primary"/>
                         </h1>
                     </div>
                     <group>
-                        <group>
-                            <field name="customer_id"/>
-                            <field name="date_order"/>
-                            <field name="date_expected"/>
+                        <group string="👤 Client">
+                            <field name="company_id" invisible="1"/>
+                            <field name="customer_id" options="{'no_create': True}"/>
+                            <field name="date_order" widget="date"/>
+                            <field name="date_expected" widget="date"/>
                         </group>
-                        <group>
-                            <field name="user_id"/>
-                            <field name="total_tonnage"/>
+                        <group string="📊 Informations">
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                            <field name="total_tonnage" widget="float" class="fw-bold text-primary"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Ordres de Transit" name="transit_orders">
                             <field name="transit_order_ids" context="{'default_customer_order_id': id}">
-                                <tree string="Ordres de Transit" editable="bottom">
+                                <tree string="Ordres de Transit">
                                     <field name="name"/>
                                     <field name="consignee_id"/>
                                     <field name="product_type"/>
@@ -102,24 +119,28 @@
                 <templates>
                     <t t-name="kanban-box">
                         <div t-attf-class="oe_kanban_global_click">
-                            <div class="o_kanban_record_top mb8">
+                            <div class="o_kanban_record_top mb-2">
                                 <div class="o_kanban_record_headings">
-                                    <strong class="o_kanban_record_title">
-                                        <field name="name"/>
+                                    <strong class="o_kanban_record_title fs-5">
+                                        <i class="fa fa-file-text me-1 text-primary"/> <field name="name"/>
                                     </strong>
                                 </div>
                                 <field name="state" widget="label_selection" options="{'classes': {'draft': 'secondary', 'confirmed': 'info', 'in_progress': 'warning', 'done': 'success', 'cancelled': 'danger'}}"/>
                             </div>
                             <div class="o_kanban_record_body">
-                                <field name="customer_id"/>
-                                <div class="mt4">
-                                    <span class="badge bg-primary"><t t-out="record.transit_order_count.raw_value"/> OT</span>
-                                    <span class="badge bg-secondary ms-1"><t t-out="record.total_tonnage.raw_value"/> T</span>
+                                <div class="mb-1"><i class="fa fa-building text-muted me-1"/> <field name="customer_id"/></div>
+                                <div class="mt-2 d-flex gap-2 flex-wrap">
+                                    <span class="badge bg-primary rounded-pill">
+                                        <i class="fa fa-truck me-1"/><t t-out="record.transit_order_count.raw_value"/> OT
+                                    </span>
+                                    <span class="badge bg-info rounded-pill">
+                                        <i class="fa fa-balance-scale me-1"/><t t-out="record.total_tonnage.raw_value"/> T
+                                    </span>
                                 </div>
                             </div>
-                            <div class="o_kanban_record_bottom">
-                                <div class="oe_kanban_bottom_left">
-                                    <field name="date_order"/>
+                            <div class="o_kanban_record_bottom mt-2">
+                                <div class="oe_kanban_bottom_left text-muted small">
+                                    <i class="fa fa-calendar"/> <field name="date_order"/>
                                 </div>
                                 <div class="oe_kanban_bottom_right">
                                     <field name="user_id" widget="many2one_avatar_user"/>

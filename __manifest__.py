@@ -43,6 +43,7 @@
         'views/potting_transit_order_views.xml',
         'views/potting_lot_views.xml',
         'views/potting_container_views.xml',
+        'views/potting_consignee_views.xml',
         'views/potting_menu_views.xml',
         # Reports (must be before mail templates)
         'reports/potting_report_templates.xml',

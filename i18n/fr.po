@@ -434,3 +434,33 @@ msgstr "Destinataire principal"
 #: model:ir.model.fields,field_description:potting_management.field_potting_send_report_wizard__cc_partner_ids
 msgid "CC Recipients"
 msgstr "En copie (CC)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_res_partner__is_potting_consignee
+msgid "Is Potting Consignee"
+msgstr "Est un destinataire (Consignee)"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_res_partner__potting_consignee_code
+msgid "Consignee Code"
+msgstr "Code destinataire"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_res_partner__potting_transit_order_ids
+msgid "Transit Orders"
+msgstr "Ordres de transit"
+
+#. module: potting_management
+#: model:ir.model.fields,field_description:potting_management.field_res_partner__potting_transit_order_count
+msgid "Transit Order Count"
+msgstr "Nombre d'OT"
+
+#. module: potting_management
+#: model:ir.actions.act_window,name:potting_management.action_potting_consignee
+msgid "Consignees"
+msgstr "Destinataires (Consignees)"
+
+#. module: potting_management
+#: model:ir.ui.menu,name:potting_management.menu_potting_consignee
+msgid "Consignees Menu"
+msgstr "Destinataires"
