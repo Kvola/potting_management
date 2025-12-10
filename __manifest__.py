@@ -37,6 +37,7 @@
         'data/product_data.xml',
         # Wizards (must be before menus that reference them)
         'wizards/potting_send_report_wizard_views.xml',
+        'wizards/potting_create_ot_wizard_views.xml',
         # Views
         'views/res_config_settings_views.xml',
         'views/potting_customer_order_views.xml',

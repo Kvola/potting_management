@@ -329,6 +329,20 @@ class PottingCustomerOrder(models.Model):
         }
         return action
 
+    def action_open_create_ot_wizard(self):
+        """Ouvrir le wizard de création d'OT"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _("Créer des Ordres de Transit"),
+            'res_model': 'potting.create.ot.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_customer_order_id': self.id,
+            },
+        }
+
     # -------------------------------------------------------------------------
     # BUSINESS METHODS
     # -------------------------------------------------------------------------

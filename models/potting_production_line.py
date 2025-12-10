@@ -102,11 +102,19 @@ class PottingProductionLine(models.Model):
     # -------------------------------------------------------------------------
     @api.constrains('tonnage')
     def _check_tonnage(self):
+        # Récupérer la limite configurable (défaut: 10 tonnes)
+        max_production = float(
+            self.env['ir.config_parameter'].sudo().get_param(
+                'potting_management.max_daily_production', '10.0'
+            )
+        )
         for line in self:
             if line.tonnage <= 0:
                 raise ValidationError(_("Le tonnage doit être supérieur à 0."))
-            if line.tonnage > 10:  # Max 10 tonnes per production line
-                raise ValidationError(_("Le tonnage par production ne peut pas dépasser 10 tonnes."))
+            if line.tonnage > max_production:
+                raise ValidationError(
+                    _("Le tonnage par production ne peut pas dépasser %.1f tonnes.") % max_production
+                )
 
     @api.constrains('date')
     def _check_date(self):

@@ -72,6 +72,18 @@ class ResConfigSettings(models.TransientModel):
     )
 
     # =========================================================================
+    # PRODUCTION CONFIGURATION
+    # =========================================================================
+    
+    potting_max_daily_production = fields.Float(
+        string="Production max par ligne (T)",
+        config_parameter='potting_management.max_daily_production',
+        default=10.0,
+        help="Tonnage maximum autorisé par ligne de production. "
+             "Cette valeur limite le tonnage qu'un opérateur peut saisir pour une seule ligne de production."
+    )
+
+    # =========================================================================
     # CONTAINER CONFIGURATION
     # =========================================================================
     

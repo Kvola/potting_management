@@ -25,4 +25,8 @@ access_potting_pot_lot_wizard_shipping,potting.pot.lot.wizard.shipping,model_pot
 access_potting_pot_lot_wizard_ceo_agent,potting.pot.lot.wizard.ceo_agent,model_potting_pot_lot_wizard,group_potting_ceo_agent,1,1,1,1
 access_potting_send_report_wizard_shipping,potting.send.report.wizard.shipping,model_potting_send_report_wizard,group_potting_shipping,1,1,1,1
 access_potting_send_report_wizard_ceo_agent,potting.send.report.wizard.ceo_agent,model_potting_send_report_wizard,group_potting_ceo_agent,1,1,1,1
+access_potting_create_ot_wizard_shipping,potting.create.ot.wizard.shipping,model_potting_create_ot_wizard,group_potting_shipping,1,1,1,1
+access_potting_create_ot_wizard_manager,potting.create.ot.wizard.manager,model_potting_create_ot_wizard,group_potting_manager,1,1,1,1
+access_potting_create_ot_wizard_line_shipping,potting.create.ot.wizard.line.shipping,model_potting_create_ot_wizard_line,group_potting_shipping,1,1,1,1
+access_potting_create_ot_wizard_line_manager,potting.create.ot.wizard.line.manager,model_potting_create_ot_wizard_line,group_potting_manager,1,1,1,1
 access_res_partner_consignee_shipping,res.partner.consignee.shipping,base.model_res_partner,group_potting_shipping,1,1,1,0

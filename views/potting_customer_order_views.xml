@@ -36,6 +36,7 @@
         <field name="arch" type="xml">
             <form string="Commande client">
                 <header>
+                    <button name="action_open_create_ot_wizard" type="object" string="➕ Ajouter des OT" class="btn-success" invisible="state in ('done', 'cancelled')" groups="potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
                     <button name="action_confirm" type="object" string="Confirmer" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_start" type="object" string="Démarrer" class="btn-primary" invisible="state != 'confirmed'"/>
                     <button name="action_done" type="object" string="Terminer" class="btn-primary" invisible="state != 'in_progress'"/>

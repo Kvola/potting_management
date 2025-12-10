@@ -44,6 +44,27 @@
                     
                     <!-- Tonnage Maximum - Masse de cacao -->
                     <block title="⚖️ Tonnage Maximum par Lot" name="potting_tonnage_config">
+                        <setting id="potting_max_production_setting" 
+                                 title="🏭 Production maximum par ligne" 
+                                 help="Limite le tonnage qu'un opérateur peut saisir pour une seule ligne de production">
+                            <div class="content-group">
+                                <div class="row mt-2">
+                                    <label string="Max par ligne (T)" 
+                                           for="potting_max_daily_production" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_max_daily_production" class="col-lg-2"/>
+                                    <span class="col-lg-1 text-muted">tonnes</span>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12">
+                                        <small class="text-muted fst-italic">
+                                            <i class="fa fa-info-circle me-1"/>Cette valeur limite le tonnage maximum qu'un opérateur peut saisir pour une seule ligne de production
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </setting>
+                        
                         <setting id="potting_tonnage_mass_setting" 
                                  title="🍫 Masse de cacao" 
                                  help="Tonnage maximum par lot pour la Masse de cacao">

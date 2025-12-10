@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard Form View -->
+    <record id="potting_create_ot_wizard_view_form" model="ir.ui.view">
+        <field name="name">potting.create.ot.wizard.form</field>
+        <field name="model">potting.create.ot.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Créer des Ordres de Transit">
+                <group>
+                    <group string="📋 Commande">
+                        <field name="customer_order_id" readonly="1"/>
+                        <field name="customer_id" readonly="1"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group string="📊 Résumé">
+                        <field name="line_count" readonly="1"/>
+                        <field name="total_tonnage" readonly="1" widget="float" class="fw-bold text-primary"/>
+                    </group>
+                </group>
+                
+                <separator string="➕ Ajouter un OT"/>
+                <group>
+                    <group>
+                        <field name="quick_consignee_id" 
+                               placeholder="Sélectionner un destinataire..."
+                               options="{'no_create': False, 'no_quick_create': True}"/>
+                        <field name="quick_product_type"/>
+                        <field name="quick_tonnage"/>
+                        <field name="quick_container_size"/>
+                    </group>
+                    <group>
+                        <field name="quick_vessel_name" placeholder="Ex: MSC MARINA"/>
+                        <field name="quick_pod" placeholder="Ex: HAMBURG"/>
+                        <field name="quick_booking_number" placeholder="Ex: BK123456"/>
+                    </group>
+                </group>
+                <div class="text-center mb-3">
+                    <button name="action_add_line" 
+                            type="object" 
+                            string="➕ Ajouter à la liste" 
+                            class="btn-secondary"
+                            icon="fa-plus"/>
+                </div>
+                
+                <separator string="📦 Ordres de Transit à créer"/>
+                <field name="line_ids" nolabel="1">
+                    <tree string="Lignes OT" editable="bottom">
+                        <field name="consignee_id"/>
+                        <field name="product_type"/>
+                        <field name="tonnage" sum="Total"/>
+                        <field name="vessel_name"/>
+                        <field name="pod"/>
+                        <field name="container_size"/>
+                        <field name="booking_number"/>
+                    </tree>
+                </field>
+                
+                <footer>
+                    <button name="action_create_ot" 
+                            type="object" 
+                            string="✅ Créer les OT" 
+                            class="btn-primary"
+                            invisible="line_count == 0"/>
+                    <button name="action_create_and_new" 
+                            type="object" 
+                            string="Créer et Nouveau" 
+                            class="btn-secondary"
+                            invisible="line_count == 0"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the wizard -->
+    <record id="action_potting_create_ot_wizard" model="ir.actions.act_window">
+        <field name="name">Créer des OT</field>
+        <field name="res_model">potting.create.ot.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_potting_customer_order"/>
+        <field name="binding_view_types">form</field>
+    </record>
+</odoo>
