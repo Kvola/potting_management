@@ -153,6 +153,14 @@ class ResConfigSettings(models.TransientModel):
     # SEQUENCE CONFIGURATION
     # =========================================================================
     
+    potting_ot_initial_number = fields.Integer(
+        string="Numéro OT initial",
+        config_parameter='potting_management.ot_initial_number',
+        default=1,
+        help="Numéro de départ pour la numérotation des OT. "
+             "Les nouveaux OT seront numérotés à partir de ce numéro."
+    )
+    
     potting_lot_initial_number = fields.Integer(
         string="Numéro lot initial",
         config_parameter='potting_management.lot_initial_number',
@@ -540,19 +548,36 @@ class ResConfigSettings(models.TransientModel):
         return self.env['res.partner'].sudo().browse(partner_ids)
 
     @api.model
-    def get_next_ot_number_for_product(self, product_type):
-        """Get the next OT number for a specific product type.
+    def get_ot_initial_number(self):
+        """Get the initial OT number from settings.
+        
+        Returns:
+            int: The initial OT number (default 1)
+        """
+        ICP = self.env['ir.config_parameter'].sudo()
+        try:
+            return int(ICP.get_param('potting_management.ot_initial_number', '1'))
+        except (ValueError, TypeError):
+            return 1
+
+    @api.model
+    def get_next_ot_number_for_product(self, product_type, campaign_period=None):
+        """Get the next OT number for a specific product type and campaign.
         
         Args:
             product_type: One of 'cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder'
+            campaign_period: The campaign period (e.g., '2025-2026'). If None, uses default.
         
         Returns:
-            int: The next OT number to use for this product type
+            int: The next OT number to use for this product type and campaign
         """
         import re
         
-        campaign_year = self.get_campaign_year()
+        campaign_year = campaign_period or self.get_campaign_year()
         product_code = self.get_ot_prefix_for_product(product_type)
+        
+        # Récupérer le numéro initial configuré
+        initial_number = self.get_ot_initial_number()
         
         # Chercher le plus grand numéro OT existant pour ce type de produit et cette campagne
         # Format attendu: NNNN/AAAA-AAAA-XX (ex: 3734/2025-2026-MA)
@@ -576,14 +601,18 @@ class ResConfigSettings(models.TransientModel):
                     except (ValueError, TypeError):
                         pass
         
+        # Si aucun OT n'existe, utiliser le numéro initial, sinon incrémenter le max
+        if max_number == 0:
+            return initial_number
         return max_number + 1
 
     @api.model
-    def generate_ot_name(self, product_type=None):
+    def generate_ot_name(self, product_type=None, campaign_period=None):
         """Generate the next OT name based on campaign year and product type.
         
         Args:
             product_type: One of 'cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder'
+            campaign_period: The campaign period (e.g., '2025-2026'). If None, uses default.
         
         Returns:
             str: The complete OT name (e.g., "3734/2025-2026-MA")
@@ -593,9 +622,9 @@ class ResConfigSettings(models.TransientModel):
             import time
             return f"{int(time.time()) % 100000}"
         
-        campaign_year = self.get_campaign_year()
+        campaign_year = campaign_period or self.get_campaign_year()
         product_code = self.get_ot_prefix_for_product(product_type)
-        next_number = self.get_next_ot_number_for_product(product_type)
+        next_number = self.get_next_ot_number_for_product(product_type, campaign_year)
         
         # Format: NNNN/AAAA-AAAA-XX (ex: 3734/2025-2026-MA)
         return f"{next_number}/{campaign_year}-{product_code}"

@@ -15,6 +15,7 @@
                 <field name="company_id" column_invisible="1"/>
                 <field name="name" decoration-bf="1"/>
                 <field name="customer_id"/>
+                <field name="campaign_period" optional="show"/>
                 <field name="date_order" widget="date"/>
                 <field name="date_expected" widget="date" optional="show"/>
                 <field name="transit_order_count" string="OT"/>
@@ -64,6 +65,7 @@
                         <group string="👤 Client">
                             <field name="company_id" invisible="1"/>
                             <field name="customer_id" options="{'no_create': True}"/>
+                            <field name="campaign_period" placeholder="2025-2026"/>
                             <field name="date_order" widget="date"/>
                             <field name="date_expected" widget="date"/>
                         </group>

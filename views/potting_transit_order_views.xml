@@ -15,6 +15,7 @@
                 <field name="name" decoration-bf="1"/>
                 <field name="company_id" column_invisible="1"/>
                 <field name="customer_order_id" optional="show"/>
+                <field name="campaign_period" optional="show"/>
                 <field name="consignee_id"/>
                 <field name="product_type" widget="badge" 
                        decoration-info="product_type == 'cocoa_mass'"
@@ -77,6 +78,7 @@
                             <field name="company_id" invisible="1"/>
                             <field name="is_created_from_order" invisible="1"/>
                             <field name="customer_order_id" options="{'no_create': True}" readonly="is_created_from_order or state != 'draft'"/>
+                            <field name="campaign_period" readonly="1"/>
                             <field name="customer_id" options="{'no_create': True}"/>
                             <field name="consignee_id" 
                                    domain="[('is_potting_consignee', '=', True)]" 

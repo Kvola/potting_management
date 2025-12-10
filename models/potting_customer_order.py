@@ -49,6 +49,15 @@ class PottingCustomerOrder(models.Model):
         tracking=True
     )
     
+    campaign_period = fields.Char(
+        string="Campagne Café-Cacao",
+        required=True,
+        tracking=True,
+        default=lambda self: self._get_default_campaign_period(),
+        help="Période de la campagne Café-Cacao (ex: 2025-2026). "
+             "Utilisée pour la numérotation des OT."
+    )
+    
     transit_order_ids = fields.One2many(
         'potting.transit.order',
         'customer_order_id',
@@ -136,6 +145,11 @@ class PottingCustomerOrder(models.Model):
     # -------------------------------------------------------------------------
     # DEFAULT METHODS
     # -------------------------------------------------------------------------
+    @api.model
+    def _get_default_campaign_period(self):
+        """Get the default campaign period from settings."""
+        return self.env['res.config.settings'].get_campaign_year()
+    
     @api.model
     def _get_default_customer(self):
         """Get the default customer from settings"""

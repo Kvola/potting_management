@@ -48,6 +48,14 @@ class PottingTransitOrder(models.Model):
         domain="[('state', 'not in', ['done', 'cancelled'])]"
     )
     
+    campaign_period = fields.Char(
+        related='customer_order_id.campaign_period',
+        string="Campagne",
+        store=True,
+        readonly=True,
+        help="Période de la campagne Café-Cacao héritée de la commande"
+    )
+    
     customer_id = fields.Many2one(
         related='customer_order_id.customer_id',
         string="Client",
@@ -290,9 +298,21 @@ class PottingTransitOrder(models.Model):
         for vals in vals_list:
             # Générer automatiquement le numéro OT si non fourni ou si 'Nouveau'
             if vals.get('name', _('Nouveau')) == _('Nouveau') or not vals.get('name'):
-                # Le nom de l'OT dépend du type de produit et de la campagne
+                # Le nom de l'OT dépend du type de produit et de la campagne de la commande
                 product_type = vals.get('product_type')
-                vals['name'] = self.env['res.config.settings'].generate_ot_name(product_type)
+                
+                # Récupérer la campagne depuis la commande
+                campaign_period = None
+                customer_order_id = vals.get('customer_order_id')
+                if customer_order_id:
+                    customer_order = self.env['potting.customer.order'].browse(customer_order_id)
+                    if customer_order.exists():
+                        campaign_period = customer_order.campaign_period
+                
+                vals['name'] = self.env['res.config.settings'].generate_ot_name(
+                    product_type, 
+                    campaign_period
+                )
             
             # Marquer si l'OT est créé depuis le contexte d'une commande
             if self.env.context.get('default_customer_order_id') or vals.get('customer_order_id'):

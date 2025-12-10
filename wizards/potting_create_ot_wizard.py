@@ -32,6 +32,13 @@ class PottingCreateOTWizard(models.TransientModel):
         readonly=True
     )
     
+    campaign_period = fields.Char(
+        related='customer_order_id.campaign_period',
+        string="Campagne",
+        readonly=True,
+        help="Période de la campagne Café-Cacao de la commande"
+    )
+    
     company_id = fields.Many2one(
         related='customer_order_id.company_id',
         string="Société",

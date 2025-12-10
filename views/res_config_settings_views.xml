@@ -139,8 +139,8 @@
                     <!-- Configuration Campagne et Numérotation -->
                     <block title="📅 Campagne &amp; Numérotation" name="potting_sequence_config">
                         <setting id="potting_campaign_setting" 
-                                 title="Campagne Café-Cacao" 
-                                 help="Configuration de la période de campagne utilisée dans la numérotation des OT">
+                                 title="Campagne Café-Cacao par défaut" 
+                                 help="Période de campagne par défaut pour les nouvelles commandes">
                             <div class="content-group">
                                 <div class="row mt-2">
                                     <label string="Période campagne" 
@@ -152,7 +152,35 @@
                                 <div class="row mt-1">
                                     <div class="col-12">
                                         <small class="text-muted fst-italic">
-                                            <i class="fa fa-info-circle me-1"/>Les numéros d'OT sont générés au format: NNNN/AAAA-AAAA-XX (ex: 3734/2025-2026-MA pour Masse)
+                                            <i class="fa fa-info-circle me-1"/>Cette valeur est utilisée par défaut lors de la création d'une commande client. La campagne de la commande détermine ensuite la numérotation des OT.
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12">
+                                        <small class="text-muted fst-italic">
+                                            <i class="fa fa-info-circle me-1"/>Format des numéros d'OT: NNNN/AAAA-AAAA-XX (ex: 1/2025-2026-MA pour Masse)
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <setting id="potting_ot_sequence_setting" 
+                                 title="Numérotation des OT" 
+                                 help="Configuration du numéro de départ des OT">
+                            <div class="content-group">
+                                <div class="row mt-2">
+                                    <label string="Numéro OT initial" 
+                                           for="potting_ot_initial_number" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_ot_initial_number" class="col-lg-2"/>
+                                    <span class="col-lg-5 text-muted">Premier numéro d'OT pour une nouvelle campagne</span>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12">
+                                        <small class="text-muted fst-italic">
+                                            <i class="fa fa-info-circle me-1"/>Ce numéro est utilisé comme point de départ lorsqu'aucun OT n'existe encore pour une campagne/produit donné.
                                         </small>
                                     </div>
                                 </div>
@@ -257,11 +285,11 @@
                                     <hr class="my-2"/>
                                     <p class="mb-2"><strong>Format des numéros d'OT:</strong> NNNN/AAAA-AAAA-XX</p>
                                     <ul class="mb-2 ps-3">
-                                        <li><strong>NNNN:</strong> Numéro séquentiel</li>
-                                        <li><strong>AAAA-AAAA:</strong> Période de campagne (ex: 2025-2026)</li>
+                                        <li><strong>NNNN:</strong> Numéro séquentiel (par campagne et type de produit)</li>
+                                        <li><strong>AAAA-AAAA:</strong> Période de campagne (héritée de la commande client)</li>
                                         <li><strong>XX:</strong> Code produit (MA=Masse, BE=Beurre, TO=Tourteau, PO=Poudre)</li>
                                     </ul>
-                                    <p class="mb-1"><em>Exemple: 3734/2025-2026-MA</em></p>
+                                    <p class="mb-1"><em>Exemple: 1/2025-2026-MA (1er OT Masse de la campagne 2025-2026)</em></p>
                                     <hr class="my-2"/>
                                     <p class="mb-2"><strong>Format des numéros de lots:</strong> X#####</p>
                                     <ul class="mb-0 ps-3">
