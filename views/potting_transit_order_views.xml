@@ -47,7 +47,7 @@
         <field name="arch" type="xml">
             <form string="Ordre de Transit">
                 <header>
-                    <button name="action_generate_lots" type="object" string="Générer les lots" class="btn-primary" invisible="state != 'draft'" groups="potting_management.group_potting_shipping,potting_management.group_potting_ceo_agent"/>
+                    <button name="action_generate_lots" type="object" string="Générer les lots" class="btn-primary" invisible="state != 'draft'" groups="potting_management.group_potting_shipping"/>
                     <button name="action_start_production" type="object" string="Démarrer production" invisible="state != 'lots_generated'" groups="potting_management.group_potting_ceo_agent"/>
                     <button name="action_mark_ready" type="object" string="Prêt pour validation" invisible="state != 'in_progress'" groups="potting_management.group_potting_ceo_agent"/>
                     <button name="action_validate" type="object" string="Valider" class="btn-success" invisible="state != 'ready_validation'" groups="potting_management.group_potting_ceo_agent"/>
@@ -69,7 +69,7 @@
                     <div class="oe_title">
                         <label for="name" string="Numéro OT"/>
                         <h1>
-                            <field name="name" placeholder="Ex: OT3708" class="text-primary" readonly="state != 'draft'"/>
+                            <field name="name" class="text-primary" readonly="1"/>
                         </h1>
                     </div>
                     <group>

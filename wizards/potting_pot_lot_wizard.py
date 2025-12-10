@@ -191,11 +191,11 @@ class PottingPotLotWizard(models.TransientModel):
                 "Seuls les lots en attente ou prêts peuvent être empotés."
             ) % (self.lot_id.name, self.lot_id.state))
         
-        if self.lot_id.tonnage <= 0:
+        if self.lot_id.current_tonnage <= 0:
             raise UserError(_(
                 "Le lot '%s' a un tonnage invalide (%s T). "
                 "Le tonnage doit être supérieur à zéro."
-            ) % (self.lot_id.name, self.lot_id.tonnage))
+            ) % (self.lot_id.name, self.lot_id.current_tonnage))
         
         return True
     
@@ -311,7 +311,7 @@ class PottingPotLotWizard(models.TransientModel):
                     'title': _('✅ Empotage confirmé'),
                     'message': _(
                         'Le lot %s (%.2f T) a été empoté dans le conteneur %s.'
-                    ) % (self.lot_id.name, self.lot_id.tonnage, container.name),
+                    ) % (self.lot_id.name, self.lot_id.current_tonnage, container.name),
                     'type': 'success',
                     'sticky': False,
                     'next': {'type': 'ir.actions.act_window_close'},

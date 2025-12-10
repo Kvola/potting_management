@@ -26,6 +26,7 @@ class PottingTransitOrder(models.Model):
         tracking=True,
         index=True,
         copy=False,
+        readonly=True,
         default=lambda self: _('Nouveau')
     )
     

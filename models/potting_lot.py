@@ -24,7 +24,8 @@ class PottingLot(models.Model):
         required=True,
         tracking=True,
         index=True,
-        copy=False
+        copy=False,
+        readonly=True
     )
     
     transit_order_id = fields.Many2one(
