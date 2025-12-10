@@ -138,30 +138,20 @@ class ResConfigSettings(models.TransientModel):
     )
     
     # =========================================================================
-    # SEQUENCE CONFIGURATION
+    # CAMPAIGN CONFIGURATION (Campagne Café-Cacao)
     # =========================================================================
     
-    potting_ot_sequence_prefix = fields.Char(
-        string="Préfixe séquence OT",
-        config_parameter='potting_management.ot_sequence_prefix',
-        default='OT',
-        help="Préfixe pour la numérotation des Ordres de Transit"
+    potting_campaign_year = fields.Char(
+        string="Période campagne",
+        config_parameter='potting_management.campaign_year',
+        default='2025-2026',
+        help="Période de la campagne Café-Cacao au format AAAA-AAAA (ex: 2025-2026). "
+             "Utilisé dans la numérotation des OT."
     )
-    
-    potting_ot_initial_number = fields.Integer(
-        string="Numéro OT initial",
-        config_parameter='potting_management.ot_initial_number',
-        default=1,
-        help="Numéro à partir duquel commence la numérotation automatique des OT. "
-             "Ce numéro sera utilisé pour le prochain OT créé si aucun OT n'existe."
-    )
-    
-    potting_lot_sequence_prefix = fields.Char(
-        string="Préfixe séquence Lot",
-        config_parameter='potting_management.lot_sequence_prefix',
-        default='T',
-        help="Préfixe pour la numérotation des Lots (ex: T pour T10001)"
-    )
+
+    # =========================================================================
+    # SEQUENCE CONFIGURATION
+    # =========================================================================
     
     potting_lot_initial_number = fields.Integer(
         string="Numéro lot initial",
@@ -172,35 +162,35 @@ class ResConfigSettings(models.TransientModel):
     )
 
     # =========================================================================
-    # LOT SUFFIX PER PRODUCT TYPE
+    # LOT PREFIX PER PRODUCT TYPE
     # =========================================================================
     
-    potting_lot_suffix_cocoa_mass = fields.Char(
-        string="Suffixe lot - Masse de cacao",
-        config_parameter='potting_management.lot_suffix_cocoa_mass',
-        default='RA',
-        help="Suffixe ajouté aux numéros de lot pour la Masse de cacao (ex: T10001RA)"
+    potting_lot_prefix_cocoa_mass = fields.Char(
+        string="Préfixe lot - Masse de cacao",
+        config_parameter='potting_management.lot_prefix_cocoa_mass',
+        default='M',
+        help="Préfixe pour les numéros de lot de Masse de cacao (ex: M10001)"
     )
     
-    potting_lot_suffix_cocoa_butter = fields.Char(
-        string="Suffixe lot - Beurre de cacao",
-        config_parameter='potting_management.lot_suffix_cocoa_butter',
-        default='RB',
-        help="Suffixe ajouté aux numéros de lot pour le Beurre de cacao (ex: T10001RB)"
+    potting_lot_prefix_cocoa_butter = fields.Char(
+        string="Préfixe lot - Beurre de cacao",
+        config_parameter='potting_management.lot_prefix_cocoa_butter',
+        default='B',
+        help="Préfixe pour les numéros de lot de Beurre de cacao (ex: B10001)"
     )
     
-    potting_lot_suffix_cocoa_cake = fields.Char(
-        string="Suffixe lot - Cake de cacao",
-        config_parameter='potting_management.lot_suffix_cocoa_cake',
-        default='RC',
-        help="Suffixe ajouté aux numéros de lot pour le Cake de cacao (ex: T10001RC)"
+    potting_lot_prefix_cocoa_cake = fields.Char(
+        string="Préfixe lot - Cake de cacao",
+        config_parameter='potting_management.lot_prefix_cocoa_cake',
+        default='T',
+        help="Préfixe pour les numéros de lot de Cake/Tourteau de cacao (ex: T10001)"
     )
     
-    potting_lot_suffix_cocoa_powder = fields.Char(
-        string="Suffixe lot - Poudre de cacao",
-        config_parameter='potting_management.lot_suffix_cocoa_powder',
-        default='RD',
-        help="Suffixe ajouté aux numéros de lot pour la Poudre de cacao (ex: T10001RD)"
+    potting_lot_prefix_cocoa_powder = fields.Char(
+        string="Préfixe lot - Poudre de cacao",
+        config_parameter='potting_management.lot_prefix_cocoa_powder',
+        default='P',
+        help="Préfixe pour les numéros de lot de Poudre de cacao (ex: P10001)"
     )
 
     # =========================================================================
@@ -463,47 +453,76 @@ class ResConfigSettings(models.TransientModel):
             return default_value
 
     @api.model
-    def get_lot_suffix_for_product(self, product_type):
-        """Get the lot suffix for a given product type.
+    def get_lot_prefix_for_product(self, product_type):
+        """Get the lot prefix for a given product type.
         
         Args:
             product_type: One of 'cocoa_mass', 'cocoa_butter', 'cocoa_cake', 
                          'cocoa_powder'
         
         Returns:
-            str: Suffix for the product type (e.g., 'RA', 'RB', etc.)
+            str: Prefix for the product type (M, B, T, P)
         """
         if not product_type:
-            _logger.warning("get_lot_suffix_for_product called without product_type")
-            return ''
+            _logger.warning("get_lot_prefix_for_product called without product_type")
+            return 'X'
         
         ICP = self.env['ir.config_parameter'].sudo()
         
-        suffix_map = {
-            'cocoa_mass': 'potting_management.lot_suffix_cocoa_mass',
-            'cocoa_butter': 'potting_management.lot_suffix_cocoa_butter',
-            'cocoa_cake': 'potting_management.lot_suffix_cocoa_cake',
-            'cocoa_powder': 'potting_management.lot_suffix_cocoa_powder',
+        prefix_map = {
+            'cocoa_mass': 'potting_management.lot_prefix_cocoa_mass',
+            'cocoa_butter': 'potting_management.lot_prefix_cocoa_butter',
+            'cocoa_cake': 'potting_management.lot_prefix_cocoa_cake',
+            'cocoa_powder': 'potting_management.lot_prefix_cocoa_powder',
         }
         
-        default_suffixes = {
-            'cocoa_mass': 'RA',
-            'cocoa_butter': 'RB',
-            'cocoa_cake': 'RC',
-            'cocoa_powder': 'RD',
+        default_prefixes = {
+            'cocoa_mass': 'M',      # Masse
+            'cocoa_butter': 'B',    # Beurre
+            'cocoa_cake': 'T',      # Tourteau (Cake)
+            'cocoa_powder': 'P',    # Poudre
         }
         
-        param_key = suffix_map.get(product_type)
-        default_value = default_suffixes.get(product_type, '')
+        param_key = prefix_map.get(product_type)
+        default_value = default_prefixes.get(product_type, 'X')
         
         if not param_key:
             _logger.warning(
-                "Type de produit inconnu pour suffixe lot: %s", 
+                "Type de produit inconnu pour préfixe lot: %s", 
                 product_type
             )
             return default_value
         
         return ICP.get_param(param_key, default_value) or default_value
+
+    @api.model
+    def get_ot_prefix_for_product(self, product_type):
+        """Get the OT prefix code for a given product type.
+        
+        Args:
+            product_type: One of 'cocoa_mass', 'cocoa_butter', 'cocoa_cake', 
+                         'cocoa_powder'
+        
+        Returns:
+            str: Code for the product type used in OT numbering
+        """
+        product_codes = {
+            'cocoa_mass': 'MA',      # Masse
+            'cocoa_butter': 'BE',    # Beurre
+            'cocoa_cake': 'TO',      # Tourteau (Cake)
+            'cocoa_powder': 'PO',    # Poudre
+        }
+        return product_codes.get(product_type, 'XX')
+
+    @api.model
+    def get_campaign_year(self):
+        """Get the current campaign year.
+        
+        Returns:
+            str: Campaign year in format AABB (e.g., '2425' for 2024-2025)
+        """
+        ICP = self.env['ir.config_parameter'].sudo()
+        return ICP.get_param('potting_management.campaign_year', '2425') or '2425'
 
     @api.model
     def get_default_cc_partners(self):
@@ -519,78 +538,67 @@ class ResConfigSettings(models.TransientModel):
         
         partner_ids = self._safe_get_partner_ids(cc_partner_ids_str)
         return self.env['res.partner'].sudo().browse(partner_ids)
-    
-    @api.model
-    def get_sequence_prefix(self, sequence_type):
-        """Get the sequence prefix for a given type.
-        
-        Args:
-            sequence_type: One of 'ot', 'lot'
-        
-        Returns:
-            str: The prefix to use for the sequence
-        """
-        ICP = self.env['ir.config_parameter'].sudo()
-        
-        prefix_map = {
-            'ot': ('potting_management.ot_sequence_prefix', 'OT'),
-            'lot': ('potting_management.lot_sequence_prefix', 'LOT'),
-        }
-        
-        if sequence_type not in prefix_map:
-            _logger.warning("Type de séquence inconnu: %s", sequence_type)
-            return sequence_type.upper()
-        
-        param_key, default_value = prefix_map[sequence_type]
-        return ICP.get_param(param_key, default_value) or default_value
 
     @api.model
-    def get_next_ot_number(self):
-        """Get the next OT number based on existing OTs or initial config.
+    def get_next_ot_number_for_product(self, product_type):
+        """Get the next OT number for a specific product type.
+        
+        Args:
+            product_type: One of 'cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder'
         
         Returns:
-            int: The next OT number to use
+            int: The next OT number to use for this product type
         """
-        ICP = self.env['ir.config_parameter'].sudo()
-        prefix = self.get_sequence_prefix('ot')
-        
-        # Chercher le plus grand numéro OT existant
-        existing_ots = self.env['potting.transit.order'].sudo().search([], order='id desc', limit=100)
-        max_number = 0
-        
         import re
+        
+        campaign_year = self.get_campaign_year()
+        product_code = self.get_ot_prefix_for_product(product_type)
+        
+        # Chercher le plus grand numéro OT existant pour ce type de produit et cette campagne
+        # Format attendu: NNNN/AAAA-AAAA-XX (ex: 3734/2025-2026-MA)
+        # Pattern pour trouver tous les OT de cette campagne et ce produit
+        search_pattern = f"/{campaign_year}-{product_code}"
+        
+        existing_ots = self.env['potting.transit.order'].sudo().search([
+            ('name', 'like', search_pattern)
+        ], order='name desc', limit=100)
+        
+        max_number = 0
         for ot in existing_ots:
-            if ot.name:
-                # Extraire le numéro du nom OT (ex: "OT3708" -> 3708)
-                numbers = re.findall(r'\d+', ot.name)
-                if numbers:
+            if ot.name and search_pattern in ot.name:
+                # Extraire le numéro au début (ex: "3734/2025-2026-MA" -> 3734)
+                match = re.search(r'^(\d+)/', ot.name)
+                if match:
                     try:
-                        num = int(numbers[-1])  # Prendre le dernier nombre trouvé
+                        num = int(match.group(1))
                         if num > max_number:
                             max_number = num
                     except (ValueError, TypeError):
                         pass
         
-        if max_number > 0:
-            return max_number + 1
-        
-        # Sinon utiliser le numéro initial configuré
-        try:
-            initial_number = int(ICP.get_param('potting_management.ot_initial_number', '1'))
-            return max(1, initial_number)
-        except (ValueError, TypeError):
-            return 1
+        return max_number + 1
 
     @api.model
-    def generate_ot_name(self):
-        """Generate the next OT name.
+    def generate_ot_name(self, product_type=None):
+        """Generate the next OT name based on campaign year and product type.
+        
+        Args:
+            product_type: One of 'cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder'
         
         Returns:
-            str: The complete OT name (e.g., "OT3709")
+            str: The complete OT name (e.g., "3734/2025-2026-MA")
         """
-        prefix = self.get_sequence_prefix('ot')
-        next_number = self.get_next_ot_number()
-        return f"{prefix}{next_number}"
+        if not product_type:
+            # Fallback: generate a generic OT name
+            import time
+            return f"{int(time.time()) % 100000}"
+        
+        campaign_year = self.get_campaign_year()
+        product_code = self.get_ot_prefix_for_product(product_type)
+        next_number = self.get_next_ot_number_for_product(product_type)
+        
+        # Format: NNNN/AAAA-AAAA-XX (ex: 3734/2025-2026-MA)
+        return f"{next_number}/{campaign_year}-{product_code}"
     
     # =========================================================================
     # ACTION METHODS

@@ -290,7 +290,9 @@ class PottingTransitOrder(models.Model):
         for vals in vals_list:
             # Générer automatiquement le numéro OT si non fourni ou si 'Nouveau'
             if vals.get('name', _('Nouveau')) == _('Nouveau') or not vals.get('name'):
-                vals['name'] = self.env['res.config.settings'].generate_ot_name()
+                # Le nom de l'OT dépend du type de produit et de la campagne
+                product_type = vals.get('product_type')
+                vals['name'] = self.env['res.config.settings'].generate_ot_name(product_type)
             
             # Marquer si l'OT est créé depuis le contexte d'une commande
             if self.env.context.get('default_customer_order_id') or vals.get('customer_order_id'):
@@ -327,7 +329,7 @@ class PottingTransitOrder(models.Model):
     # ACTION METHODS
     # -------------------------------------------------------------------------
     def action_generate_lots(self):
-        """Generate lots based on tonnage and product type"""
+        """Open wizard to generate lots with custom max tonnage."""
         self.ensure_one()
         
         if self.state != 'draft':
@@ -342,72 +344,43 @@ class PottingTransitOrder(models.Model):
         if not self.product_type:
             raise UserError(_("Veuillez sélectionner un type de produit."))
         
-        # Get max tonnage for this product type
-        max_tonnage = self.env['res.config.settings'].get_max_tonnage_for_product(self.product_type)
-        
-        if max_tonnage <= 0:
-            raise UserError(_("La configuration du tonnage maximum n'est pas valide."))
-        
-        # Calculate number of lots needed
-        num_lots = math.ceil(self.tonnage / max_tonnage)
-        
-        # Create lots - use sequence for each lot to ensure uniqueness
-        lot_vals_list = []
-        remaining_tonnage = self.tonnage
-        
-        for i in range(num_lots):
-            lot_tonnage = min(max_tonnage, remaining_tonnage)
-            remaining_tonnage -= lot_tonnage
-            
-            # Get unique lot name from sequence for each lot
-            lot_name = self._get_unique_lot_name()
-            
-            lot_vals_list.append({
-                'name': lot_name,
-                'transit_order_id': self.id,
-                'product_type': self.product_type,
-                'product_id': self.product_id.id if self.product_id else False,
-                'target_tonnage': lot_tonnage,
-                'state': 'draft',
-            })
-        
-        self.env['potting.lot'].create(lot_vals_list)
-        self.state = 'lots_generated'
-        self.message_post(body=_("%d lots générés pour cet OT.") % num_lots)
-        
+        # Open the wizard
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Lots générés'),
-                'message': _('%d lots ont été créés pour cet OT.') % num_lots,
-                'type': 'success',
-                'sticky': False,
-                'next': {'type': 'ir.actions.act_window_close'},
-            }
+            'name': _('Générer les lots'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'potting.generate.lots.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_id': self.id,
+                'active_model': 'potting.transit.order',
+            },
         }
 
     def _get_unique_lot_name(self):
-        """Get a unique lot name using sequence and configured suffix"""
+        """Get a unique lot name using sequence and product-specific prefix.
+        
+        Format: [Prefix][Number] where Prefix depends on product type:
+        - M for Masse (cocoa_mass)
+        - B for Beurre (cocoa_butter)  
+        - T for Tourteau/Cake (cocoa_cake)
+        - P for Poudre (cocoa_powder)
+        """
         import re
         
-        # Get prefix from config (default: T)
-        ICP = self.env['ir.config_parameter'].sudo()
-        prefix = ICP.get_param('potting_management.lot_sequence_prefix', 'T')
-        
-        # Get suffix for this product type from configuration
-        suffix = self.env['res.config.settings'].get_lot_suffix_for_product(self.product_type)
+        # Get prefix for this product type from configuration
+        prefix = self.env['res.config.settings'].get_lot_prefix_for_product(self.product_type)
         
         sequence = self.env['ir.sequence'].next_by_code('potting.lot')
         if sequence:
-            # Extract number from sequence (format: T10001)
+            # Extract number from sequence
             numbers = re.findall(r'\d+', sequence)
             if numbers:
-                return f"{prefix}{numbers[0]}{suffix}"
+                return f"{prefix}{numbers[0]}"
         
         # Fallback: use timestamp-based unique name
         import time
-        return f"{prefix}{int(time.time() * 1000) % 100000}{suffix}"
+        return f"{prefix}{int(time.time() * 1000) % 100000}"
 
     def _get_next_lot_sequence_number(self):
         """Get the next lot sequence number"""

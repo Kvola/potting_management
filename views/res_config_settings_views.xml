@@ -136,29 +136,23 @@
                         </setting>
                     </block>
                     
-                    <!-- Numérotation automatique -->
-                    <block title="🔢 Numérotation Automatique" name="potting_sequence_config">
-                        <setting id="potting_ot_sequence_setting" 
-                                 title="Numérotation des OT" 
-                                 help="Configuration de la numérotation automatique des Ordres de Transit">
+                    <!-- Configuration Campagne et Numérotation -->
+                    <block title="📅 Campagne &amp; Numérotation" name="potting_sequence_config">
+                        <setting id="potting_campaign_setting" 
+                                 title="Campagne Café-Cacao" 
+                                 help="Configuration de la période de campagne utilisée dans la numérotation des OT">
                             <div class="content-group">
                                 <div class="row mt-2">
-                                    <label string="Préfixe OT" 
-                                           for="potting_ot_sequence_prefix" 
+                                    <label string="Période campagne" 
+                                           for="potting_campaign_year" 
                                            class="col-lg-3 o_light_label"/>
-                                    <field name="potting_ot_sequence_prefix" class="col-lg-2" placeholder="OT"/>
-                                </div>
-                                <div class="row mt-2">
-                                    <label string="Numéro initial" 
-                                           for="potting_ot_initial_number" 
-                                           class="col-lg-3 o_light_label"/>
-                                    <field name="potting_ot_initial_number" class="col-lg-2"/>
+                                    <field name="potting_campaign_year" class="col-lg-3" placeholder="2025-2026"/>
+                                    <span class="col-lg-4 text-muted">Format: AAAA-AAAA (ex: 2025-2026)</span>
                                 </div>
                                 <div class="row mt-1">
                                     <div class="col-12">
                                         <small class="text-muted fst-italic">
-                                            <i class="fa fa-info-circle me-1"/>Le numéro initial sera utilisé pour le premier OT créé s'il n'y a pas d'OT existant. 
-                                            Sinon, le système incrémente à partir du plus grand numéro existant.
+                                            <i class="fa fa-info-circle me-1"/>Les numéros d'OT sont générés au format: NNNN/AAAA-AAAA-XX (ex: 3734/2025-2026-MA pour Masse)
                                         </small>
                                     </div>
                                 </div>
@@ -170,12 +164,6 @@
                                  help="Configuration de la numérotation automatique des lots">
                             <div class="content-group">
                                 <div class="row mt-2">
-                                    <label string="Préfixe Lot" 
-                                           for="potting_lot_sequence_prefix" 
-                                           class="col-lg-3 o_light_label"/>
-                                    <field name="potting_lot_sequence_prefix" class="col-lg-2" placeholder="T"/>
-                                </div>
-                                <div class="row mt-2">
                                     <label string="Numéro initial" 
                                            for="potting_lot_initial_number" 
                                            class="col-lg-3 o_light_label"/>
@@ -184,7 +172,7 @@
                                 <div class="row mt-1">
                                     <div class="col-12">
                                         <small class="text-muted fst-italic">
-                                            <i class="fa fa-info-circle me-1"/>Format: [Préfixe][Numéro][Suffixe] → ex: T10001RA
+                                            <i class="fa fa-info-circle me-1"/>Format: [Préfixe][Numéro] → ex: M10001 (Masse), B10001 (Beurre), T10001 (Tourteau), P10001 (Poudre)
                                         </small>
                                     </div>
                                 </div>
@@ -199,60 +187,60 @@
                         </setting>
                     </block>
                     
-                    <!-- Suffixes des Lots par Type de Produit -->
-                    <block title="🏷️ Suffixes des Lots par Produit" name="potting_suffix_config">
-                        <setting id="potting_suffix_mass_setting" 
-                                 title="🍫 Suffixe - Masse de cacao" 
-                                 help="Suffixe ajouté aux numéros de lot pour la Masse de cacao">
+                    <!-- Préfixes des Lots par Type de Produit -->
+                    <block title="🏷️ Préfixes des Lots par Produit" name="potting_prefix_config">
+                        <setting id="potting_prefix_mass_setting" 
+                                 title="🍫 Préfixe - Masse de cacao" 
+                                 help="Préfixe pour les numéros de lot de Masse de cacao">
                             <div class="content-group">
                                 <div class="row mt-2">
-                                    <label string="Suffixe" 
-                                           for="potting_lot_suffix_cocoa_mass" 
+                                    <label string="Préfixe" 
+                                           for="potting_lot_prefix_cocoa_mass" 
                                            class="col-lg-3 o_light_label"/>
-                                    <field name="potting_lot_suffix_cocoa_mass" class="col-lg-2" placeholder="RA"/>
-                                    <span class="col-lg-4 text-muted">→ Ex: T10001<strong>RA</strong></span>
+                                    <field name="potting_lot_prefix_cocoa_mass" class="col-lg-2" placeholder="M"/>
+                                    <span class="col-lg-4 text-muted">→ Ex: <strong>M</strong>10001</span>
                                 </div>
                             </div>
                         </setting>
                         
-                        <setting id="potting_suffix_butter_setting" 
-                                 title="🧈 Suffixe - Beurre de cacao" 
-                                 help="Suffixe ajouté aux numéros de lot pour le Beurre de cacao">
+                        <setting id="potting_prefix_butter_setting" 
+                                 title="🧈 Préfixe - Beurre de cacao" 
+                                 help="Préfixe pour les numéros de lot de Beurre de cacao">
                             <div class="content-group">
                                 <div class="row mt-2">
-                                    <label string="Suffixe" 
-                                           for="potting_lot_suffix_cocoa_butter" 
+                                    <label string="Préfixe" 
+                                           for="potting_lot_prefix_cocoa_butter" 
                                            class="col-lg-3 o_light_label"/>
-                                    <field name="potting_lot_suffix_cocoa_butter" class="col-lg-2" placeholder="RB"/>
-                                    <span class="col-lg-4 text-muted">→ Ex: T10001<strong>RB</strong></span>
+                                    <field name="potting_lot_prefix_cocoa_butter" class="col-lg-2" placeholder="B"/>
+                                    <span class="col-lg-4 text-muted">→ Ex: <strong>B</strong>10001</span>
                                 </div>
                             </div>
                         </setting>
                         
-                        <setting id="potting_suffix_cake_setting" 
-                                 title="🍪 Suffixe - Cake de cacao" 
-                                 help="Suffixe ajouté aux numéros de lot pour le Cake de cacao">
+                        <setting id="potting_prefix_cake_setting" 
+                                 title="🍪 Préfixe - Cake (Tourteau) de cacao" 
+                                 help="Préfixe pour les numéros de lot de Cake/Tourteau de cacao">
                             <div class="content-group">
                                 <div class="row mt-2">
-                                    <label string="Suffixe" 
-                                           for="potting_lot_suffix_cocoa_cake" 
+                                    <label string="Préfixe" 
+                                           for="potting_lot_prefix_cocoa_cake" 
                                            class="col-lg-3 o_light_label"/>
-                                    <field name="potting_lot_suffix_cocoa_cake" class="col-lg-2" placeholder="RC"/>
-                                    <span class="col-lg-4 text-muted">→ Ex: T10001<strong>RC</strong></span>
+                                    <field name="potting_lot_prefix_cocoa_cake" class="col-lg-2" placeholder="T"/>
+                                    <span class="col-lg-4 text-muted">→ Ex: <strong>T</strong>10001</span>
                                 </div>
                             </div>
                         </setting>
                         
-                        <setting id="potting_suffix_powder_setting" 
-                                 title="☕ Suffixe - Poudre de cacao" 
-                                 help="Suffixe ajouté aux numéros de lot pour la Poudre de cacao">
+                        <setting id="potting_prefix_powder_setting" 
+                                 title="☕ Préfixe - Poudre de cacao" 
+                                 help="Préfixe pour les numéros de lot de Poudre de cacao">
                             <div class="content-group">
                                 <div class="row mt-2">
-                                    <label string="Suffixe" 
-                                           for="potting_lot_suffix_cocoa_powder" 
+                                    <label string="Préfixe" 
+                                           for="potting_lot_prefix_cocoa_powder" 
                                            class="col-lg-3 o_light_label"/>
-                                    <field name="potting_lot_suffix_cocoa_powder" class="col-lg-2" placeholder="RD"/>
-                                    <span class="col-lg-4 text-muted">→ Ex: T10001<strong>RD</strong></span>
+                                    <field name="potting_lot_prefix_cocoa_powder" class="col-lg-2" placeholder="P"/>
+                                    <span class="col-lg-4 text-muted">→ Ex: <strong>P</strong>10001</span>
                                 </div>
                             </div>
                         </setting>
@@ -264,26 +252,23 @@
                             <div class="col-12">
                                 <div class="alert alert-info border-0 shadow-sm" role="alert">
                                     <h5 class="alert-heading fw-bold">
-                                        <i class="fa fa-book me-2"/>Information sur les tonnages
+                                        <i class="fa fa-book me-2"/>Information sur la numérotation
                                     </h5>
                                     <hr class="my-2"/>
+                                    <p class="mb-2"><strong>Format des numéros d'OT:</strong> NNNN/AAAA-AAAA-XX</p>
+                                    <ul class="mb-2 ps-3">
+                                        <li><strong>NNNN:</strong> Numéro séquentiel</li>
+                                        <li><strong>AAAA-AAAA:</strong> Période de campagne (ex: 2025-2026)</li>
+                                        <li><strong>XX:</strong> Code produit (MA=Masse, BE=Beurre, TO=Tourteau, PO=Poudre)</li>
+                                    </ul>
+                                    <p class="mb-1"><em>Exemple: 3734/2025-2026-MA</em></p>
+                                    <hr class="my-2"/>
+                                    <p class="mb-2"><strong>Format des numéros de lots:</strong> X#####</p>
                                     <ul class="mb-0 ps-3">
-                                        <li class="mb-1">
-                                            <strong class="text-dark">🍫 Masse de cacao:</strong> 
-                                            <span class="text-muted">Tonnage standard 25T, alternatif 20T selon conteneur</span>
-                                        </li>
-                                        <li class="mb-1">
-                                            <strong class="text-dark">🧈 Beurre de cacao:</strong> 
-                                            <span class="text-muted">Tonnage maximum recommandé 22T</span>
-                                        </li>
-                                        <li class="mb-1">
-                                            <strong class="text-dark">🍪 Cake (Tourteau):</strong> 
-                                            <span class="text-muted">Tonnage maximum recommandé 25T</span>
-                                        </li>
-                                        <li class="mb-1">
-                                            <strong class="text-dark">☕ Poudre de cacao:</strong> 
-                                            <span class="text-muted">Tonnage maximum recommandé 22.5T</span>
-                                        </li>
+                                        <li><strong>M</strong>10001 → Masse de cacao</li>
+                                        <li><strong>B</strong>10001 → Beurre de cacao</li>
+                                        <li><strong>T</strong>10001 → Tourteau (Cake) de cacao</li>
+                                        <li><strong>P</strong>10001 → Poudre de cacao</li>
                                     </ul>
                                 </div>
                             </div>

@@ -5,18 +5,16 @@ from odoo.exceptions import UserError, ValidationError
 
 
 class PottingCreateOTWizard(models.TransientModel):
-    """Wizard pour créer un ou plusieurs OT depuis une commande client.
+    """Wizard pour créer un OT depuis une commande client.
     
-    Ce wizard permet de:
-    - Renseigner les informations d'un OT rapidement
-    - Créer plusieurs OT en une seule opération
-    - Pré-remplir les informations depuis la commande
+    Ce wizard affiche un formulaire complet pour créer un nouvel OT
+    directement depuis la commande client.
     """
     _name = 'potting.create.ot.wizard'
     _description = "Assistant de création d'OT"
 
     # =========================================================================
-    # FIELDS
+    # FIELDS - Informations de la commande (readonly)
     # =========================================================================
     
     customer_order_id = fields.Many2one(
@@ -25,7 +23,7 @@ class PottingCreateOTWizard(models.TransientModel):
         required=True,
         readonly=True,
         ondelete='cascade',
-        help="La commande client pour laquelle créer les OT."
+        help="La commande client pour laquelle créer l'OT."
     )
     
     customer_id = fields.Many2one(
@@ -39,171 +37,128 @@ class PottingCreateOTWizard(models.TransientModel):
         string="Société",
         readonly=True
     )
+
+    # =========================================================================
+    # FIELDS - Informations de l'OT à créer
+    # =========================================================================
     
-    line_ids = fields.One2many(
-        'potting.create.ot.wizard.line',
-        'wizard_id',
-        string="Lignes OT",
-        help="Les OT à créer pour cette commande."
-    )
-    
-    # Champs pour ajout rapide d'une ligne
-    quick_consignee_id = fields.Many2one(
+    consignee_id = fields.Many2one(
         'res.partner',
-        string="Destinataire",
-        domain="[('is_potting_consignee', '=', True)]"
+        string="Destinataire (Consignee)",
+        required=True,
+        help="Le destinataire de la marchandise"
     )
     
-    quick_product_type = fields.Selection([
+    product_type = fields.Selection([
         ('cocoa_mass', 'Masse de cacao'),
         ('cocoa_butter', 'Beurre de cacao'),
         ('cocoa_cake', 'Cake (Tourteau) de cacao'),
         ('cocoa_powder', 'Poudre de cacao'),
-    ], string="Type de produit")
+    ], string="Type de produit", required=True)
     
-    quick_tonnage = fields.Float(
+    product_id = fields.Many2one(
+        'product.product',
+        string="Produit",
+        domain="[('potting_product_type', '=', product_type)]",
+        help="Produit spécifique (optionnel)"
+    )
+    
+    tonnage = fields.Float(
         string="Tonnage (T)",
-        digits='Product Unit of Measure'
+        required=True,
+        digits='Product Unit of Measure',
+        help="Tonnage total de l'OT"
     )
     
-    quick_vessel_name = fields.Char(
-        string="Nom du navire"
+    vessel_name = fields.Char(
+        string="Nom du navire (Vessel)",
+        help="Nom du navire pour le transport"
     )
     
-    quick_pod = fields.Char(
-        string="Port de déchargement"
+    pod = fields.Char(
+        string="Port de déchargement (POD)",
+        help="Port of Discharge - Port de destination"
     )
     
-    quick_container_size = fields.Selection([
+    container_size = fields.Selection([
         ('20', "20'"),
         ('40', "40'"),
-    ], string="Taille conteneur", default='20')
+    ], string="Taille conteneur (TC)", default='20')
     
-    quick_booking_number = fields.Char(
-        string="N° Booking"
+    booking_number = fields.Char(
+        string="Numéro de réservation (Booking)",
+        help="Numéro de réservation du transporteur"
     )
     
-    total_tonnage = fields.Float(
-        string="Tonnage total",
-        compute='_compute_total_tonnage',
-        digits='Product Unit of Measure'
-    )
-    
-    line_count = fields.Integer(
-        string="Nombre d'OT",
-        compute='_compute_line_count'
+    note = fields.Text(
+        string="Notes",
+        help="Notes ou instructions particulières"
     )
 
     # =========================================================================
-    # COMPUTE METHODS
+    # DEFAULT METHODS
     # =========================================================================
     
-    @api.depends('line_ids.tonnage')
-    def _compute_total_tonnage(self):
-        """Calcule le tonnage total des lignes."""
-        for wizard in self:
-            wizard.total_tonnage = sum(wizard.line_ids.mapped('tonnage'))
-    
-    @api.depends('line_ids')
-    def _compute_line_count(self):
-        """Calcule le nombre de lignes."""
-        for wizard in self:
-            wizard.line_count = len(wizard.line_ids)
+    @api.model
+    def default_get(self, fields_list):
+        """Pré-remplit le destinataire avec le client de la commande."""
+        res = super().default_get(fields_list)
+        
+        # Récupérer la commande depuis le contexte
+        customer_order_id = res.get('customer_order_id') or self.env.context.get('default_customer_order_id')
+        if customer_order_id:
+            order = self.env['potting.customer.order'].browse(customer_order_id)
+            if order.exists() and order.customer_id:
+                res['consignee_id'] = order.customer_id.id
+        
+        return res
 
     # =========================================================================
     # ONCHANGE METHODS
     # =========================================================================
     
-    @api.onchange('customer_order_id')
-    def _onchange_customer_order_id(self):
-        """Pré-remplit le destinataire avec le client de la commande."""
-        if self.customer_order_id and self.customer_order_id.customer_id:
-            self.quick_consignee_id = self.customer_order_id.customer_id
+    @api.onchange('product_type')
+    def _onchange_product_type(self):
+        """Reset product when product type changes"""
+        if self.product_id and self.product_id.potting_product_type != self.product_type:
+            self.product_id = False
 
     # =========================================================================
     # ACTION METHODS
     # =========================================================================
     
-    def action_add_line(self):
-        """Ajoute une ligne OT avec les valeurs rapides."""
-        self.ensure_one()
-        
-        # Validation des champs obligatoires
-        if not self.quick_consignee_id:
-            raise UserError(_("Veuillez sélectionner un destinataire."))
-        if not self.quick_product_type:
-            raise UserError(_("Veuillez sélectionner un type de produit."))
-        if not self.quick_tonnage or self.quick_tonnage <= 0:
-            raise UserError(_("Veuillez saisir un tonnage valide (supérieur à 0)."))
-        
-        # Créer la ligne
-        self.env['potting.create.ot.wizard.line'].create({
-            'wizard_id': self.id,
-            'consignee_id': self.quick_consignee_id.id,
-            'product_type': self.quick_product_type,
-            'tonnage': self.quick_tonnage,
-            'vessel_name': self.quick_vessel_name,
-            'pod': self.quick_pod,
-            'container_size': self.quick_container_size,
-            'booking_number': self.quick_booking_number,
-        })
-        
-        # Réinitialiser les champs de saisie rapide (sauf destinataire et navire)
-        self.quick_product_type = False
-        self.quick_tonnage = 0
-        self.quick_booking_number = False
-        
-        # Retourner l'action pour rester sur le wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'potting.create.ot.wizard',
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'new',
-            'context': self.env.context,
-        }
-    
     def action_create_ot(self):
-        """Crée les OT à partir des lignes du wizard."""
+        """Crée l'OT et retourne à la commande."""
         self.ensure_one()
         
-        if not self.line_ids:
-            raise UserError(_("Veuillez ajouter au moins une ligne OT."))
+        # Validation
+        if self.tonnage <= 0:
+            raise ValidationError(_("Le tonnage doit être supérieur à 0."))
         
-        created_ots = self.env['potting.transit.order']
+        # Créer l'OT
+        ot_vals = {
+            'customer_order_id': self.customer_order_id.id,
+            'consignee_id': self.consignee_id.id,
+            'product_type': self.product_type,
+            'product_id': self.product_id.id if self.product_id else False,
+            'tonnage': self.tonnage,
+            'vessel_name': self.vessel_name,
+            'pod': self.pod,
+            'container_size': self.container_size,
+            'booking_number': self.booking_number,
+            'note': self.note,
+            'is_created_from_order': True,
+        }
         
-        for line in self.line_ids:
-            # Validation de la ligne
-            if line.tonnage <= 0:
-                raise ValidationError(_(
-                    "Le tonnage de la ligne pour '%s' doit être supérieur à 0."
-                ) % line.consignee_id.name)
-            
-            # Créer l'OT
-            ot_vals = {
-                'customer_order_id': self.customer_order_id.id,
-                'consignee_id': line.consignee_id.id,
-                'product_type': line.product_type,
-                'tonnage': line.tonnage,
-                'vessel_name': line.vessel_name,
-                'pod': line.pod,
-                'container_size': line.container_size,
-                'booking_number': line.booking_number,
-                'is_created_from_order': True,
-            }
-            
-            ot = self.env['potting.transit.order'].create(ot_vals)
-            created_ots |= ot
+        ot = self.env['potting.transit.order'].create(ot_vals)
         
-        # Message de succès
-        message = _("✅ %d Ordre(s) de Transit créé(s) avec succès pour la commande %s.") % (
-            len(created_ots),
-            self.customer_order_id.name
-        )
-        
-        # Poster un message sur la commande
+        # Message de succès sur la commande
         self.customer_order_id.message_post(
-            body=message,
+            body=_("✅ Ordre de Transit <b>%s</b> créé avec succès (%.2f T - %s).") % (
+                ot.name,
+                self.tonnage,
+                dict(self._fields['product_type'].selection).get(self.product_type)
+            ),
             message_type='notification'
         )
         
@@ -217,65 +172,97 @@ class PottingCreateOTWizard(models.TransientModel):
         }
     
     def action_create_and_new(self):
-        """Crée les OT et ouvre un nouveau wizard."""
-        self.action_create_ot()
+        """Crée l'OT et ouvre un nouveau wizard pour en créer un autre."""
+        self.ensure_one()
+        
+        # Validation
+        if self.tonnage <= 0:
+            raise ValidationError(_("Le tonnage doit être supérieur à 0."))
+        
+        # Créer l'OT
+        ot_vals = {
+            'customer_order_id': self.customer_order_id.id,
+            'consignee_id': self.consignee_id.id,
+            'product_type': self.product_type,
+            'product_id': self.product_id.id if self.product_id else False,
+            'tonnage': self.tonnage,
+            'vessel_name': self.vessel_name,
+            'pod': self.pod,
+            'container_size': self.container_size,
+            'booking_number': self.booking_number,
+            'note': self.note,
+            'is_created_from_order': True,
+        }
+        
+        ot = self.env['potting.transit.order'].create(ot_vals)
+        
+        # Message de succès sur la commande
+        self.customer_order_id.message_post(
+            body=_("✅ Ordre de Transit <b>%s</b> créé avec succès (%.2f T - %s).") % (
+                ot.name,
+                self.tonnage,
+                dict(self._fields['product_type'].selection).get(self.product_type)
+            ),
+            message_type='notification'
+        )
         
         # Ouvrir un nouveau wizard
         return {
             'type': 'ir.actions.act_window',
+            'name': _("Créer un Ordre de Transit"),
             'res_model': 'potting.create.ot.wizard',
             'view_mode': 'form',
             'target': 'new',
             'context': {
                 'default_customer_order_id': self.customer_order_id.id,
+                'default_consignee_id': self.consignee_id.id,
+                'default_vessel_name': self.vessel_name,
+                'default_pod': self.pod,
+                'default_container_size': self.container_size,
             },
         }
-
-
-class PottingCreateOTWizardLine(models.TransientModel):
-    """Ligne de wizard pour la création d'OT."""
-    _name = 'potting.create.ot.wizard.line'
-    _description = "Ligne de création d'OT"
-
-    wizard_id = fields.Many2one(
-        'potting.create.ot.wizard',
-        string="Wizard",
-        required=True,
-        ondelete='cascade'
-    )
     
-    consignee_id = fields.Many2one(
-        'res.partner',
-        string="Destinataire",
-        required=True
-    )
-    
-    product_type = fields.Selection([
-        ('cocoa_mass', 'Masse de cacao'),
-        ('cocoa_butter', 'Beurre de cacao'),
-        ('cocoa_cake', 'Cake (Tourteau) de cacao'),
-        ('cocoa_powder', 'Poudre de cacao'),
-    ], string="Type de produit", required=True)
-    
-    tonnage = fields.Float(
-        string="Tonnage (T)",
-        required=True,
-        digits='Product Unit of Measure'
-    )
-    
-    vessel_name = fields.Char(
-        string="Navire"
-    )
-    
-    pod = fields.Char(
-        string="POD"
-    )
-    
-    container_size = fields.Selection([
-        ('20', "20'"),
-        ('40', "40'"),
-    ], string="TC", default='20')
-    
-    booking_number = fields.Char(
-        string="N° Booking"
-    )
+    def action_view_ot(self):
+        """Crée l'OT et ouvre sa fiche."""
+        self.ensure_one()
+        
+        # Validation
+        if self.tonnage <= 0:
+            raise ValidationError(_("Le tonnage doit être supérieur à 0."))
+        
+        # Créer l'OT
+        ot_vals = {
+            'customer_order_id': self.customer_order_id.id,
+            'consignee_id': self.consignee_id.id,
+            'product_type': self.product_type,
+            'product_id': self.product_id.id if self.product_id else False,
+            'tonnage': self.tonnage,
+            'vessel_name': self.vessel_name,
+            'pod': self.pod,
+            'container_size': self.container_size,
+            'booking_number': self.booking_number,
+            'note': self.note,
+            'is_created_from_order': True,
+        }
+        
+        ot = self.env['potting.transit.order'].create(ot_vals)
+        
+        # Message de succès sur la commande
+        self.customer_order_id.message_post(
+            body=_("✅ Ordre de Transit <b>%s</b> créé avec succès (%.2f T - %s).") % (
+                ot.name,
+                self.tonnage,
+                dict(self._fields['product_type'].selection).get(self.product_type)
+            ),
+            message_type='notification'
+        )
+        
+        # Ouvrir la fiche de l'OT créé
+        return {
+            'type': 'ir.actions.act_window',
+            'name': ot.name,
+            'res_model': 'potting.transit.order',
+            'res_id': ot.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }

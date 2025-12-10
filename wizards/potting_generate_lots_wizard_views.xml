@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ===================================================================
+         WIZARD FORM VIEW - Generate Lots
+         =================================================================== -->
+    <record id="potting_generate_lots_wizard_form" model="ir.ui.view">
+        <field name="name">potting.generate.lots.wizard.form</field>
+        <field name="model">potting.generate.lots.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Générer les lots">
+                <group>
+                    <group string="Informations de l'OT" name="ot_info">
+                        <field name="transit_order_id" readonly="1"/>
+                        <field name="product_type_display" string="Type de produit"/>
+                        <field name="total_tonnage" widget="float" options="{'digits': [16, 2]}"/>
+                    </group>
+                    <group string="Configuration des lots" name="lot_config">
+                        <field name="default_max_tonnage" 
+                               widget="float" 
+                               options="{'digits': [16, 2]}"
+                               class="text-muted"/>
+                        <field name="max_tonnage_per_lot" 
+                               widget="float" 
+                               options="{'digits': [16, 2]}"
+                               class="fw-bold"/>
+                        <field name="estimated_lots_count" class="fw-bold text-primary"/>
+                    </group>
+                </group>
+                <div class="alert alert-info mt-3" role="alert">
+                    <i class="fa fa-info-circle me-2"/>
+                    <span>
+                        Les lots seront créés avec le tonnage maximum spécifié. 
+                        Le dernier lot contiendra le tonnage restant si nécessaire.
+                    </span>
+                </div>
+                <footer>
+                    <button name="action_generate_lots" 
+                            string="Générer les lots" 
+                            type="object" 
+                            class="btn-primary"
+                            icon="fa-cogs"/>
+                    <button name="action_cancel" 
+                            string="Annuler" 
+                            type="object" 
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===================================================================
+         WIZARD ACTION
+         =================================================================== -->
+    <record id="action_potting_generate_lots_wizard" model="ir.actions.act_window">
+        <field name="name">Générer les lots</field>
+        <field name="res_model">potting.generate.lots.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="potting_management.model_potting_transit_order"/>
+    </record>
+
+</odoo>
