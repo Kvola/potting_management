@@ -60,7 +60,7 @@ class ResConfigSettings(models.TransientModel):
     potting_max_tonnage_cocoa_cake = fields.Float(
         string="Tonnage max - Cake de cacao (T)",
         config_parameter='potting_management.max_tonnage_cocoa_cake',
-        default=25.0,
+        default=20.0,
         help="Tonnage maximum par lot pour le Cake (Tourteau) de cacao"
     )
 
