@@ -28,6 +28,35 @@ class PottingLot(models.Model):
         readonly=True
     )
     
+    # Champs pour la prime (bonus)
+    premium_amount = fields.Monetary(
+        string="Prime",
+        currency_field='currency_id',
+        tracking=True,
+        help="Montant de la prime associée à ce lot. Lorsqu'une prime est définie, le numéro du lot sera suffixé par 'RA'."
+    )
+    
+    has_premium = fields.Boolean(
+        string="A une prime",
+        compute='_compute_has_premium',
+        store=True,
+        index=True
+    )
+    
+    display_name_with_premium = fields.Char(
+        string="Référence lot",
+        compute='_compute_display_name_with_premium',
+        store=True,
+        help="Numéro de lot avec suffixe RA si une prime est définie"
+    )
+    
+    currency_id = fields.Many2one(
+        'res.currency',
+        string="Devise",
+        default=lambda self: self.env.company.currency_id,
+        required=True
+    )
+    
     transit_order_id = fields.Many2one(
         'potting.transit.order',
         string="Ordre de Transit",
@@ -218,6 +247,25 @@ class PottingLot(models.Model):
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
     # -------------------------------------------------------------------------
+    @api.depends('premium_amount')
+    def _compute_has_premium(self):
+        for lot in self:
+            lot.has_premium = lot.premium_amount and lot.premium_amount > 0
+
+    @api.depends('name', 'premium_amount')
+    def _compute_display_name_with_premium(self):
+        for lot in self:
+            if lot.premium_amount and lot.premium_amount > 0:
+                # Ajouter le suffixe RA si prime définie
+                base_name = lot.name or ''
+                # Éviter d'ajouter RA si déjà présent
+                if not base_name.endswith('RA'):
+                    lot.display_name_with_premium = f"{base_name}RA"
+                else:
+                    lot.display_name_with_premium = base_name
+            else:
+                lot.display_name_with_premium = lot.name
+
     @api.depends('product_type')
     def _compute_product_type_display(self):
         selection_dict = dict(self._fields['product_type'].selection)
