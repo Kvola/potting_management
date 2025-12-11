@@ -11,6 +11,20 @@ class PottingLot(models.Model):
     _order = 'name'
     _check_company_auto = True
 
+    # -------------------------------------------------------------------------
+    # CONSTANTES DE CONDITIONNEMENT PAR TYPE DE PRODUIT
+    # -------------------------------------------------------------------------
+    # Masse de cacao : cartons de 25 kg
+    # Beurre de cacao : cartons de 25 kg
+    # Cake de cacao : big bags de 1 tonne (1000 kg)
+    # Poudre de cacao : sacs de 25 kg
+    PACKAGING_CONFIG = {
+        'cocoa_mass': {'unit_weight': 0.025, 'unit_name': 'carton', 'unit_name_plural': 'cartons'},  # 25 kg = 0.025 T
+        'cocoa_butter': {'unit_weight': 0.025, 'unit_name': 'carton', 'unit_name_plural': 'cartons'},  # 25 kg = 0.025 T
+        'cocoa_cake': {'unit_weight': 1.0, 'unit_name': 'big bag', 'unit_name_plural': 'big bags'},  # 1000 kg = 1 T
+        'cocoa_powder': {'unit_weight': 0.025, 'unit_name': 'sac', 'unit_name_plural': 'sacs'},  # 25 kg = 0.025 T
+    }
+
     # SQL Constraints
     _sql_constraints = [
         ('name_company_uniq', 'unique(name, company_id)', 
@@ -127,6 +141,59 @@ class PottingLot(models.Model):
         compute='_compute_current_tonnage',
         store=True,
         digits='Product Unit of Measure'
+    )
+    
+    # -------------------------------------------------------------------------
+    # CHAMPS DE CONDITIONNEMENT
+    # -------------------------------------------------------------------------
+    packaging_unit_name = fields.Char(
+        string="Unité de conditionnement",
+        compute='_compute_packaging_info',
+        store=True,
+        help="Type d'unité de conditionnement (carton, big bag, sac)"
+    )
+    
+    packaging_unit_weight = fields.Float(
+        string="Poids unitaire (T)",
+        compute='_compute_packaging_info',
+        store=True,
+        digits=(10, 4),
+        help="Poids d'une unité de conditionnement en tonnes"
+    )
+    
+    packaging_unit_weight_kg = fields.Float(
+        string="Poids unitaire (kg)",
+        compute='_compute_packaging_info',
+        store=True,
+        digits=(10, 2),
+        help="Poids d'une unité de conditionnement en kilogrammes"
+    )
+    
+    target_units = fields.Integer(
+        string="Unités cibles",
+        compute='_compute_packaging_units',
+        store=True,
+        help="Nombre d'unités de conditionnement à produire"
+    )
+    
+    current_units = fields.Integer(
+        string="Unités produites",
+        compute='_compute_packaging_units',
+        store=True,
+        help="Nombre d'unités de conditionnement actuellement produites"
+    )
+    
+    remaining_units = fields.Integer(
+        string="Unités restantes",
+        compute='_compute_packaging_units',
+        store=True,
+        help="Nombre d'unités de conditionnement restant à produire"
+    )
+    
+    packaging_display = fields.Char(
+        string="Conditionnement",
+        compute='_compute_packaging_display',
+        help="Affichage formaté du conditionnement"
     )
     
     fill_percentage = fields.Float(
@@ -294,6 +361,44 @@ class PottingLot(models.Model):
         for lot in self:
             lot.production_count = len(lot.production_line_ids)
 
+    @api.depends('product_type')
+    def _compute_packaging_info(self):
+        """Calcul des informations de conditionnement basé sur le type de produit"""
+        for lot in self:
+            config = self.PACKAGING_CONFIG.get(lot.product_type, {})
+            lot.packaging_unit_name = config.get('unit_name_plural', '')
+            lot.packaging_unit_weight = config.get('unit_weight', 0)
+            lot.packaging_unit_weight_kg = config.get('unit_weight', 0) * 1000  # Conversion T -> kg
+
+    @api.depends('target_tonnage', 'current_tonnage', 'packaging_unit_weight')
+    def _compute_packaging_units(self):
+        """Calcul du nombre d'unités de conditionnement (cartons, big bags, sacs)"""
+        for lot in self:
+            if lot.packaging_unit_weight and lot.packaging_unit_weight > 0:
+                lot.target_units = int(lot.target_tonnage / lot.packaging_unit_weight)
+                lot.current_units = int(lot.current_tonnage / lot.packaging_unit_weight)
+                lot.remaining_units = max(0, lot.target_units - lot.current_units)
+            else:
+                lot.target_units = 0
+                lot.current_units = 0
+                lot.remaining_units = 0
+
+    @api.depends('current_units', 'target_units', 'packaging_unit_name', 'packaging_unit_weight_kg')
+    def _compute_packaging_display(self):
+        """Affichage formaté du conditionnement"""
+        for lot in self:
+            if lot.packaging_unit_name and lot.target_units > 0:
+                lot.packaging_display = _(
+                    "%(current)d / %(target)d %(unit)s (%(weight).0f kg/unité)"
+                ) % {
+                    'current': lot.current_units,
+                    'target': lot.target_units,
+                    'unit': lot.packaging_unit_name,
+                    'weight': lot.packaging_unit_weight_kg,
+                }
+            else:
+                lot.packaging_display = ''
+
     # -------------------------------------------------------------------------
     # ONCHANGE METHODS
     # -------------------------------------------------------------------------
@@ -455,25 +560,44 @@ class PottingLot(models.Model):
     # -------------------------------------------------------------------------
     # BUSINESS METHODS
     # -------------------------------------------------------------------------
-    def add_production(self, tonnage, batch_number=None, shift=None, operator_id=None, note=None):
-        """Add a production line to the lot"""
+    def add_production(self, units_produced, batch_number=None, shift=None, operator_id=None, note=None):
+        """
+        Add a production line to the lot by specifying the number of units.
+        The tonnage is calculated automatically based on the packaging configuration.
+        
+        :param units_produced: Number of units (cartons, big bags, sacs) produced
+        :param batch_number: Optional batch number
+        :param shift: Optional shift (morning, afternoon, night)
+        :param operator_id: Optional operator user ID
+        :param note: Optional note
+        :return: Created production line record
+        """
         self.ensure_one()
         if self.state not in ('draft', 'in_production'):
             raise UserError(_("Impossible d'ajouter de la production à un lot %s.") % self.state)
         
-        if tonnage <= 0:
-            raise ValidationError(_("Le tonnage doit être supérieur à 0."))
+        if units_produced <= 0:
+            raise ValidationError(_("Le nombre d'unités produites doit être supérieur à 0."))
+        
+        # Calculate tonnage from units
+        tonnage = units_produced * self.packaging_unit_weight
         
         # Check if this would overfill the lot by too much
         if self.current_tonnage + tonnage > self.target_tonnage * 1.1:  # 10% tolerance
+            max_units = int((self.target_tonnage * 1.1 - self.current_tonnage) / self.packaging_unit_weight) if self.packaging_unit_weight else 0
             raise UserError(_(
-                "Cette production dépasserait la capacité du lot de plus de 10%%. "
-                "Capacité: %.2f T, Actuel: %.2f T, Production: %.2f T"
-            ) % (self.target_tonnage, self.current_tonnage, tonnage))
+                "Cette production dépasserait la capacité du lot de plus de 10%%.\n"
+                "Capacité: %.2f T, Actuel: %.2f T, Production: %.2f T (%d %s)\n"
+                "Maximum: %d %s"
+            ) % (
+                self.target_tonnage, self.current_tonnage, tonnage, 
+                units_produced, self.packaging_unit_name,
+                max_units, self.packaging_unit_name
+            ))
         
         vals = {
             'lot_id': self.id,
-            'tonnage': tonnage,
+            'units_produced': units_produced,
             'date': fields.Date.context_today(self),
         }
         if batch_number:
@@ -486,6 +610,27 @@ class PottingLot(models.Model):
             vals['note'] = note
         
         return self.env['potting.production.line'].create(vals)
+
+    def add_production_by_tonnage(self, tonnage, batch_number=None, shift=None, operator_id=None, note=None):
+        """
+        Add a production line by specifying tonnage directly.
+        The number of units is calculated automatically.
+        This method is kept for backward compatibility.
+        
+        :param tonnage: Tonnage to add
+        :return: Created production line record
+        """
+        self.ensure_one()
+        if not self.packaging_unit_weight or self.packaging_unit_weight <= 0:
+            raise UserError(_("Impossible de calculer les unités : poids unitaire non défini."))
+        
+        units_produced = int(tonnage / self.packaging_unit_weight)
+        if units_produced <= 0:
+            raise ValidationError(_(
+                "Le tonnage %.3f T correspond à moins d'une unité de %s (%.0f kg)."
+            ) % (tonnage, self.packaging_unit_name, self.packaging_unit_weight_kg))
+        
+        return self.add_production(units_produced, batch_number, shift, operator_id, note)
 
     def get_fill_status(self):
         """Get the fill status of the lot"""
@@ -514,10 +659,56 @@ class PottingLot(models.Model):
             'state': self.state,
             'container': self.container_id.name if self.container_id else None,
             'date_potted': self.date_potted,
+            # Informations de conditionnement
+            'packaging_unit_name': self.packaging_unit_name,
+            'packaging_unit_weight_kg': self.packaging_unit_weight_kg,
+            'target_units': self.target_units,
+            'current_units': self.current_units,
+            'remaining_units': self.remaining_units,
+            'packaging_display': self.packaging_display,
             'productions': [{
                 'date': prod.date,
                 'tonnage': prod.tonnage,
                 'batch': prod.batch_number,
                 'shift': prod.shift,
+                'units_produced': prod.units_produced if hasattr(prod, 'units_produced') else 0,
             } for prod in self.production_line_ids.sorted('date')],
         }
+
+    @api.model
+    def get_packaging_config(self, product_type=None):
+        """
+        Retourne la configuration de conditionnement pour un type de produit.
+        Si aucun type n'est spécifié, retourne toute la configuration.
+        
+        Configuration :
+        - Masse de cacao : cartons de 25 kg
+        - Beurre de cacao : cartons de 25 kg
+        - Cake de cacao : big bags de 1 tonne
+        - Poudre de cacao : sacs de 25 kg
+        """
+        if product_type:
+            return self.PACKAGING_CONFIG.get(product_type, {})
+        return self.PACKAGING_CONFIG
+
+    def get_units_from_tonnage(self, tonnage):
+        """
+        Convertit un tonnage en nombre d'unités de conditionnement.
+        Retourne un tuple (nombre_unités, reste_en_tonnes)
+        """
+        self.ensure_one()
+        if not self.packaging_unit_weight or self.packaging_unit_weight <= 0:
+            return (0, tonnage)
+        
+        units = int(tonnage / self.packaging_unit_weight)
+        remainder = tonnage - (units * self.packaging_unit_weight)
+        return (units, remainder)
+
+    def get_tonnage_from_units(self, units):
+        """
+        Convertit un nombre d'unités en tonnage.
+        """
+        self.ensure_one()
+        if not self.packaging_unit_weight:
+            return 0
+        return units * self.packaging_unit_weight

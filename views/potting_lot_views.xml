@@ -28,6 +28,11 @@
                 <field name="target_tonnage" decoration-bf="1"/>
                 <field name="current_tonnage" decoration-bf="1" class="text-primary"/>
                 <field name="remaining_tonnage" optional="show"/>
+                <!-- Colonnes de conditionnement -->
+                <field name="packaging_unit_name" string="Unité" optional="show"/>
+                <field name="target_units" string="Unités cibles" optional="show"/>
+                <field name="current_units" string="Unités prod." decoration-bf="1" class="text-success"/>
+                <field name="remaining_units" string="Unités rest." optional="show"/>
                 <field name="fill_percentage" widget="progressbar"/>
                 <field name="is_full" widget="boolean_toggle"/>
                 <field name="container_id" optional="show"/>
@@ -96,14 +101,22 @@
                             </div>
                             <field name="is_full" widget="boolean_toggle"/>
                         </group>
+                        <group string="📦 Conditionnement">
+                            <field name="packaging_unit_name" readonly="1"/>
+                            <field name="packaging_unit_weight_kg" readonly="1" string="Poids unitaire (kg)"/>
+                            <field name="target_units" readonly="1" class="fw-bold"/>
+                            <field name="current_units" readonly="1" class="fw-bold text-success"/>
+                            <field name="remaining_units" readonly="1" class="text-warning"/>
+                            <field name="packaging_display" readonly="1" class="fw-bold text-info" string="Résumé"/>
+                        </group>
+                    </group>
+                    <group>
                         <group string="📤 Empotage">
                             <field name="container_id" options="{'no_create': True}"/>
                             <field name="date_potted"/>
                             <field name="quality_check" widget="boolean_toggle"/>
                             <field name="quality_note" widget="text" invisible="not quality_check" placeholder="Notes qualité..."/>
                         </group>
-                    </group>
-                    <group>
                         <group string="💰 Prime">
                             <field name="currency_id" invisible="1"/>
                             <field name="premium_amount" widget="monetary"/>
@@ -113,14 +126,22 @@
                     </group>
                     <notebook>
                         <page string="Productions" name="productions">
+                            <div class="alert alert-info" role="alert">
+                                <strong>💡 Saisie des productions :</strong> Entrez le nombre de <field name="packaging_unit_name" readonly="1" class="fw-bold"/> produits. Le tonnage est calculé automatiquement (<field name="packaging_unit_weight_kg" readonly="1"/> kg par unité).
+                            </div>
                             <field name="production_line_ids">
                                 <tree string="Productions" editable="bottom">
                                     <field name="date"/>
-                                    <field name="tonnage" sum="Total"/>
+                                    <field name="packaging_unit_name" string="Type" readonly="1" column_invisible="1"/>
+                                    <field name="packaging_unit_weight" column_invisible="1"/>
+                                    <field name="units_produced" string="Nb unités" class="fw-bold text-primary"/>
+                                    <field name="tonnage" string="Tonnage (T)" readonly="1" sum="Total" class="text-success"/>
+                                    <field name="tonnage_kg" string="Poids (kg)" readonly="1" optional="show"/>
                                     <field name="batch_number"/>
                                     <field name="shift"/>
                                     <field name="operator_id"/>
-                                    <field name="note"/>
+                                    <field name="quality_ok" widget="boolean_toggle" optional="show"/>
+                                    <field name="note" optional="hide"/>
                                 </tree>
                             </field>
                         </page>
@@ -156,6 +177,9 @@
                 <field name="is_full"/>
                 <field name="container_id"/>
                 <field name="state"/>
+                <field name="packaging_unit_name"/>
+                <field name="current_units"/>
+                <field name="target_units"/>
                 <progressbar field="state" colors='{"draft": "secondary", "in_production": "warning", "ready": "info", "potted": "success"}'/>
                 <templates>
                     <t t-name="kanban-box">
@@ -176,6 +200,10 @@
                                     <span class="badge bg-primary rounded-pill">
                                         <i class="fa fa-balance-scale me-1"/>
                                         <t t-out="record.current_tonnage.raw_value"/>/<t t-out="record.target_tonnage.raw_value"/> T
+                                    </span>
+                                    <span class="badge bg-info rounded-pill" t-if="record.current_units.raw_value > 0">
+                                        <i class="fa fa-archive me-1"/>
+                                        <t t-out="record.current_units.raw_value"/>/<t t-out="record.target_units.raw_value"/> <t t-out="record.packaging_unit_name.value"/>
                                     </span>
                                     <span t-if="record.is_full.raw_value" class="badge bg-success rounded-pill">
                                         <i class="fa fa-check-circle me-1"/>Plein
@@ -273,14 +301,20 @@
         <field name="arch" type="xml">
             <tree string="Lignes de production" editable="bottom">
                 <field name="company_id" column_invisible="1"/>
+                <field name="packaging_unit_weight" column_invisible="1"/>
                 <field name="date"/>
                 <field name="lot_id"/>
-                <field name="transit_order_id"/>
-                <field name="tonnage" sum="Total"/>
+                <field name="transit_order_id" optional="show"/>
+                <field name="packaging_unit_name" string="Type d'unité" readonly="1"/>
+                <field name="units_produced" string="Nb unités" class="fw-bold text-primary"/>
+                <field name="tonnage" string="Tonnage (T)" readonly="1" sum="Total" class="text-success"/>
+                <field name="tonnage_kg" string="Poids (kg)" readonly="1" optional="show"/>
+                <field name="units_display" string="Résumé" readonly="1" optional="show"/>
                 <field name="batch_number"/>
                 <field name="shift"/>
                 <field name="operator_id"/>
-                <field name="note"/>
+                <field name="quality_ok" widget="boolean_toggle" optional="show"/>
+                <field name="note" optional="hide"/>
             </tree>
         </field>
     </record>

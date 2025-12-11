@@ -27,6 +27,7 @@ Ce module permet de gérer le flux complet d'empotage des produits semi-finis du
 - Suivi du remplissage en temps réel
 - Gestion des lignes de production
 - Empotage dans les conteneurs
+- **Calcul automatique du conditionnement** (cartons, big bags, sacs)
 
 ### 4. Gestion des conteneurs
 - Création et suivi des conteneurs
@@ -43,6 +44,22 @@ Ce module permet de gérer le flux complet d'empotage des produits semi-finis du
 - **Tableau de bord Agent PDG** : Gestion des productions et validations
 
 ## Configuration
+
+### Conditionnement par type de produit
+
+Le module gère automatiquement le conditionnement selon le type de produit :
+
+| Produit | Type de conditionnement | Poids unitaire |
+|---------|------------------------|----------------|
+| **Masse de cacao** | Cartons | 25 kg |
+| **Beurre de cacao** | Cartons | 25 kg |
+| **Cake de cacao** | Big bags | 1 tonne (1000 kg) |
+| **Poudre de cacao** | Sacs | 25 kg |
+
+Le calcul du nombre d'unités est automatique :
+- **Exemple Masse** : 10 tonnes = 400 cartons (10000 kg ÷ 25 kg)
+- **Exemple Cake** : 10 tonnes = 10 big bags (10 T ÷ 1 T)
+- **Exemple Poudre** : 5 tonnes = 200 sacs (5000 kg ÷ 25 kg)
 
 ### Tonnages maximum par défaut
 - Masse de cacao : 25 T (alternatif : 20 T)

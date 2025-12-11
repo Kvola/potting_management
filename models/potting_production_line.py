@@ -10,10 +10,10 @@ class PottingProductionLine(models.Model):
     _order = 'date desc, id desc'
     _check_company_auto = True
 
-    # SQL Constraints
+    # SQL Constraints - Validation sur les unités produites (pas le tonnage)
     _sql_constraints = [
-        ('tonnage_positive', 'CHECK(tonnage > 0)', 
-         'Le tonnage doit être supérieur à 0!'),
+        ('units_produced_positive', 'CHECK(units_produced > 0)', 
+         'Le nombre d\'unités produites doit être supérieur à 0!'),
     ]
 
     lot_id = fields.Many2one(
@@ -51,10 +51,56 @@ class PottingProductionLine(models.Model):
         index=True
     )
     
+    # -------------------------------------------------------------------------
+    # CHAMPS DE CONDITIONNEMENT - L'UTILISATEUR SAISIT LES UNITÉS
+    # -------------------------------------------------------------------------
+    packaging_unit_name = fields.Char(
+        string="Unité",
+        related='lot_id.packaging_unit_name',
+        store=True
+    )
+    
+    packaging_unit_weight = fields.Float(
+        string="Poids unitaire (T)",
+        related='lot_id.packaging_unit_weight',
+        store=True
+    )
+    
+    packaging_unit_weight_kg = fields.Float(
+        string="Poids unitaire (kg)",
+        related='lot_id.packaging_unit_weight_kg',
+        store=True
+    )
+    
+    # Champ de SAISIE : l'utilisateur entre le nombre d'unités
+    units_produced = fields.Integer(
+        string="Unités produites",
+        required=True,
+        default=1,
+        help="Nombre d'unités de conditionnement produites (cartons, big bags, sacs)"
+    )
+    
+    # Champ CALCULÉ : le tonnage est déduit des unités
     tonnage = fields.Float(
         string="Tonnage (T)",
-        required=True,
-        digits='Product Unit of Measure'
+        compute='_compute_tonnage',
+        store=True,
+        digits='Product Unit of Measure',
+        help="Tonnage calculé automatiquement à partir du nombre d'unités"
+    )
+    
+    tonnage_kg = fields.Float(
+        string="Poids (kg)",
+        compute='_compute_tonnage',
+        store=True,
+        digits=(10, 2),
+        help="Poids en kilogrammes"
+    )
+    
+    units_display = fields.Char(
+        string="Conditionnement",
+        compute='_compute_units_display',
+        help="Affichage formaté des unités produites"
     )
     
     batch_number = fields.Char(
@@ -100,20 +146,25 @@ class PottingProductionLine(models.Model):
     # -------------------------------------------------------------------------
     # CONSTRAINTS
     # -------------------------------------------------------------------------
-    @api.constrains('tonnage')
-    def _check_tonnage(self):
-        # Récupérer la limite configurable (défaut: 10 tonnes)
-        max_production = float(
-            self.env['ir.config_parameter'].sudo().get_param(
-                'potting_management.max_daily_production', '10.0'
-            )
-        )
+    @api.constrains('units_produced')
+    def _check_units_produced(self):
+        """Validation du nombre d'unités produites"""
         for line in self:
-            if line.tonnage <= 0:
-                raise ValidationError(_("Le tonnage doit être supérieur à 0."))
+            if line.units_produced <= 0:
+                raise ValidationError(_("Le nombre d'unités produites doit être supérieur à 0."))
+            
+            # Vérifier la limite max en tonnage (configurable)
+            max_production = float(
+                self.env['ir.config_parameter'].sudo().get_param(
+                    'potting_management.max_daily_production', '10.0'
+                )
+            )
             if line.tonnage > max_production:
+                max_units = int(max_production / line.packaging_unit_weight) if line.packaging_unit_weight else 0
                 raise ValidationError(
-                    _("Le tonnage par production ne peut pas dépasser %.1f tonnes.") % max_production
+                    _("Le nombre d'unités produites ne peut pas dépasser %d %s (%.1f tonnes max).") % (
+                        max_units, line.packaging_unit_name or 'unités', max_production
+                    )
                 )
 
     @api.constrains('date')
@@ -123,61 +174,103 @@ class PottingProductionLine(models.Model):
             if line.date > today:
                 raise ValidationError(_("La date de production ne peut pas être dans le futur."))
 
-    @api.constrains('lot_id', 'tonnage')
+    @api.constrains('lot_id', 'units_produced')
     def _check_lot_capacity(self):
+        """Vérifier que la production ne dépasse pas la capacité du lot"""
         for line in self:
             lot = line.lot_id
-            # Check if this would overfill the lot by too much (> 110%)
+            # Calculer le tonnage total sans cette ligne
             other_tonnage = sum(lot.production_line_ids.filtered(lambda l: l.id != line.id).mapped('tonnage'))
             total = other_tonnage + line.tonnage
+            
+            # Tolérance de 110% de la capacité
             if total > lot.target_tonnage * 1.1:
+                max_units_remaining = int((lot.target_tonnage * 1.1 - other_tonnage) / line.packaging_unit_weight) if line.packaging_unit_weight else 0
                 raise ValidationError(_(
-                    "Cette production dépasserait la capacité du lot de plus de 10%%. "
-                    "Capacité: %.2f T, Total après: %.2f T"
-                ) % (lot.target_tonnage, total))
+                    "Cette production dépasserait la capacité du lot de plus de 10%%.\n"
+                    "Capacité: %.2f T, Total après: %.2f T\n"
+                    "Maximum %d %s restants pour ce lot."
+                ) % (lot.target_tonnage, total, max_units_remaining, line.packaging_unit_name or 'unités'))
 
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
     # -------------------------------------------------------------------------
+    @api.depends('units_produced', 'packaging_unit_weight')
+    def _compute_tonnage(self):
+        """Calcul du tonnage à partir du nombre d'unités produites"""
+        for line in self:
+            if line.packaging_unit_weight and line.packaging_unit_weight > 0:
+                line.tonnage = line.units_produced * line.packaging_unit_weight
+                line.tonnage_kg = line.tonnage * 1000
+            else:
+                line.tonnage = 0
+                line.tonnage_kg = 0
+
     @api.depends('lot_id.fill_percentage')
     def _compute_lot_fill_after(self):
         for line in self:
             line.lot_fill_after = line.lot_id.fill_percentage if line.lot_id else 0
+
+    @api.depends('units_produced', 'packaging_unit_name', 'tonnage')
+    def _compute_units_display(self):
+        """Affichage formaté des unités produites avec tonnage"""
+        for line in self:
+            if line.units_produced > 0 and line.packaging_unit_name:
+                line.units_display = _("%(units)d %(unit_name)s (%(tonnage).3f T)") % {
+                    'units': line.units_produced,
+                    'unit_name': line.packaging_unit_name,
+                    'tonnage': line.tonnage,
+                }
+            else:
+                line.units_display = ''
 
     # -------------------------------------------------------------------------
     # ONCHANGE METHODS
     # -------------------------------------------------------------------------
     @api.onchange('lot_id')
     def _onchange_lot_id(self):
-        """Show warning if lot is almost full"""
-        if self.lot_id and self.lot_id.fill_percentage >= 90:
-            return {
-                'warning': {
-                    'title': _("Lot presque plein"),
-                    'message': _(
-                        "Le lot %s est rempli à %.1f%%. "
-                        "Capacité restante: %.2f T"
-                    ) % (
-                        self.lot_id.name, 
-                        self.lot_id.fill_percentage, 
-                        self.lot_id.remaining_tonnage
-                    ),
+        """Show warning if lot is almost full and suggest remaining units"""
+        if self.lot_id:
+            if self.lot_id.fill_percentage >= 90:
+                return {
+                    'warning': {
+                        'title': _("Lot presque plein"),
+                        'message': _(
+                            "Le lot %s est rempli à %.1f%%.\n"
+                            "Capacité restante: %.2f T (%d %s)"
+                        ) % (
+                            self.lot_id.name, 
+                            self.lot_id.fill_percentage, 
+                            self.lot_id.remaining_tonnage,
+                            self.lot_id.remaining_units,
+                            self.lot_id.packaging_unit_name or 'unités'
+                        ),
+                    }
                 }
-            }
 
-    @api.onchange('tonnage')
-    def _onchange_tonnage(self):
-        """Warn if tonnage would overfill the lot"""
-        if self.lot_id and self.tonnage:
-            new_total = self.lot_id.current_tonnage + self.tonnage
+    @api.onchange('units_produced')
+    def _onchange_units_produced(self):
+        """Warn if units would overfill the lot and show calculated tonnage"""
+        if self.lot_id and self.units_produced and self.packaging_unit_weight:
+            calculated_tonnage = self.units_produced * self.packaging_unit_weight
+            new_total = self.lot_id.current_tonnage + calculated_tonnage
+            
             if new_total > self.lot_id.target_tonnage:
                 overfill = new_total - self.lot_id.target_tonnage
+                overfill_units = int(overfill / self.packaging_unit_weight) if self.packaging_unit_weight else 0
                 return {
                     'warning': {
                         'title': _("Dépassement de capacité"),
                         'message': _(
-                            "Cette production dépasserait la capacité cible de %.2f T."
-                        ) % overfill,
+                            "Cette production de %d %s (%.3f T) dépasserait la capacité cible de %.2f T (%d %s)."
+                        ) % (
+                            self.units_produced,
+                            self.packaging_unit_name or 'unités',
+                            calculated_tonnage,
+                            overfill,
+                            overfill_units,
+                            self.packaging_unit_name or 'unités'
+                        ),
                     }
                 }
 
