@@ -39,36 +39,48 @@ class PottingLot(models.Model):
         tracking=True,
         index=True,
         copy=False,
-        readonly=True
+        readonly=True,
+        help="Référence complète du lot incluant le suffixe de certification (ex: T10582RA)"
     )
     
-    # Champs pour la prime (bonus)
-    premium_amount = fields.Monetary(
-        string="Prime",
-        currency_field='currency_id',
+    base_name = fields.Char(
+        string="Référence de base",
+        required=True,
+        index=True,
+        copy=False,
+        readonly=True,
+        help="Référence du lot sans le suffixe de certification (ex: T10582)"
+    )
+    
+    # -------------------------------------------------------------------------
+    # CHAMPS DE CERTIFICATION
+    # -------------------------------------------------------------------------
+    certification_id = fields.Many2one(
+        'potting.certification',
+        string="Certification",
         tracking=True,
-        help="Montant de la prime associée à ce lot. Lorsqu'une prime est définie, le numéro du lot sera suffixé par 'RA'."
+        index=True,
+        help="Certification du lot (Fair Trade, Rain Forest, etc.). Le suffixe sera ajouté à la référence."
     )
     
-    has_premium = fields.Boolean(
-        string="A une prime",
-        compute='_compute_has_premium',
+    certification_suffix = fields.Char(
+        string="Suffixe certification",
+        related='certification_id.suffix',
+        store=True
+    )
+    
+    has_certification = fields.Boolean(
+        string="Certifié",
+        compute='_compute_has_certification',
         store=True,
         index=True
     )
     
-    display_name_with_premium = fields.Char(
+    display_name_with_certification = fields.Char(
         string="Référence lot",
-        compute='_compute_display_name_with_premium',
+        compute='_compute_display_name_with_certification',
         store=True,
-        help="Numéro de lot avec suffixe RA si une prime est définie"
-    )
-    
-    currency_id = fields.Many2one(
-        'res.currency',
-        string="Devise",
-        default=lambda self: self.env.company.currency_id,
-        required=True
+        help="Numéro de lot avec suffixe de certification si défini"
     )
     
     transit_order_id = fields.Many2one(
@@ -314,24 +326,57 @@ class PottingLot(models.Model):
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
     # -------------------------------------------------------------------------
-    @api.depends('premium_amount')
-    def _compute_has_premium(self):
+    @api.depends('certification_id')
+    def _compute_has_certification(self):
         for lot in self:
-            lot.has_premium = lot.premium_amount and lot.premium_amount > 0
+            lot.has_certification = bool(lot.certification_id)
 
-    @api.depends('name', 'premium_amount')
-    def _compute_display_name_with_premium(self):
+    @api.depends('base_name', 'certification_id', 'certification_id.suffix')
+    def _compute_display_name_with_certification(self):
         for lot in self:
-            if lot.premium_amount and lot.premium_amount > 0:
-                # Ajouter le suffixe RA si prime définie
-                base_name = lot.name or ''
-                # Éviter d'ajouter RA si déjà présent
-                if not base_name.endswith('RA'):
-                    lot.display_name_with_premium = f"{base_name}RA"
-                else:
-                    lot.display_name_with_premium = base_name
+            base = lot.base_name or lot.name or ''
+            if lot.certification_id and lot.certification_id.suffix:
+                suffix = lot.certification_id.suffix.upper()
+                lot.display_name_with_certification = f"{base}{suffix}"
             else:
-                lot.display_name_with_premium = lot.name
+                lot.display_name_with_certification = base
+
+    @api.onchange('certification_id')
+    def _onchange_certification_id(self):
+        """Met à jour le numéro de lot quand la certification change."""
+        if self.base_name:
+            if self.certification_id and self.certification_id.suffix:
+                self.name = f"{self.base_name}{self.certification_id.suffix.upper()}"
+            else:
+                self.name = self.base_name
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create pour initialiser base_name si non fourni."""
+        for vals in vals_list:
+            # Si base_name n'est pas fourni, utiliser name comme base_name
+            if 'base_name' not in vals and 'name' in vals:
+                vals['base_name'] = vals['name']
+            # Si une certification est fournie, mettre à jour le name avec le suffixe
+            if vals.get('certification_id') and vals.get('base_name'):
+                certification = self.env['potting.certification'].browse(vals['certification_id'])
+                if certification.suffix:
+                    vals['name'] = f"{vals['base_name']}{certification.suffix.upper()}"
+        return super().create(vals_list)
+
+    def write(self, vals):
+        """Override write pour mettre à jour le name quand la certification change."""
+        result = super().write(vals)
+        if 'certification_id' in vals:
+            for lot in self:
+                if lot.base_name:
+                    if lot.certification_id and lot.certification_id.suffix:
+                        new_name = f"{lot.base_name}{lot.certification_id.suffix.upper()}"
+                    else:
+                        new_name = lot.base_name
+                    if lot.name != new_name:
+                        super(PottingLot, lot).write({'name': new_name})
+        return result
 
     @api.depends('product_type')
     def _compute_product_type_display(self):

@@ -113,6 +113,13 @@
         sequence="100"
         groups="potting_management.group_potting_shipping"/>
 
+    <menuitem id="menu_potting_certification"
+        name="🏅 Certifications"
+        parent="menu_potting_config"
+        action="action_potting_certification"
+        sequence="5"
+        groups="potting_management.group_potting_shipping"/>
+
     <menuitem id="menu_potting_consignee"
         name="👤 Destinataires"
         parent="menu_potting_config"

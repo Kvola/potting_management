@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- ============================================================ -->
+        <!-- CERTIFICATIONS STANDARDS DU CACAO -->
+        <!-- ============================================================ -->
+
+        <!-- Fair Trade (Commerce équitable) -->
+        <record id="certification_fair_trade" model="potting.certification">
+            <field name="name">Fair Trade</field>
+            <field name="suffix">FT</field>
+            <field name="description">Certification Fair Trade (Commerce équitable).
+Le commerce équitable garantit des conditions commerciales plus justes pour les producteurs de cacao des pays en développement. Cette certification assure :
+- Un prix minimum garanti aux producteurs
+- Une prime de développement pour la communauté
+- Des relations commerciales à long terme
+- Des conditions de travail décentes</field>
+            <field name="sequence">10</field>
+            <field name="color">2</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Rain Forest Alliance -->
+        <record id="certification_rainforest" model="potting.certification">
+            <field name="name">Rain Forest Alliance</field>
+            <field name="suffix">RA</field>
+            <field name="description">Certification Rain Forest Alliance.
+La certification Rainforest Alliance est axée sur la durabilité environnementale et sociale. Elle garantit :
+- La protection des forêts et de la biodiversité
+- Des pratiques agricoles durables
+- L'amélioration des conditions de vie des agriculteurs
+- La réduction des impacts environnementaux</field>
+            <field name="sequence">20</field>
+            <field name="color">3</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- UTZ (maintenant partie de Rain Forest Alliance) -->
+        <record id="certification_utz" model="potting.certification">
+            <field name="name">UTZ Certified</field>
+            <field name="suffix">UTZ</field>
+            <field name="description">Certification UTZ (maintenant fusionnée avec Rainforest Alliance).
+UTZ signifie "bon" en langue maya. Cette certification se concentre sur :
+- La traçabilité de la chaîne d'approvisionnement
+- Les bonnes pratiques agricoles
+- La gestion responsable des exploitations
+- L'amélioration continue des conditions</field>
+            <field name="sequence">30</field>
+            <field name="color">4</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Organic / Biologique -->
+        <record id="certification_organic" model="potting.certification">
+            <field name="name">Bio / Organic</field>
+            <field name="suffix">BIO</field>
+            <field name="description">Certification Biologique / Organic.
+La certification biologique garantit que le cacao a été cultivé sans :
+- Pesticides de synthèse
+- Engrais chimiques
+- OGM (Organismes Génétiquement Modifiés)
+Et favorise :
+- La rotation des cultures
+- La biodiversité
+- La fertilité naturelle des sols</field>
+            <field name="sequence">40</field>
+            <field name="color">5</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Direct Trade -->
+        <record id="certification_direct_trade" model="potting.certification">
+            <field name="name">Direct Trade</field>
+            <field name="suffix">DT</field>
+            <field name="description">Certification Direct Trade (Commerce Direct).
+Le commerce direct établit une relation directe entre l'acheteur et le producteur :
+- Élimination des intermédiaires
+- Prix souvent supérieurs au commerce équitable
+- Transparence totale sur la chaîne d'approvisionnement
+- Relations personnalisées avec les agriculteurs</field>
+            <field name="sequence">50</field>
+            <field name="color">6</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Single Origin -->
+        <record id="certification_single_origin" model="potting.certification">
+            <field name="name">Single Origin</field>
+            <field name="suffix">SO</field>
+            <field name="description">Certification Single Origin (Origine Unique).
+Cette certification garantit que le cacao provient d'une seule région ou plantation :
+- Traçabilité complète
+- Profil aromatique distinct
+- Valorisation du terroir
+- Qualité premium</field>
+            <field name="sequence">60</field>
+            <field name="color">7</field>
+            <field name="active" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

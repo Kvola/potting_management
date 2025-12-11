@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Gestion des Empotages',
-    'version': '17.0.1.0.1',
+    'version': '17.0.1.0.2',
     'category': 'Inventory/Logistics',
     'summary': 'Gestion des empotages de produits semi-finis du cacao',
     'description': """
@@ -35,12 +35,14 @@
         # Data
         'data/ir_sequence_data.xml',
         'data/product_data.xml',
+        'data/potting_certification_data.xml',
         # Wizards (must be before menus that reference them)
         'wizards/potting_send_report_wizard_views.xml',
         'wizards/potting_create_ot_wizard_views.xml',
         'wizards/potting_generate_lots_wizard_views.xml',
         # Views
         'views/res_config_settings_views.xml',
+        'views/potting_certification_views.xml',
         'views/potting_customer_order_views.xml',
         'views/potting_transit_order_views.xml',
         'views/potting_lot_views.xml',

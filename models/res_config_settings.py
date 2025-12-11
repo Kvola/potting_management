@@ -176,28 +176,28 @@ class ResConfigSettings(models.TransientModel):
     potting_lot_prefix_cocoa_mass = fields.Char(
         string="Préfixe lot - Masse de cacao",
         config_parameter='potting_management.lot_prefix_cocoa_mass',
-        default='M',
+        default='M0',
         help="Préfixe pour les numéros de lot de Masse de cacao (ex: M10001)"
     )
     
     potting_lot_prefix_cocoa_butter = fields.Char(
         string="Préfixe lot - Beurre de cacao",
         config_parameter='potting_management.lot_prefix_cocoa_butter',
-        default='B',
+        default='B0',
         help="Préfixe pour les numéros de lot de Beurre de cacao (ex: B10001)"
     )
     
     potting_lot_prefix_cocoa_cake = fields.Char(
         string="Préfixe lot - Cake de cacao",
         config_parameter='potting_management.lot_prefix_cocoa_cake',
-        default='T',
+        default='T0',
         help="Préfixe pour les numéros de lot de Cake/Tourteau de cacao (ex: T10001)"
     )
     
     potting_lot_prefix_cocoa_powder = fields.Char(
         string="Préfixe lot - Poudre de cacao",
         config_parameter='potting_management.lot_prefix_cocoa_powder',
-        default='P',
+        default='P0',
         help="Préfixe pour les numéros de lot de Poudre de cacao (ex: P10001)"
     )
 

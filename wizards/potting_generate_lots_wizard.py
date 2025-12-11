@@ -166,6 +166,7 @@ class PottingGenerateLotsWizard(models.TransientModel):
             
             lot_vals_list.append({
                 'name': lot_name,
+                'base_name': lot_name,  # Référence de base sans suffixe de certification
                 'transit_order_id': transit_order.id,
                 'product_type': transit_order.product_type,
                 'product_id': transit_order.product_id.id if transit_order.product_id else False,

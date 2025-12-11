@@ -200,7 +200,7 @@
                                 <div class="row mt-1">
                                     <div class="col-12">
                                         <small class="text-muted fst-italic">
-                                            <i class="fa fa-info-circle me-1"/>Format: [Préfixe][Numéro] → ex: M10001 (Masse), B10001 (Beurre), T10001 (Tourteau), P10001 (Poudre)
+                                            <i class="fa fa-info-circle me-1"/>Format: [Préfixe][Numéro] → ex: M010001 (Masse), B010001 (Beurre), T010001 (Tourteau), P010001 (Poudre)
                                         </small>
                                     </div>
                                 </div>

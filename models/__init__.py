@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from . import res_config_settings
+from . import potting_certification
 from . import potting_customer_order
 from . import potting_transit_order
 from . import potting_lot

@@ -13,10 +13,11 @@
                   multi_edit="1"
                   sample="1">
                 <field name="company_id" column_invisible="1"/>
-                <field name="display_name_with_premium" string="N° Lot" decoration-bf="1"/>
+                <field name="display_name_with_certification" string="N° Lot" decoration-bf="1"/>
                 <field name="name" column_invisible="1"/>
-                <field name="has_premium" column_invisible="1"/>
-                <field name="premium_amount" string="Prime" optional="show" decoration-success="has_premium"/>
+                <field name="has_certification" column_invisible="1"/>
+                <field name="certification_id" string="Certification" optional="show" widget="badge"/>
+                <field name="certification_suffix" string="Suffixe" optional="hide"/>
                 <field name="transit_order_id" optional="show"/>
                 <field name="customer_id" optional="show"/>
                 <field name="consignee_id" optional="show"/>
@@ -117,11 +118,11 @@
                             <field name="quality_check" widget="boolean_toggle"/>
                             <field name="quality_note" widget="text" invisible="not quality_check" placeholder="Notes qualité..."/>
                         </group>
-                        <group string="💰 Prime">
-                            <field name="currency_id" invisible="1"/>
-                            <field name="premium_amount" widget="monetary"/>
-                            <field name="has_premium" widget="boolean_toggle" readonly="1"/>
-                            <field name="display_name_with_premium" string="Référence avec prime" readonly="1" class="fw-bold text-success" invisible="not has_premium"/>
+                        <group string="🏅 Certification">
+                            <field name="certification_id" options="{'no_create': True}"/>
+                            <field name="certification_suffix" readonly="1" class="fw-bold text-primary" invisible="not certification_id"/>
+                            <field name="has_certification" widget="boolean_toggle" readonly="1"/>
+                            <field name="display_name_with_certification" string="Référence certifiée" readonly="1" class="fw-bold text-success" invisible="not has_certification"/>
                         </group>
                     </group>
                     <notebook>
@@ -166,9 +167,10 @@
         <field name="arch" type="xml">
             <kanban default_group_by="state" class="o_kanban_mobile">
                 <field name="name"/>
-                <field name="display_name_with_premium"/>
-                <field name="has_premium"/>
-                <field name="premium_amount"/>
+                <field name="display_name_with_certification"/>
+                <field name="has_certification"/>
+                <field name="certification_id"/>
+                <field name="certification_suffix"/>
                 <field name="transit_order_id"/>
                 <field name="product_type"/>
                 <field name="target_tonnage"/>
@@ -183,12 +185,14 @@
                 <progressbar field="state" colors='{"draft": "secondary", "in_production": "warning", "ready": "info", "potted": "success"}'/>
                 <templates>
                     <t t-name="kanban-box">
-                        <div t-attf-class="oe_kanban_global_click #{record.is_full.raw_value ? 'border-start border-4 border-success' : ''} #{record.has_premium.raw_value ? 'border-top border-3 border-warning' : ''}">
+                        <div t-attf-class="oe_kanban_global_click #{record.is_full.raw_value ? 'border-start border-4 border-success' : ''} #{record.has_certification.raw_value ? 'border-top border-3 border-info' : ''}">
                             <div class="o_kanban_record_top mb-2">
                                 <div class="o_kanban_record_headings">
                                     <strong class="o_kanban_record_title fs-5">
-                                        <i class="fa fa-cube me-1 text-primary"/> <field name="display_name_with_premium"/>
-                                        <span t-if="record.has_premium.raw_value" class="badge bg-warning text-dark ms-1" title="Prime"><i class="fa fa-star"/></span>
+                                        <i class="fa fa-cube me-1 text-primary"/> <field name="display_name_with_certification"/>
+                                        <span t-if="record.has_certification.raw_value" class="badge bg-info text-white ms-1" title="Certifié">
+                                            <i class="fa fa-certificate me-1"/><t t-out="record.certification_suffix.value"/>
+                                        </span>
                                     </strong>
                                 </div>
                                 <field name="state" widget="label_selection" options="{'classes': {'draft': 'secondary', 'in_production': 'warning', 'ready': 'info', 'potted': 'success'}}"/>
@@ -201,7 +205,7 @@
                                         <i class="fa fa-balance-scale me-1"/>
                                         <t t-out="record.current_tonnage.raw_value"/>/<t t-out="record.target_tonnage.raw_value"/> T
                                     </span>
-                                    <span class="badge bg-info rounded-pill" t-if="record.current_units.raw_value > 0">
+                                    <span class="badge bg-secondary rounded-pill" t-if="record.current_units.raw_value > 0">
                                         <i class="fa fa-archive me-1"/>
                                         <t t-out="record.current_units.raw_value"/>/<t t-out="record.target_units.raw_value"/> <t t-out="record.packaging_unit_name.value"/>
                                     </span>
@@ -236,6 +240,7 @@
                 <field name="customer_id"/>
                 <field name="consignee_id"/>
                 <field name="container_id"/>
+                <field name="certification_id"/>
                 <separator/>
                 <filter string="Brouillon" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="En production" name="in_production" domain="[('state', '=', 'in_production')]"/>
@@ -245,8 +250,8 @@
                 <filter string="Capacité atteinte" name="full" domain="[('is_full', '=', True)]"/>
                 <filter string="En cours de remplissage" name="not_full" domain="[('is_full', '=', False), ('state', '=', 'in_production')]"/>
                 <separator/>
-                <filter string="Avec prime" name="with_premium" domain="[('has_premium', '=', True)]"/>
-                <filter string="Sans prime" name="without_premium" domain="[('has_premium', '=', False)]"/>
+                <filter string="Certifiés" name="with_certification" domain="[('has_certification', '=', True)]"/>
+                <filter string="Non certifiés" name="without_certification" domain="[('has_certification', '=', False)]"/>
                 <separator/>
                 <filter string="Masse de cacao" name="cocoa_mass" domain="[('product_type', '=', 'cocoa_mass')]"/>
                 <filter string="Beurre de cacao" name="cocoa_butter" domain="[('product_type', '=', 'cocoa_butter')]"/>
@@ -255,6 +260,7 @@
                 <group expand="0" string="Grouper par">
                     <filter string="OT" name="transit_order" context="{'group_by': 'transit_order_id'}"/>
                     <filter string="Client" name="customer" context="{'group_by': 'customer_id'}"/>
+                    <filter string="Certification" name="certification" context="{'group_by': 'certification_id'}"/>
                     <filter string="Type de produit" name="product_type" context="{'group_by': 'product_type'}"/>
                     <filter string="Conteneur" name="container" context="{'group_by': 'container_id'}"/>
                     <filter string="État" name="state" context="{'group_by': 'state'}"/>
