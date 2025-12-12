@@ -23,7 +23,7 @@
                        decoration-success="product_type == 'cocoa_cake'"
                        decoration-primary="product_type == 'cocoa_powder'"/>
                 <field name="tonnage" sum="Total" decoration-bf="1"/>
-                <field name="vessel_name" optional="show"/>
+                <field name="vessel_id" string="Navire" optional="show"/>
                 <field name="pod" optional="show"/>
                 <field name="container_size" optional="hide"/>
                 <field name="lot_range" optional="show"/>
@@ -93,7 +93,7 @@
                     </group>
                     <group>
                         <group string="🚢 Transport">
-                            <field name="vessel_name" placeholder="Nom du navire..."/>
+                            <field name="vessel_id" options="{'no_create_edit': True}"/>
                             <field name="pod" placeholder="Port de destination..."/>
                             <field name="container_size" widget="radio" options="{'horizontal': True}"/>
                             <field name="booking_number" placeholder="N° Booking..."/>

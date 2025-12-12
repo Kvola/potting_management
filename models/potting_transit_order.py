@@ -101,13 +101,17 @@ class PottingTransitOrder(models.Model):
     
     vessel_id = fields.Many2one(
         'potting.vessel',
-        string="Navire (Vessel)",
-        tracking=True
+        string="Navire",
+        tracking=True,
+        index=True
     )
     
     vessel_name = fields.Char(
         string="Nom du navire",
-        tracking=True
+        related='vessel_id.name',
+        store=True,
+        readonly=True,
+        help="Nom du navire (automatiquement rempli depuis le navire sélectionné)"
     )
     
     pod = fields.Char(
