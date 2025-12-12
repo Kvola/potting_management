@@ -77,9 +77,10 @@ class PottingCreateOTWizard(models.TransientModel):
         help="Tonnage total de l'OT"
     )
     
-    vessel_name = fields.Char(
-        string="Nom du navire (Vessel)",
-        help="Nom du navire pour le transport"
+    vessel_id = fields.Many2one(
+        'potting.vessel',
+        string="Navire",
+        help="Navire pour le transport"
     )
     
     pod = fields.Char(
@@ -244,7 +245,7 @@ class PottingCreateOTWizard(models.TransientModel):
             'product_type': self.product_type,
             'product_id': self.product_id.id if self.product_id else False,
             'tonnage': self.tonnage,
-            'vessel_name': self.vessel_name,
+            'vessel_id': self.vessel_id.id if self.vessel_id else False,
             'pod': self.pod,
             'container_size': self.container_size,
             'booking_number': self.booking_number,

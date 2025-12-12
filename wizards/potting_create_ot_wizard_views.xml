@@ -33,7 +33,9 @@
                             <field name="tonnage" class="fw-bold"/>
                         </group>
                         <group string="🚢 Transport">
-                            <field name="vessel_name" placeholder="Ex: MSC MARINA"/>
+                            <field name="vessel_id" 
+                                   placeholder="Sélectionner un navire..."
+                                   options="{'no_create_edit': True}"/>
                             <field name="pod" placeholder="Ex: HAMBURG"/>
                             <field name="container_size"/>
                             <field name="booking_number" placeholder="Ex: BK123456"/>
