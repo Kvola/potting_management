@@ -150,7 +150,7 @@ class PottingCreateOTWizard(models.TransientModel):
             'product_type': self.product_type,
             'product_id': self.product_id.id if self.product_id else False,
             'tonnage': self.tonnage,
-            'vessel_name': self.vessel_name,
+            'vessel_id': self.vessel_id.id if self.vessel_id else False,
             'pod': self.pod,
             'container_size': self.container_size,
             'booking_number': self.booking_number,
