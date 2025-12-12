@@ -78,16 +78,16 @@
                     <notebook>
                         <page string="Ordres de Transit" name="transit_orders">
                             <field name="transit_order_ids" context="{'default_customer_order_id': id}">
-                                <tree string="Ordres de Transit">
-                                    <field name="name"/>
+                                <tree string="Ordres de Transit" decoration-info="state == 'draft'" decoration-warning="state == 'in_progress'" decoration-success="state == 'done'">
+                                    <field name="name" decoration-bf="1"/>
                                     <field name="consignee_id"/>
-                                    <field name="product_type"/>
-                                    <field name="tonnage" sum="Total"/>
-                                    <field name="vessel_name"/>
+                                    <field name="product_type" widget="badge"/>
+                                    <field name="tonnage" sum="Total" decoration-bf="1"/>
+                                    <field name="vessel_id" string="Navire"/>
                                     <field name="pod"/>
-                                    <field name="container_size"/>
+                                    <field name="container_size" widget="badge"/>
                                     <field name="lot_range"/>
-                                    <field name="booking_number"/>
+                                    <field name="progress_percentage" widget="progressbar"/>
                                     <field name="state" widget="badge"/>
                                 </tree>
                             </field>
@@ -133,10 +133,10 @@
                             <div class="o_kanban_record_body">
                                 <div class="mb-1"><i class="fa fa-building text-muted me-1"/> <field name="customer_id"/></div>
                                 <div class="mt-2 d-flex gap-2 flex-wrap">
-                                    <span class="badge bg-primary rounded-pill">
+                                    <span class="badge text-bg-primary rounded-pill">
                                         <i class="fa fa-truck me-1"/><t t-out="record.transit_order_count.raw_value"/> OT
                                     </span>
-                                    <span class="badge bg-info rounded-pill">
+                                    <span class="badge text-bg-info rounded-pill">
                                         <i class="fa fa-balance-scale me-1"/><t t-out="record.total_tonnage.raw_value"/> T
                                     </span>
                                 </div>

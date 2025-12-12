@@ -231,7 +231,7 @@
                                             <td t-esc="getProductTypeLabel(ot.product_type)"/>
                                             <td><t t-esc="ot.tonnage.toFixed(2)"/> T</td>
                                             <td>
-                                                <span class="badge bg-success">
+                                                <span class="badge text-bg-success">
                                                     <t t-esc="ot.potted_lot_count"/>/<t t-esc="ot.lot_count"/>
                                                 </span>
                                             </td>

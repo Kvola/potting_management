@@ -9,37 +9,42 @@
         <field name="model">potting.generate.lots.wizard</field>
         <field name="arch" type="xml">
             <form string="Générer les lots">
-                <group>
-                    <group string="Informations de l'OT" name="ot_info">
-                        <field name="transit_order_id" readonly="1"/>
-                        <field name="product_type_display" string="Type de produit"/>
-                        <field name="total_tonnage" widget="float" options="{'digits': [16, 2]}"/>
+                <sheet>
+                    <div class="oe_title mb-3">
+                        <h2>
+                            <i class="fa fa-cubes me-2 text-primary"/>
+                            <span>Génération automatique des lots</span>
+                        </h2>
+                    </div>
+                    <group>
+                        <group string="📋 Informations de l'OT" name="ot_info">
+                            <field name="transit_order_id" readonly="1"/>
+                            <field name="product_type_display" string="Type de produit"/>
+                            <field name="total_tonnage" widget="float" options="{'digits': [16, 2]}" class="fw-bold text-primary"/>
+                        </group>
+                        <group string="⚙️ Configuration des lots" name="lot_config">
+                            <field name="default_max_tonnage" 
+                                   widget="float" 
+                                   options="{'digits': [16, 2]}"
+                                   class="text-muted"/>
+                            <field name="max_tonnage_per_lot" 
+                                   widget="float" 
+                                   options="{'digits': [16, 2]}"
+                                   class="fw-bold"/>
+                            <field name="estimated_lots_count" class="fw-bold text-success"/>
+                        </group>
                     </group>
-                    <group string="Configuration des lots" name="lot_config">
-                        <field name="default_max_tonnage" 
-                               widget="float" 
-                               options="{'digits': [16, 2]}"
-                               class="text-muted"/>
-                        <field name="max_tonnage_per_lot" 
-                               widget="float" 
-                               options="{'digits': [16, 2]}"
-                               class="fw-bold"/>
-                        <field name="estimated_lots_count" class="fw-bold text-primary"/>
-                    </group>
-                </group>
-                <div class="alert alert-info mt-3" role="alert">
-                    <i class="fa fa-info-circle me-2"/>
-                    <span>
+                    <div class="alert alert-info mt-3" role="alert">
+                        <strong><i class="fa fa-lightbulb-o me-2"/>Conseil :</strong>
                         Les lots seront créés avec le tonnage maximum spécifié. 
                         Le dernier lot contiendra le tonnage restant si nécessaire.
-                    </span>
-                </div>
+                    </div>
+                </sheet>
                 <footer>
                     <button name="action_generate_lots" 
-                            string="Générer les lots" 
+                            string="✅ Générer les lots" 
                             type="object" 
-                            class="btn-primary"
-                            icon="fa-cogs"/>
+                            class="btn-primary"/>
                     <button name="action_cancel" 
                             string="Annuler" 
                             type="object" 

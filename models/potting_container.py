@@ -115,9 +115,18 @@ class PottingContainer(models.Model):
         store=True
     )
     
+    vessel_id = fields.Many2one(
+        'potting.vessel',
+        string="Navire",
+        tracking=True,
+        index=True
+    )
+    
     vessel_name = fields.Char(
         string="Nom du navire",
-        tracking=True
+        related='vessel_id.name',
+        store=True,
+        readonly=True
     )
     
     booking_number = fields.Char(

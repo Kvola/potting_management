@@ -201,12 +201,37 @@
     letter-spacing: 0.02em;
 }
 
-.o_potting_dashboard .badge.bg-secondary { background-color: #6c757d !important; }
-.o_potting_dashboard .badge.bg-info { background-color: #3498db !important; }
-.o_potting_dashboard .badge.bg-warning { background-color: #e67e22 !important; color: #fff !important; }
-.o_potting_dashboard .badge.bg-success { background-color: #27ae60 !important; }
-.o_potting_dashboard .badge.bg-primary { background-color: #2980b9 !important; }
-.o_potting_dashboard .badge.bg-danger { background-color: #c0392b !important; }
+/* Badge colors with proper text contrast */
+.o_potting_dashboard .badge.bg-secondary,
+.o_potting_dashboard .badge.text-bg-secondary { 
+    background-color: #6c757d !important; 
+    color: #fff !important;
+}
+.o_potting_dashboard .badge.bg-info,
+.o_potting_dashboard .badge.text-bg-info { 
+    background-color: #3498db !important; 
+    color: #fff !important;
+}
+.o_potting_dashboard .badge.bg-warning,
+.o_potting_dashboard .badge.text-bg-warning { 
+    background-color: #e67e22 !important; 
+    color: #fff !important; 
+}
+.o_potting_dashboard .badge.bg-success,
+.o_potting_dashboard .badge.text-bg-success { 
+    background-color: #27ae60 !important; 
+    color: #fff !important;
+}
+.o_potting_dashboard .badge.bg-primary,
+.o_potting_dashboard .badge.text-bg-primary { 
+    background-color: #2980b9 !important; 
+    color: #fff !important;
+}
+.o_potting_dashboard .badge.bg-danger,
+.o_potting_dashboard .badge.text-bg-danger { 
+    background-color: #c0392b !important; 
+    color: #fff !important;
+}
 
 /* Buttons - Professional */
 .o_potting_dashboard .btn {

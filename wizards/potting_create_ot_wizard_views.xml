@@ -7,16 +7,18 @@
         <field name="arch" type="xml">
             <form string="Créer un Ordre de Transit">
                 <sheet>
-                    <div class="oe_title">
-                        <h1>
-                            <span class="text-primary">Nouvel Ordre de Transit</span>
-                        </h1>
-                        <h3 class="text-muted">
-                            <span>Pour la commande: </span>
-                            <field name="customer_order_id" readonly="1" class="oe_inline"/>
-                            <span> - Campagne: </span>
-                            <field name="campaign_period" readonly="1" class="oe_inline fw-bold"/>
-                        </h3>
+                    <div class="oe_title mb-3">
+                        <h2>
+                            <i class="fa fa-truck me-2 text-primary"/>
+                            <span>Nouvel Ordre de Transit</span>
+                        </h2>
+                        <div class="text-muted mt-2">
+                            <span>Commande: </span>
+                            <field name="customer_order_id" readonly="1" class="oe_inline fw-bold"/>
+                            <span class="mx-2">|</span>
+                            <span>Campagne: </span>
+                            <field name="campaign_period" readonly="1" class="oe_inline fw-bold text-primary"/>
+                        </div>
                     </div>
                     
                     <group>
@@ -25,25 +27,28 @@
                             <field name="customer_id" readonly="1"/>
                             <field name="consignee_id" 
                                    placeholder="Sélectionner un destinataire..."
-                                   options="{'no_create': False, 'no_quick_create': True}"/>
-                            <field name="product_type"/>
+                                   domain="[('is_potting_consignee', '=', True)]"
+                                   context="{'default_is_potting_consignee': True}"
+                                   options="{'no_quick_create': True}"/>
+                            <field name="product_type" widget="radio" options="{'horizontal': true}"/>
                             <field name="product_id" 
                                    placeholder="Produit spécifique (optionnel)"
-                                   invisible="not product_type"/>
-                            <field name="tonnage" class="fw-bold"/>
+                                   invisible="not product_type"
+                                   options="{'no_create': True}"/>
+                            <field name="tonnage" class="fw-bold text-primary"/>
                         </group>
                         <group string="🚢 Transport">
                             <field name="vessel_id" 
                                    placeholder="Sélectionner un navire..."
                                    options="{'no_create_edit': True}"/>
-                            <field name="pod" placeholder="Ex: HAMBURG"/>
-                            <field name="container_size"/>
+                            <field name="pod" placeholder="Ex: HAMBURG, ROTTERDAM..."/>
+                            <field name="container_size" widget="radio" options="{'horizontal': true}"/>
                             <field name="booking_number" placeholder="Ex: BK123456"/>
                         </group>
                     </group>
                     
                     <separator string="📝 Notes"/>
-                    <field name="note" nolabel="1" placeholder="Notes ou instructions particulières..."/>
+                    <field name="note" nolabel="1" placeholder="Notes ou instructions particulières..." widget="text"/>
                 </sheet>
                 
                 <footer>
@@ -53,15 +58,15 @@
                             class="btn-primary"/>
                     <button name="action_create_and_new" 
                             type="object" 
-                            string="Créer et Nouveau" 
+                            string="➕ Créer et Nouveau" 
                             class="btn-secondary"
                             title="Créer cet OT et ouvrir un nouveau formulaire pour en créer un autre"/>
                     <button name="action_view_ot" 
                             type="object" 
-                            string="Créer et Voir" 
+                            string="👁 Créer et Voir" 
                             class="btn-secondary"
                             title="Créer cet OT et ouvrir sa fiche"/>
-                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                    <button string="Annuler" class="btn-light" special="cancel"/>
                 </footer>
             </form>
         </field>

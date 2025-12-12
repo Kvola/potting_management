@@ -20,7 +20,7 @@
                 <field name="seal_number" optional="show"/>
                 <field name="lot_count" string="Lots"/>
                 <field name="total_tonnage" sum="Total" decoration-bf="1" class="text-primary"/>
-                <field name="vessel_name" optional="show"/>
+                <field name="vessel_id" string="Navire" optional="show"/>
                 <field name="booking_number" optional="hide"/>
                 <field name="port_loading" optional="show"/>
                 <field name="port_discharge" optional="show"/>
@@ -80,7 +80,7 @@
                     </group>
                     <group>
                         <group string="🚢 Transport">
-                            <field name="vessel_name" placeholder="Nom du navire..."/>
+                            <field name="vessel_id" options="{'no_create_edit': True}"/>
                             <field name="booking_number" placeholder="N° Booking..."/>
                             <field name="date_departure" widget="date"/>
                         </group>
@@ -136,7 +136,7 @@
                 <field name="container_type"/>
                 <field name="lot_count"/>
                 <field name="total_tonnage"/>
-                <field name="vessel_name"/>
+                <field name="vessel_id"/>
                 <field name="state"/>
                 <templates>
                     <t t-name="kanban-box">
@@ -151,20 +151,20 @@
                             </div>
                             <div class="o_kanban_record_body">
                                 <div class="mb-1">
-                                    <span class="badge bg-secondary rounded-pill">
+                                    <span class="badge text-bg-secondary rounded-pill">
                                         <field name="container_type"/>
                                     </span>
                                 </div>
                                 <div class="mt-2 d-flex gap-2 flex-wrap">
-                                    <span class="badge bg-primary rounded-pill">
+                                    <span class="badge text-bg-primary rounded-pill">
                                         <i class="fa fa-cubes me-1"/><t t-out="record.lot_count.raw_value"/> Lots
                                     </span>
-                                    <span class="badge bg-info rounded-pill">
+                                    <span class="badge text-bg-info rounded-pill">
                                         <i class="fa fa-balance-scale me-1"/><t t-out="record.total_tonnage.raw_value"/> T
                                     </span>
                                 </div>
-                                <div t-if="record.vessel_name.value" class="mt-2 text-muted small">
-                                    <i class="fa fa-ship me-1"/> <field name="vessel_name"/>
+                                <div t-if="record.vessel_id.value" class="mt-2 text-muted small">
+                                    <i class="fa fa-ship me-1"/> <field name="vessel_id"/>
                                 </div>
                             </div>
                         </div>
@@ -182,7 +182,7 @@
             <search string="Rechercher conteneurs">
                 <field name="name"/>
                 <field name="seal_number"/>
-                <field name="vessel_name"/>
+                <field name="vessel_id"/>
                 <field name="booking_number"/>
                 <field name="port_loading"/>
                 <field name="port_discharge"/>
@@ -196,8 +196,9 @@
                 <filter string="40'" name="40ft" domain="[('container_type', 'in', ('40', '40hc'))]"/>
                 <group expand="0" string="Grouper par">
                     <filter string="Type" name="type" context="{'group_by': 'container_type'}"/>
-                    <filter string="Navire" name="vessel" context="{'group_by': 'vessel_name'}"/>
+                    <filter string="Navire" name="vessel" context="{'group_by': 'vessel_id'}"/>
                     <filter string="Port déchargement" name="pod" context="{'group_by': 'port_discharge'}"/>
+                    <filter string="Date départ" name="departure" context="{'group_by': 'date_departure'}"/>
                     <filter string="État" name="state" context="{'group_by': 'state'}"/>
                 </group>
             </search>

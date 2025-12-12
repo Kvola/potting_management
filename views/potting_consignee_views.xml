@@ -152,7 +152,7 @@
                                 </div>
                                 <div class="o_kanban_record_bottom mt-2">
                                     <div class="oe_kanban_bottom_left">
-                                        <span t-if="record.potting_transit_order_count.raw_value > 0" class="badge bg-primary rounded-pill">
+                                        <span t-if="record.potting_transit_order_count.raw_value > 0" class="badge text-bg-primary rounded-pill">
                                             <i class="fa fa-truck me-1"/><t t-out="record.potting_transit_order_count.raw_value"/> OT
                                         </span>
                                     </div>

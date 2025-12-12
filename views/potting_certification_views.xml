@@ -81,13 +81,13 @@
                                         <field name="name"/>
                                     </strong>
                                 </div>
-                                <span class="badge bg-primary rounded-pill fs-5 fw-bold">
+                                <span class="badge text-bg-primary rounded-pill fs-5 fw-bold">
                                     <field name="suffix"/>
                                 </span>
                             </div>
                             <div class="o_kanban_record_body">
                                 <div class="text-muted">
-                                    <span class="badge bg-info rounded-pill">
+                                    <span class="badge text-bg-info rounded-pill">
                                         <i class="fa fa-cube me-1"/>
                                         <field name="lot_count"/> lots
                                     </span>
