@@ -292,6 +292,19 @@ class PottingLot(models.Model):
         tracking=True
     )
     
+    # -------------------------------------------------------------------------
+    # QUALITÉ DU CACAO
+    # -------------------------------------------------------------------------
+    cocoa_quality = fields.Selection([
+        ('segregated', 'Segregated'),
+        ('mass_balance', 'Mass Balance'),
+        ('identity_preserve', 'Identity Preserve'),
+    ], string="Qualité du cacao", tracking=True, index=True,
+       help="Type de qualité du cacao utilisé pour ce lot:\n"
+            "- Segregated: Cacao certifié séparé physiquement\n"
+            "- Mass Balance: Système de traçabilité par bilan massique\n"
+            "- Identity Preserve: Traçabilité complète de l'origine")
+    
     # Tolerance for considering lot as full (in percentage)
     FILL_TOLERANCE = 95.0
 

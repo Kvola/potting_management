@@ -18,6 +18,10 @@
                 <field name="has_certification" column_invisible="1"/>
                 <field name="certification_id" string="Certification" optional="show" widget="badge"/>
                 <field name="certification_suffix" string="Suffixe" optional="hide"/>
+                <field name="cocoa_quality" string="Qualité cacao" optional="show" widget="badge"
+                       decoration-info="cocoa_quality == 'segregated'"
+                       decoration-success="cocoa_quality == 'mass_balance'"
+                       decoration-warning="cocoa_quality == 'identity_preserve'"/>
                 <field name="transit_order_id" optional="show"/>
                 <field name="customer_id" optional="show"/>
                 <field name="consignee_id" optional="show"/>
@@ -118,11 +122,12 @@
                             <field name="quality_check" widget="boolean_toggle"/>
                             <field name="quality_note" widget="text" invisible="not quality_check" placeholder="Notes qualité..."/>
                         </group>
-                        <group string="🏅 Certification">
+                        <group string="🏅 Certification &amp; Qualité">
                             <field name="certification_id" options="{'no_create': True}"/>
                             <field name="certification_suffix" readonly="1" class="fw-bold text-primary" invisible="not certification_id"/>
                             <field name="has_certification" widget="boolean_toggle" readonly="1"/>
                             <field name="display_name_with_certification" string="Référence certifiée" readonly="1" class="fw-bold text-success" invisible="not has_certification"/>
+                            <field name="cocoa_quality" widget="radio" options="{'horizontal': true}"/>
                         </group>
                     </group>
                     <notebook>
@@ -171,6 +176,7 @@
                 <field name="has_certification"/>
                 <field name="certification_id"/>
                 <field name="certification_suffix"/>
+                <field name="cocoa_quality"/>
                 <field name="transit_order_id"/>
                 <field name="product_type"/>
                 <field name="target_tonnage"/>
@@ -200,6 +206,10 @@
                             <div class="o_kanban_record_body">
                                 <div class="mb-1 text-muted"><i class="fa fa-truck me-1"/> <field name="transit_order_id"/></div>
                                 <div class="mb-1"><i class="fa fa-cube me-1 text-muted"/> <field name="product_type"/></div>
+                                <div class="mb-1" t-if="record.cocoa_quality.value">
+                                    <i class="fa fa-leaf me-1 text-success"/> 
+                                    <span class="badge bg-info"><field name="cocoa_quality"/></span>
+                                </div>
                                 <div class="mt-2 d-flex gap-2 flex-wrap align-items-center">
                                     <span class="badge bg-primary rounded-pill">
                                         <i class="fa fa-balance-scale me-1"/>
@@ -253,6 +263,10 @@
                 <filter string="Certifiés" name="with_certification" domain="[('has_certification', '=', True)]"/>
                 <filter string="Non certifiés" name="without_certification" domain="[('has_certification', '=', False)]"/>
                 <separator/>
+                <filter string="Segregated" name="segregated" domain="[('cocoa_quality', '=', 'segregated')]"/>
+                <filter string="Mass Balance" name="mass_balance" domain="[('cocoa_quality', '=', 'mass_balance')]"/>
+                <filter string="Identity Preserve" name="identity_preserve" domain="[('cocoa_quality', '=', 'identity_preserve')]"/>
+                <separator/>
                 <filter string="Masse de cacao" name="cocoa_mass" domain="[('product_type', '=', 'cocoa_mass')]"/>
                 <filter string="Beurre de cacao" name="cocoa_butter" domain="[('product_type', '=', 'cocoa_butter')]"/>
                 <filter string="Cake de cacao" name="cocoa_cake" domain="[('product_type', '=', 'cocoa_cake')]"/>
@@ -261,6 +275,7 @@
                     <filter string="OT" name="transit_order" context="{'group_by': 'transit_order_id'}"/>
                     <filter string="Client" name="customer" context="{'group_by': 'customer_id'}"/>
                     <filter string="Certification" name="certification" context="{'group_by': 'certification_id'}"/>
+                    <filter string="Qualité cacao" name="cocoa_quality" context="{'group_by': 'cocoa_quality'}"/>
                     <filter string="Type de produit" name="product_type" context="{'group_by': 'product_type'}"/>
                     <filter string="Conteneur" name="container" context="{'group_by': 'container_id'}"/>
                     <filter string="État" name="state" context="{'group_by': 'state'}"/>
