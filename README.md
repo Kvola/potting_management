@@ -41,7 +41,7 @@ Ce module permet de gérer le flux complet d'empotage des produits semi-finis du
 
 ### 6. Tableaux de bord OWL
 - **Tableau de bord Shipping** : Vue d'ensemble des commandes et OT
-- **Tableau de bord Agent PDG** : Gestion des productions et validations
+- **Tableau de bord Agent Exportation** : Gestion des productions et validations
 
 ## Configuration
 
@@ -78,7 +78,7 @@ Liste configurable des personnes à mettre en copie lors de l'envoi des rapports
 ## Groupes d'utilisateurs
 
 1. **Shipping - Utilisateur** : Création et gestion des commandes et OT
-2. **Agent PDG** : Gestion des lots, productions et validations
+2. **Agent Exportation** : Gestion des lots, productions et validations
 3. **Responsable** : Accès complet au module
 
 ## Installation

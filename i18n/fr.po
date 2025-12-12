@@ -327,8 +327,8 @@ msgstr "Shipping - Utilisateur"
 
 #. module: potting_management
 #: model:res.groups,name:potting_management.group_potting_ceo_agent
-msgid "CEO Agent"
-msgstr "Agent PDG"
+msgid "Export Agent"
+msgstr "Agent Exportation"
 
 #. module: potting_management
 #: model:res.groups,name:potting_management.group_potting_manager

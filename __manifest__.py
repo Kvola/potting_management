@@ -16,7 +16,7 @@
         - Gestion des Ordres de Transit (OT)
         - Génération automatique des lots selon le tonnage
         - Suivi des productions et empotages
-        - Tableaux de bord dédiés (Shipping et Agent PDG)
+        - Tableaux de bord dédiés (Shipping et Agent Exportation)
         - Rapports et envoi par email
     """,
     'author': 'ICP',

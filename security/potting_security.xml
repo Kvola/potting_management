@@ -24,10 +24,10 @@
             <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
         </record>
 
-        <!-- CEO Agent Group -->
+        <!-- Export Agent Group -->
         <record id="group_potting_ceo_agent" model="res.groups">
-            <field name="name">Agent PDG</field>
-            <field name="comment">Agent du PDG - Peut gérer les lots et valider les OT</field>
+            <field name="name">Agent Exportation</field>
+            <field name="comment">Agent Exportation - Peut gérer les lots et valider les OT</field>
             <field name="category_id" ref="module_category_potting"/>
             <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
         </record>

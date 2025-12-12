@@ -7,7 +7,7 @@
     </record>
 
     <record id="action_potting_dashboard_ceo_agent" model="ir.actions.client">
-        <field name="name">📊 Tableau de bord Agent PDG</field>
+        <field name="name">📊 Tableau de bord Agent Exportation</field>
         <field name="tag">potting_ceo_agent_dashboard</field>
     </record>
 
@@ -33,7 +33,7 @@
               groups="potting_management.group_potting_shipping"/>
 
     <menuitem id="menu_potting_dashboard_ceo_agent" 
-              name="👔 Agent PDG" 
+              name="📦 Agent Exportation" 
               parent="menu_potting_dashboards" 
               action="action_potting_dashboard_ceo_agent" 
               sequence="20"

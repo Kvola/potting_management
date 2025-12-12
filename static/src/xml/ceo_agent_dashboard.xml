@@ -6,7 +6,7 @@
             <!-- Header -->
             <div class="dashboard-header">
                 <h1 class="dashboard-title">
-                    <i class="fa fa-tachometer me-2"/>Tableau de bord Agent PDG
+                    <i class="fa fa-tachometer me-2"/>Tableau de bord Agent Exportation
                 </h1>
                 <p class="dashboard-subtitle">Gestion des productions et validations</p>
             </div>
