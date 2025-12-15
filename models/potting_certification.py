@@ -114,6 +114,21 @@ class PottingCertification(models.Model):
         return super().unlink()
 
     # -------------------------------------------------------------------------
+    # ACTION METHODS
+    # -------------------------------------------------------------------------
+    def action_view_lots(self):
+        """Ouvre la liste des lots liés à cette certification"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Lots - %s') % self.name,
+            'res_model': 'potting.lot',
+            'view_mode': 'tree,kanban,form',
+            'domain': [('certification_id', '=', self.id)],
+            'context': {'search_default_certification_id': self.id},
+        }
+
+    # -------------------------------------------------------------------------
     # DISPLAY METHODS
     # -------------------------------------------------------------------------
     def name_get(self):

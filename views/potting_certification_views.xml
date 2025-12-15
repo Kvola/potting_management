@@ -24,8 +24,8 @@
             <form string="Certification">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="%(action_potting_lot)d" type="action" class="oe_stat_button" icon="fa-cube"
-                                context="{'search_default_certification_id': active_id}">
+                        <!-- Utiliser une méthode Python au lieu d'une action directe -->
+                        <button name="action_view_lots" type="object" class="oe_stat_button" icon="fa-cube">
                             <field name="lot_count" widget="statinfo" string="Lots"/>
                         </button>
                     </div>
