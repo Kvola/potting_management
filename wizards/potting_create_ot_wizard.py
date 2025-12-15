@@ -194,7 +194,7 @@ class PottingCreateOTWizard(models.TransientModel):
             'product_type': self.product_type,
             'product_id': self.product_id.id if self.product_id else False,
             'tonnage': self.tonnage,
-            'vessel_name': self.vessel_name,
+            'vessel_id': self.vessel_id.id if self.vessel_id else False,  # ✅ Corrigé
             'pod': self.pod,
             'container_size': self.container_size,
             'booking_number': self.booking_number,
@@ -224,7 +224,7 @@ class PottingCreateOTWizard(models.TransientModel):
             'context': {
                 'default_customer_order_id': self.customer_order_id.id,
                 'default_consignee_id': self.consignee_id.id,
-                'default_vessel_name': self.vessel_name,
+                'default_vessel_id': self.vessel_id.id if self.vessel_id else False,  # ✅ Corrigé
                 'default_pod': self.pod,
                 'default_container_size': self.container_size,
             },
