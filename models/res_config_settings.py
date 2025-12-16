@@ -31,6 +31,50 @@ class ResConfigSettings(models.TransientModel):
         domain="[('is_company', '=', True)]",
         help="Client qui sera sélectionné par défaut lors de la création d'une commande"
     )
+    
+    # =========================================================================
+    # SHIPPING USER OPTIONS
+    # =========================================================================
+    
+    potting_enable_generate_ot_from_order = fields.Boolean(
+        string="Activer la génération d'OT depuis les commandes",
+        config_parameter='potting_management.enable_generate_ot_from_order',
+        default=True,
+        help="Permet aux utilisateurs Shipping de générer automatiquement des OT "
+             "depuis une commande client en fonction du tonnage total."
+    )
+
+    # =========================================================================
+    # DEFAULT OT TONNAGE BY PRODUCT TYPE
+    # =========================================================================
+    
+    potting_default_ot_tonnage_cocoa_mass = fields.Float(
+        string="Tonnage OT par défaut - Masse de cacao (T)",
+        config_parameter='potting_management.default_ot_tonnage_cocoa_mass',
+        default=22.0,
+        help="Tonnage par défaut pour un OT de Masse de cacao lors de la génération automatique"
+    )
+    
+    potting_default_ot_tonnage_cocoa_butter = fields.Float(
+        string="Tonnage OT par défaut - Beurre de cacao (T)",
+        config_parameter='potting_management.default_ot_tonnage_cocoa_butter',
+        default=22.0,
+        help="Tonnage par défaut pour un OT de Beurre de cacao lors de la génération automatique"
+    )
+    
+    potting_default_ot_tonnage_cocoa_cake = fields.Float(
+        string="Tonnage OT par défaut - Cake de cacao (T)",
+        config_parameter='potting_management.default_ot_tonnage_cocoa_cake',
+        default=20.0,
+        help="Tonnage par défaut pour un OT de Cake (Tourteau) de cacao lors de la génération automatique"
+    )
+    
+    potting_default_ot_tonnage_cocoa_powder = fields.Float(
+        string="Tonnage OT par défaut - Poudre de cacao (T)",
+        config_parameter='potting_management.default_ot_tonnage_cocoa_powder',
+        default=22.5,
+        help="Tonnage par défaut pour un OT de Poudre de cacao lors de la génération automatique"
+    )
 
     # =========================================================================
     # MAXIMUM TONNAGE PER LOT BY PRODUCT TYPE
@@ -607,27 +651,34 @@ class ResConfigSettings(models.TransientModel):
         return max_number + 1
 
     @api.model
-    def generate_ot_name(self, product_type=None, campaign_period=None):
+    def generate_ot_name(self, product_type=None, campaign_period=None, customer_ref=None):
         """Generate the next OT name based on campaign year and product type.
         
         Args:
             product_type: One of 'cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder'
             campaign_period: The campaign period (e.g., '2025-2026'). If None, uses default.
+            customer_ref: The customer reference (e.g., 'CLI001'). If provided, will be prefixed.
         
         Returns:
-            str: The complete OT name (e.g., "3734/2025-2026-MA")
+            str: The complete OT name (e.g., "CLI001-3734/2025-2026-MA" or "3734/2025-2026-MA")
         """
         if not product_type:
             # Fallback: generate a generic OT name
             import time
-            return f"{int(time.time()) % 100000}"
+            base_name = f"{int(time.time()) % 100000}"
+            if customer_ref:
+                return f"{customer_ref}-{base_name}"
+            return base_name
         
         campaign_year = campaign_period or self.get_campaign_year()
         product_code = self.get_ot_prefix_for_product(product_type)
         next_number = self.get_next_ot_number_for_product(product_type, campaign_year)
         
-        # Format: NNNN/AAAA-AAAA-XX (ex: 3734/2025-2026-MA)
-        return f"{next_number}/{campaign_year}-{product_code}"
+        # Format: [REF-]NNNN/AAAA-AAAA-XX (ex: CLI001-3734/2025-2026-MA ou 3734/2025-2026-MA)
+        base_ot_name = f"{next_number}/{campaign_year}-{product_code}"
+        if customer_ref:
+            return f"{customer_ref}-{base_ot_name}"
+        return base_ot_name
     
     # =========================================================================
     # ACTION METHODS

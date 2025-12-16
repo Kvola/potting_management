@@ -106,6 +106,15 @@
               action="action_potting_send_report_wizard" 
               sequence="30"/>
 
+    <!-- Reports Menu -->
+    <menuitem id="menu_potting_reports" 
+              name="📊 Rapports" 
+              parent="menu_potting_root" 
+              sequence="30"
+              groups="potting_management.group_potting_ceo_agent"/>
+
+    <!-- Note: Le menu "Rapport quotidien OT" est défini dans potting_daily_report_wizard_views.xml -->
+
     <!-- Configuration Menu -->
     <menuitem id="menu_potting_config"
         name="⚙️ Configuration"

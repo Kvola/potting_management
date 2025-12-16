@@ -176,7 +176,178 @@
         </t>
     </template>
 
-    <!-- Daily Report Template -->
+    <!-- ========================================================================
+         OT DAILY REPORT - Rapport quotidien OT pour le DG
+         ======================================================================== -->
+    
+    <template id="report_ot_daily_document">
+        <t t-call="web.external_layout">
+            <t t-set="doc" t-value="docs[0] if docs else None"/>
+            <t t-if="doc">
+                <t t-set="ot_data_list" t-value="doc.get_ot_data_for_report()"/>
+                <t t-set="ot_range" t-value="doc.get_ot_number_range()"/>
+                
+                <div class="page" style="font-size: 9px;">
+                    <!-- En-tête du rapport -->
+                    <div class="row mb-3">
+                        <div class="col-3">
+                            <div style="color: #8B4513; font-weight: bold; font-size: 11px;">
+                                <span style="color: green;">IVORY</span><br/>
+                                <span style="color: #8B4513;">COCOA</span><br/>
+                                <span style="color: #8B4513;">PRODUCTS</span><br/>
+                                <span style="font-size: 9px;">Côte d'Ivoire</span>
+                            </div>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h2 style="font-size: 22px; font-weight: bold; margin-bottom: 5px;">
+                                OT DAILY REPORT
+                            </h2>
+                            <div style="font-size: 12px;">
+                                <t t-esc="doc.report_date" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
+                            </div>
+                        </div>
+                        <div class="col-3 text-end">
+                            <div style="font-size: 11px;">
+                                <strong>From OT :</strong> <t t-esc="ot_range.get('from', '')"/><br/>
+                                <strong>to :</strong> <t t-esc="ot_range.get('to', '')"/>
+                            </div>
+                            <div class="mt-2" style="font-size: 9px;">
+                                <span style="color: green;">●</span> 100% In TC<br/>
+                                <span style="color: #DAA520;">●</span> 100% Production<br/>
+                                <span style="color: red;">●</span> In Production
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="font-size: 8px; margin-bottom: 10px;">
+                        <span style="color: blue;">P &lt;=&gt; intermediate price</span>
+                    </div>
+                    
+                    <!-- Contenu du rapport - Boucle sur chaque OT -->
+                    <t t-set="lot_counter" t-value="0"/>
+                    <t t-foreach="ot_data_list" t-as="ot">
+                        <t t-set="border_color" t-value="'green' if ot['color_status'] == 'green' else ('#DAA520' if ot['color_status'] == 'yellow' else 'red')"/>
+                        
+                        <!-- En-tête OT -->
+                        <div t-attf-style="border: 2px solid #{border_color}; margin-bottom: 3px; padding: 2px;">
+                            <!-- Ligne titre OT -->
+                            <table style="width: 100%; font-size: 9px; margin-bottom: 2px;">
+                                <tr style="background-color: #f5f5f5;">
+                                    <td style="width: 15%; font-weight: bold;">
+                                        OT N° <t t-esc="ot['ot_number']"/>
+                                    </td>
+                                    <td style="width: 25%; font-weight: bold;">
+                                        <t t-esc="ot['customer_name']"/> / <t t-esc="ot['consignee_name']"/>
+                                    </td>
+                                    <td style="width: 20%;">
+                                        <strong><t t-esc="'{:,.0f}'.format(ot['total_kg'])"/> Kg</strong>
+                                        <span style="margin-left: 10px;">
+                                            <t t-esc="'{:,}'.format(ot['total_units'])"/> <t t-esc="ot['unit_name']"/>
+                                            <t t-if="ot['certification']"> <t t-esc="ot['certification']"/></t>
+                                        </span>
+                                    </td>
+                                    <td style="width: 40%; text-align: right;">
+                                        <strong>Production = <t t-esc="'{:.2f}'.format(ot['progress'])"/>%</strong>
+                                    soit quantité (Kg) de: <strong><t t-esc="'{:,.0f}'.format(ot['current_kg'])"/></strong>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <!-- En-têtes colonnes lots -->
+                        <table style="width: 100%; font-size: 8px; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: #e8e8e8; font-weight: bold;">
+                                    <th style="width: 3%; padding: 2px; border: 1px solid #ccc;">N°</th>
+                                    <th style="width: 4%; padding: 2px; border: 1px solid #ccc;">N°</th>
+                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc;">N° de lot</th>
+                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc;">N° contrat</th>
+                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">N° BL</th>
+                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">Date BL</th>
+                                    <th style="width: 9%; padding: 2px; border: 1px solid #ccc;">N° TC</th>
+                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc;">Nom navire</th>
+                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc;">N° Booking</th>
+                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">ETA Navire</th>
+                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">ETD Navire</th>
+                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">Compagnie</th>
+                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc;">Destination</th>
+                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">Date Empotage</th>
+                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">Fin Production</th>
+                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc; text-align: right;">Quantité</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="ot['lots']" t-as="lot">
+                                    <t t-set="lot_counter" t-value="lot_counter + 1"/>
+                                    <tr>
+                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot_counter"/></td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot_index + 1"/></td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['name']"/></td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['contract_number']"/></td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['bl_number']"/></td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;">
+                                            <t t-if="lot['bl_date']">
+                                                <t t-esc="lot['bl_date']" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
+                                            </t>
+                                        </td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['container_number']"/></td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['vessel_name']"/></td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['booking_number']"/></td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;">
+                                            <t t-if="lot['eta']">
+                                                <t t-esc="lot['eta']" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
+                                            </t>
+                                        </td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;">
+                                            <t t-if="lot['etd']">
+                                                <t t-esc="lot['etd']" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
+                                            </t>
+                                        </td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['shipping_line']"/></td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['destination']"/></td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;">
+                                            <t t-if="lot['date_potted']">
+                                                <t t-esc="lot['date_potted']" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
+                                            </t>
+                                        </td>
+                                        <td style="padding: 2px; border: 1px solid #ccc;">
+                                            <t t-if="lot['date_production_end']">
+                                                <t t-esc="lot['date_production_end']" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
+                                            </t>
+                                        </td>
+                                        <td style="padding: 2px; border: 1px solid #ccc; text-align: right;">
+                                            <t t-esc="'{:,.0f}'.format(lot['quantity_kg'])"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+                
+                <!-- Pied de page avec date et numéro de page -->
+                <div class="row mt-4" style="font-size: 9px;">
+                    <div class="col-4">
+                        <t t-esc="doc.report_date" t-options='{"widget": "date", "format": "EEEE dd MMMM yyyy"}'/>
+                    </div>
+                    <div class="col-4 text-center">
+                        <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%H:%M')"/>
+                    </div>
+                    <div class="col-4 text-end">
+                        Page <span class="page"/> sur <span class="topage"/>
+                    </div>
+                </div>
+            </div>
+        </t>
+        </t><!-- Ferme web.external_layout -->
+    </template>
+
+    <template id="report_ot_daily">
+        <t t-call="web.html_container">
+            <t t-call="potting_management.report_ot_daily_document"/>
+        </t>
+    </template>
+
+    <!-- Ancien template de rapport journalier (conservé pour compatibilité) -->
     <template id="report_potting_daily_document">
         <t t-call="web.external_layout">
             <div class="page">

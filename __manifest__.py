@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Gestion des Empotages',
-    'version': '17.0.1.0.2',
+    'version': '17.0.1.0.3',
     'category': 'Inventory/Logistics',
     'summary': 'Gestion des empotages de produits semi-finis du cacao',
     'description': """
@@ -14,6 +14,7 @@
         Fonctionnalités :
         - Gestion des commandes clients
         - Gestion des Ordres de Transit (OT)
+        - Génération automatique des OT depuis les commandes clients
         - Génération automatique des lots selon le tonnage
         - Suivi des productions et empotages
         - Tableaux de bord dédiés (Shipping et Agent Exportation)
@@ -40,6 +41,8 @@
         'wizards/potting_send_report_wizard_views.xml',
         'wizards/potting_create_ot_wizard_views.xml',
         'wizards/potting_generate_lots_wizard_views.xml',
+        'wizards/potting_generate_ot_from_order_wizard_views.xml',
+        'wizards/potting_daily_report_wizard_views.xml',
         # Views
         'views/res_config_settings_views.xml',
         'views/potting_certification_views.xml',

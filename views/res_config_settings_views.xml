@@ -40,6 +40,91 @@
                                 </div>
                             </div>
                         </setting>
+                        
+                        <setting id="potting_enable_generate_ot_setting" 
+                                 title="Génération automatique d'OT" 
+                                 help="Activer la possibilité de générer plusieurs OT automatiquement depuis une commande client">
+                            <div class="content-group">
+                                <div class="row mt-2">
+                                    <field name="potting_enable_generate_ot_from_order"/>
+                                    <label for="potting_enable_generate_ot_from_order" class="ms-2"/>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12">
+                                        <small class="text-muted fst-italic">
+                                            <i class="fa fa-info-circle me-1"/>Lorsque cette option est activée, les utilisateurs Shipping peuvent générer automatiquement des OT en fonction du tonnage total de la commande client et du tonnage par défaut configuré ci-dessous.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                    
+                    <!-- Tonnage OT par défaut par type de produit -->
+                    <block title="🚛 Tonnage OT par défaut (par type de produit)" name="potting_default_ot_tonnage_config">
+                        <setting id="potting_default_ot_tonnage_mass_setting" 
+                                 title="🍫 Masse de cacao" 
+                                 help="Tonnage par défaut pour un OT de Masse de cacao">
+                            <div class="content-group">
+                                <div class="row mt-2">
+                                    <label string="Tonnage OT (T)" 
+                                           for="potting_default_ot_tonnage_cocoa_mass" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_default_ot_tonnage_cocoa_mass" class="col-lg-2"/>
+                                    <span class="col-lg-1 text-muted">tonnes</span>
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <setting id="potting_default_ot_tonnage_butter_setting" 
+                                 title="🧈 Beurre de cacao" 
+                                 help="Tonnage par défaut pour un OT de Beurre de cacao">
+                            <div class="content-group">
+                                <div class="row mt-2">
+                                    <label string="Tonnage OT (T)" 
+                                           for="potting_default_ot_tonnage_cocoa_butter" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_default_ot_tonnage_cocoa_butter" class="col-lg-2"/>
+                                    <span class="col-lg-1 text-muted">tonnes</span>
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <setting id="potting_default_ot_tonnage_cake_setting" 
+                                 title="🍪 Cake (Tourteau) de cacao" 
+                                 help="Tonnage par défaut pour un OT de Cake de cacao">
+                            <div class="content-group">
+                                <div class="row mt-2">
+                                    <label string="Tonnage OT (T)" 
+                                           for="potting_default_ot_tonnage_cocoa_cake" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_default_ot_tonnage_cocoa_cake" class="col-lg-2"/>
+                                    <span class="col-lg-1 text-muted">tonnes</span>
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <setting id="potting_default_ot_tonnage_powder_setting" 
+                                 title="☕ Poudre de cacao" 
+                                 help="Tonnage par défaut pour un OT de Poudre de cacao">
+                            <div class="content-group">
+                                <div class="row mt-2">
+                                    <label string="Tonnage OT (T)" 
+                                           for="potting_default_ot_tonnage_cocoa_powder" 
+                                           class="col-lg-3 o_light_label"/>
+                                    <field name="potting_default_ot_tonnage_cocoa_powder" class="col-lg-2"/>
+                                    <span class="col-lg-1 text-muted">tonnes</span>
+                                </div>
+                            </div>
+                        </setting>
+                        
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <small class="text-muted fst-italic">
+                                    <i class="fa fa-info-circle me-1"/>Ces valeurs sont utilisées lors de la génération automatique d'OT depuis une commande client. Le tonnage total de la commande sera divisé par le tonnage par défaut pour créer le nombre approprié d'OT.
+                                </small>
+                            </div>
+                        </div>
                     </block>
                     
                     <!-- Tonnage Maximum - Masse de cacao -->

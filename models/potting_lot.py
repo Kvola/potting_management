@@ -305,6 +305,39 @@ class PottingLot(models.Model):
             "- Mass Balance: Système de traçabilité par bilan massique\n"
             "- Identity Preserve: Traçabilité complète de l'origine")
     
+    # -------------------------------------------------------------------------
+    # INFORMATIONS SHIPPING / BL
+    # -------------------------------------------------------------------------
+    contract_number = fields.Char(
+        string="N° Contrat",
+        tracking=True,
+        help="Numéro du contrat associé à ce lot"
+    )
+    
+    bl_number = fields.Char(
+        string="N° BL",
+        tracking=True,
+        help="Numéro du Bill of Lading (Connaissement)"
+    )
+    
+    bl_date = fields.Date(
+        string="Date BL",
+        tracking=True,
+        help="Date du Bill of Lading"
+    )
+    
+    destination = fields.Char(
+        string="Destination",
+        tracking=True,
+        help="Destination finale du lot"
+    )
+    
+    date_production_end = fields.Date(
+        string="Fin Production",
+        tracking=True,
+        help="Date de fin de production du lot"
+    )
+    
     # Tolerance for considering lot as full (in percentage)
     FILL_TOLERANCE = 95.0
 

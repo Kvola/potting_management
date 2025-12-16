@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Daily Report Wizard Form View -->
+    <record id="potting_daily_report_wizard_form" model="ir.ui.view">
+        <field name="name">potting.daily.report.wizard.form</field>
+        <field name="model">potting.daily.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Rapport quotidien OT">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <span class="fa fa-file-pdf-o text-danger"/> OT Daily Report
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group string="📅 Période du rapport">
+                            <field name="report_date"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group string="📧 Destinataires">
+                            <field name="recipient_id" options="{'no_create': True}"/>
+                            <field name="cc_partner_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="include_pdf"/>
+                        </group>
+                    </group>
+                    
+                    <group string="📦 Ordres de Transit sélectionnés">
+                        <field name="ot_count" readonly="1"/>
+                        <field name="transit_order_ids" widget="many2many_tags" readonly="1" options="{'no_create': True}"/>
+                    </group>
+                    
+                    <group string="💬 Message personnalisé">
+                        <field name="note" placeholder="Message optionnel à inclure dans l'email..."/>
+                    </group>
+                    
+                    <separator string="Aperçu du rapport"/>
+                    <field name="preview_info" readonly="1"/>
+                    
+                    <field name="state" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                </sheet>
+                <footer>
+                    <button name="action_preview_report" string="📄 Prévisualiser PDF" type="object" class="btn-secondary"/>
+                    <button name="action_download_pdf" string="⬇️ Télécharger PDF" type="object" class="btn-secondary"/>
+                    <button name="action_send_email" string="📧 Envoyer au DG" type="object" class="btn-primary"/>
+                    <button string="Fermer" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open the wizard -->
+    <record id="action_potting_daily_report_wizard" model="ir.actions.act_window">
+        <field name="name">Rapport quotidien OT</field>
+        <field name="res_model">potting.daily.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{}</field>
+        <field name="groups_id" eval="[(4, ref('potting_management.group_potting_ceo_agent'))]"/>
+    </record>
+    
+    <!-- Menu item for the report (accessible to CEO Agent) - sous le menu Validation -->
+    <menuitem 
+        id="menu_potting_daily_report"
+        name="📊 Rapport quotidien OT"
+        parent="potting_management.menu_potting_ceo_agent"
+        action="action_potting_daily_report_wizard"
+        sequence="40"
+        groups="potting_management.group_potting_ceo_agent"/>
+
+</odoo>

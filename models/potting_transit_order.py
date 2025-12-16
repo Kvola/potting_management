@@ -30,6 +30,14 @@ class PottingTransitOrder(models.Model):
         default=lambda self: _('Nouveau')
     )
     
+    ot_reference = fields.Char(
+        string="Référence OT",
+        tracking=True,
+        index=True,
+        copy=True,
+        help="Référence alternative de l'OT (ex: OT10532)"
+    )
+    
     # Champ technique pour savoir si l'OT a été créé depuis une commande
     is_created_from_order = fields.Boolean(
         string="Créé depuis une commande",
@@ -305,17 +313,22 @@ class PottingTransitOrder(models.Model):
                 # Le nom de l'OT dépend du type de produit et de la campagne de la commande
                 product_type = vals.get('product_type')
                 
-                # Récupérer la campagne depuis la commande
+                # Récupérer la campagne et la référence client depuis la commande
                 campaign_period = None
+                customer_ref = None
                 customer_order_id = vals.get('customer_order_id')
                 if customer_order_id:
                     customer_order = self.env['potting.customer.order'].browse(customer_order_id)
                     if customer_order.exists():
                         campaign_period = customer_order.campaign_period
+                        # Récupérer la référence du client si elle existe
+                        if customer_order.customer_id and customer_order.customer_id.ref:
+                            customer_ref = customer_order.customer_id.ref
                 
                 vals['name'] = self.env['res.config.settings'].generate_ot_name(
                     product_type, 
-                    campaign_period
+                    campaign_period,
+                    customer_ref
                 )
             
             # Marquer si l'OT est créé depuis le contexte d'une commande

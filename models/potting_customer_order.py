@@ -356,6 +356,35 @@ class PottingCustomerOrder(models.Model):
                 'default_customer_order_id': self.id,
             },
         }
+    
+    def action_open_generate_ot_wizard(self):
+        """Ouvrir le wizard de génération automatique d'OT.
+        
+        Cette fonctionnalité est optionnelle et peut être désactivée
+        dans les paramètres du module.
+        """
+        self.ensure_one()
+        
+        # Vérifier si la fonctionnalité est activée
+        ICP = self.env['ir.config_parameter'].sudo()
+        is_enabled = ICP.get_param('potting_management.enable_generate_ot_from_order', 'True')
+        
+        if is_enabled.lower() not in ('true', '1'):
+            raise UserError(_(
+                "La génération automatique d'OT est désactivée. "
+                "Veuillez contacter votre administrateur pour l'activer dans la configuration du module."
+            ))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _("Générer des Ordres de Transit"),
+            'res_model': 'potting.generate.ot.from.order.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_customer_order_id': self.id,
+            },
+        }
 
     # -------------------------------------------------------------------------
     # BUSINESS METHODS

@@ -133,6 +133,13 @@
                             <field name="quality_check" widget="boolean_toggle"/>
                             <field name="quality_note" widget="text" invisible="not quality_check" placeholder="Notes qualité..."/>
                         </group>
+                        <group string="📄 Informations Shipping / BL">
+                            <field name="contract_number"/>
+                            <field name="bl_number"/>
+                            <field name="bl_date"/>
+                            <field name="destination"/>
+                            <field name="date_production_end"/>
+                        </group>
                     </group>
                     <notebook>
                         <page string="Productions" name="productions">
