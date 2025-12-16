@@ -51,28 +51,28 @@ class ResConfigSettings(models.TransientModel):
     potting_default_ot_tonnage_cocoa_mass = fields.Float(
         string="Tonnage OT par défaut - Masse de cacao (T)",
         config_parameter='potting_management.default_ot_tonnage_cocoa_mass',
-        default=22.0,
+        default=150.0,
         help="Tonnage par défaut pour un OT de Masse de cacao lors de la génération automatique"
     )
     
     potting_default_ot_tonnage_cocoa_butter = fields.Float(
         string="Tonnage OT par défaut - Beurre de cacao (T)",
         config_parameter='potting_management.default_ot_tonnage_cocoa_butter',
-        default=22.0,
+        default=110.0,
         help="Tonnage par défaut pour un OT de Beurre de cacao lors de la génération automatique"
     )
     
     potting_default_ot_tonnage_cocoa_cake = fields.Float(
         string="Tonnage OT par défaut - Cake de cacao (T)",
         config_parameter='potting_management.default_ot_tonnage_cocoa_cake',
-        default=20.0,
+        default=200.0,
         help="Tonnage par défaut pour un OT de Cake (Tourteau) de cacao lors de la génération automatique"
     )
     
     potting_default_ot_tonnage_cocoa_powder = fields.Float(
         string="Tonnage OT par défaut - Poudre de cacao (T)",
         config_parameter='potting_management.default_ot_tonnage_cocoa_powder',
-        default=22.5,
+        default=45.0,
         help="Tonnage par défaut pour un OT de Poudre de cacao lors de la génération automatique"
     )
 
