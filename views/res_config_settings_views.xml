@@ -41,6 +41,27 @@
                             </div>
                         </setting>
                         
+                        <setting id="potting_ceo_setting" 
+                                 title="PDG / Directeur Général" 
+                                 help="Le PDG/Directeur Général qui recevra les rapports quotidiens OT par défaut">
+                            <div class="content-group">
+                                <div class="row mt-2">
+                                    <label string="PDG" for="potting_ceo_partner_id" class="col-lg-3 o_light_label"/>
+                                    <field name="potting_ceo_partner_id" 
+                                           placeholder="Sélectionner le PDG..."
+                                           options="{'no_create': True}"
+                                           class="col-lg-6"/>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12">
+                                        <small class="text-muted fst-italic">
+                                            <i class="fa fa-info-circle me-1"/>Ce contact sera pré-sélectionné comme destinataire par défaut lors de la génération des rapports quotidiens OT.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </setting>
+                        
                         <setting id="potting_enable_generate_ot_setting" 
                                  title="Génération automatique d'OT" 
                                  help="Activer la possibilité de générer plusieurs OT automatiquement depuis une commande client">

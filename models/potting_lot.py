@@ -27,8 +27,8 @@ class PottingLot(models.Model):
 
     # SQL Constraints
     _sql_constraints = [
-        ('name_company_uniq', 'unique(name, company_id)', 
-         'Le numéro de lot doit être unique par société!'),
+        ('name_uniq', 'unique(name)', 
+         'Le numéro de lot doit être unique!'),
         ('target_tonnage_positive', 'CHECK(target_tonnage > 0)', 
          'Le tonnage cible doit être supérieur à 0!'),
     ]

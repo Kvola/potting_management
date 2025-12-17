@@ -6,3 +6,4 @@ from . import potting_create_ot_wizard
 from . import potting_generate_lots_wizard
 from . import potting_generate_ot_from_order_wizard
 from . import potting_daily_report_wizard
+from . import potting_create_delivery_note_wizard

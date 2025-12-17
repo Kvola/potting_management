@@ -32,6 +32,10 @@
                 <field name="potted_lot_count"/>
                 <field name="progress_percentage" widget="progressbar"/>
                 <field name="booking_number" optional="hide"/>
+                <field name="delivery_status" widget="badge" optional="show"
+                       decoration-warning="delivery_status == 'partial'"
+                       decoration-success="delivery_status == 'fully_delivered'"
+                       decoration-muted="delivery_status == 'not_delivered'"/>
                 <field name="state" widget="badge" 
                        decoration-info="state == 'draft'" 
                        decoration-primary="state == 'lots_generated'" 
@@ -50,6 +54,7 @@
             <form string="Ordre de Transit">
                 <header>
                     <button name="action_generate_lots" type="object" string="Générer les lots" class="btn-primary" invisible="state != 'draft'" groups="potting_management.group_potting_shipping"/>
+                    <button name="action_create_delivery_note" type="object" string="Créer un BL" class="btn-secondary" invisible="state not in ('in_progress', 'ready_validation', 'done')" groups="potting_management.group_potting_shipping"/>
                     <button name="action_start_production" type="object" string="Démarrer production" invisible="state != 'lots_generated'" groups="potting_management.group_potting_ceo_agent"/>
                     <button name="action_mark_ready" type="object" string="Prêt pour validation" invisible="state != 'in_progress'" groups="potting_management.group_potting_ceo_agent"/>
                     <button name="action_validate" type="object" string="Valider" class="btn-success" invisible="state != 'ready_validation'" groups="potting_management.group_potting_ceo_agent"/>
@@ -65,9 +70,14 @@
                         <button name="action_view_potted_lots" type="object" class="oe_stat_button" icon="fa-check-circle">
                             <field name="potted_lot_count" widget="statinfo" string="Empotés"/>
                         </button>
+                        <button name="action_view_delivery_notes" type="object" class="oe_stat_button" icon="fa-truck">
+                            <field name="delivery_note_count" widget="statinfo" string="Bons de Livraison"/>
+                        </button>
                     </div>
                     <widget name="web_ribbon" title="Validé" bg_color="bg-success" invisible="state != 'done'"/>
                     <widget name="web_ribbon" title="Annulé" bg_color="bg-danger" invisible="state != 'cancelled'"/>
+                    <widget name="web_ribbon" title="Livraison partielle" bg_color="bg-warning" invisible="delivery_status != 'partial'"/>
+                    <widget name="web_ribbon" title="Entièrement livré" bg_color="bg-info" invisible="delivery_status != 'fully_delivered'"/>
                     <div class="oe_title">
                         <label for="name" string="Numéro OT"/>
                         <h1>
@@ -113,6 +123,17 @@
                                 <span class="text-muted">empotés</span>
                             </div>
                             <field name="progress_percentage" widget="progressbar" options="{'editable': false}"/>
+                        </group>
+                    </group>
+                    <group invisible="delivery_note_count == 0">
+                        <group string="🚚 Statut de livraison">
+                            <field name="delivery_status" widget="badge" 
+                                   decoration-warning="delivery_status == 'partial'"
+                                   decoration-success="delivery_status == 'fully_delivered'"
+                                   decoration-muted="delivery_status == 'not_delivered'"/>
+                            <field name="delivered_lot_count"/>
+                            <field name="delivered_tonnage"/>
+                            <field name="remaining_to_deliver_tonnage"/>
                         </group>
                     </group>
                     <notebook>
@@ -225,6 +246,10 @@
                 <filter string="Beurre de cacao" name="cocoa_butter" domain="[('product_type', '=', 'cocoa_butter')]"/>
                 <filter string="Cake de cacao" name="cocoa_cake" domain="[('product_type', '=', 'cocoa_cake')]"/>
                 <filter string="Poudre de cacao" name="cocoa_powder" domain="[('product_type', '=', 'cocoa_powder')]"/>
+                <separator/>
+                <filter string="Non livrés" name="not_delivered" domain="[('delivery_status', '=', 'not_delivered')]"/>
+                <filter string="Livraison partielle" name="partial_delivery" domain="[('delivery_status', '=', 'partial')]"/>
+                <filter string="Entièrement livrés" name="fully_delivered" domain="[('delivery_status', '=', 'fully_delivered')]"/>
                 <group expand="0" string="Grouper par">
                     <filter string="Commande" name="order" context="{'group_by': 'customer_order_id'}"/>
                     <filter string="Client" name="customer" context="{'group_by': 'customer_id'}"/>
@@ -234,6 +259,7 @@
                     <filter string="Port" name="pod" context="{'group_by': 'pod'}"/>
                     <filter string="Campagne" name="campaign" context="{'group_by': 'campaign_period'}"/>
                     <filter string="État" name="state" context="{'group_by': 'state'}"/>
+                    <filter string="Statut livraison" name="delivery_status" context="{'group_by': 'delivery_status'}"/>
                 </group>
             </search>
         </field>

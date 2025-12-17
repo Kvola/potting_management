@@ -26,7 +26,14 @@
                         </group>
                     </group>
                     
-                    <group string="📦 Ordres de Transit sélectionnés">
+                    <group string="Options de filtrage">
+                        <field name="exclude_fully_delivered"/>
+                        <div class="text-muted" colspan="2">
+                            <small><i class="fa fa-info-circle"/> Les OT entièrement livrés ne seront pas inclus dans le rapport si cette option est activée.</small>
+                        </div>
+                    </group>
+                    
+                    <group string="Ordres de Transit sélectionnés">
                         <field name="ot_count" readonly="1"/>
                         <field name="transit_order_ids" widget="many2many_tags" readonly="1" options="{'no_create': True}"/>
                     </group>
@@ -44,7 +51,7 @@
                 <footer>
                     <button name="action_preview_report" string="📄 Prévisualiser PDF" type="object" class="btn-secondary"/>
                     <button name="action_download_pdf" string="⬇️ Télécharger PDF" type="object" class="btn-secondary"/>
-                    <button name="action_send_email" string="📧 Envoyer au DG" type="object" class="btn-primary"/>
+                    <button name="action_send_email" string="📧 Envoyer au PDG" type="object" class="btn-primary"/>
                     <button string="Fermer" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

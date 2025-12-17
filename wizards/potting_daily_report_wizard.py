@@ -70,11 +70,25 @@ class PottingDailyReportWizard(models.TransientModel):
     
     recipient_id = fields.Many2one(
         'res.partner',
-        string="Destinataire (DG)",
+        string="Destinataire (PDG)",
         required=True,
         domain="[('email', '!=', False)]",
-        help="Le Directeur Général destinataire du rapport"
+        help="Le PDG/Directeur Général destinataire du rapport",
+        default=lambda self: self._get_default_ceo()
     )
+    
+    @api.model
+    def _get_default_ceo(self):
+        """Get default CEO from settings."""
+        ceo_id = self.env['ir.config_parameter'].sudo().get_param(
+            'potting_management.ceo_partner_id', False
+        )
+        if ceo_id:
+            try:
+                return int(ceo_id)
+            except (ValueError, TypeError):
+                return False
+        return False
     
     cc_partner_ids = fields.Many2many(
         'res.partner',
@@ -103,6 +117,12 @@ class PottingDailyReportWizard(models.TransientModel):
         string="Aperçu du rapport"
     )
     
+    exclude_fully_delivered = fields.Boolean(
+        string="Exclure les OT entièrement livrés",
+        default=True,
+        help="Si coché, les OT dont tous les lots ont été livrés ne seront pas inclus dans le rapport"
+    )
+    
     company_id = fields.Many2one(
         'res.company',
         string="Société",
@@ -119,7 +139,7 @@ class PottingDailyReportWizard(models.TransientModel):
     # COMPUTE METHODS
     # =========================================================================
     
-    @api.depends('date_from', 'date_to')
+    @api.depends('date_from', 'date_to', 'exclude_fully_delivered')
     def _compute_transit_order_ids(self):
         for wizard in self:
             domain = [('state', 'not in', ['draft', 'cancelled'])]
@@ -127,6 +147,10 @@ class PottingDailyReportWizard(models.TransientModel):
                 domain.append(('date_created', '>=', wizard.date_from))
             if wizard.date_to:
                 domain.append(('date_created', '<=', wizard.date_to))
+            
+            # Exclude fully delivered OTs if option is enabled
+            if wizard.exclude_fully_delivered:
+                domain.append(('delivery_status', '!=', 'fully_delivered'))
             
             orders = self.env['potting.transit.order'].search(domain, order='name asc')
             wizard.transit_order_ids = orders
@@ -162,6 +186,11 @@ class PottingDailyReportWizard(models.TransientModel):
             in_prod_100 = len(wizard.transit_order_ids.filtered(lambda o: o.progress_percentage >= 100 and o.state != 'done'))
             in_prod = len(wizard.transit_order_ids.filtered(lambda o: o.progress_percentage < 100 and o.state not in ['done', 'cancelled']))
             
+            # Compter par statut de livraison
+            partial_delivery_count = len(wizard.transit_order_ids.filtered(lambda o: o.delivery_status == 'partial'))
+            fully_delivered_count = len(wizard.transit_order_ids.filtered(lambda o: o.delivery_status == 'fully_delivered'))
+            not_delivered_count = len(wizard.transit_order_ids.filtered(lambda o: o.delivery_status == 'not_delivered'))
+            
             # Trouver la plage de numéros OT
             ot_numbers = []
             for ot in wizard.transit_order_ids:
@@ -195,7 +224,13 @@ class PottingDailyReportWizard(models.TransientModel):
                         <li><span style="color: #DAA520;">●</span> <strong>100% Production:</strong> {in_prod_100} OT</li>
                         <li><span style="color: red;">●</span> <strong>In Production:</strong> {in_prod} OT</li>
                     </ul>
-                    <h4>👥 Clients ({len(ot_by_customer)})</h4>
+                    <h4>� Statut de livraison</h4>
+                    <ul>
+                        <li><span style="color: orange;">●</span> <strong>Livraison partielle:</strong> {partial_delivery_count} OT</li>
+                        <li><span style="color: gray;">●</span> <strong>Non livrés:</strong> {not_delivered_count} OT</li>
+                        <li><span style="color: blue;">●</span> <strong>Entièrement livrés:</strong> {fully_delivered_count} OT</li>
+                    </ul>
+                    <h4>�👥 Clients ({len(ot_by_customer)})</h4>
                     <ul>
                         {"".join([f"<li>{c[0]} / {c[1]}: {len(ots)} OT</li>" for c, ots in list(ot_by_customer.items())[:5]])}
                         {"<li>...</li>" if len(ot_by_customer) > 5 else ""}
@@ -413,6 +448,12 @@ class PottingDailyReportWizard(models.TransientModel):
                 'current_kg': current_kg,
                 'color_status': color_status,
                 'lots': lots_data,
+                # Delivery status info
+                'delivery_status': ot.delivery_status,
+                'is_partial_delivery': ot.delivery_status == 'partial',
+                'delivered_lot_count': ot.delivered_lot_count,
+                'delivered_tonnage_kg': ot.delivered_tonnage * 1000,
+                'remaining_to_deliver_kg': ot.remaining_to_deliver_tonnage * 1000,
             }
             result.append(ot_data)
         

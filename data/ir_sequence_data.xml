@@ -28,5 +28,14 @@
             <field name="padding">5</field>
             <field name="company_id" eval="False"/>
         </record>
+
+        <!-- Sequence for Delivery Notes -->
+        <record id="seq_potting_delivery_note" model="ir.sequence">
+            <field name="name">Bon de Livraison empotage</field>
+            <field name="code">potting.delivery.note</field>
+            <field name="prefix">BL/%(year)s/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
     </data>
 </odoo>

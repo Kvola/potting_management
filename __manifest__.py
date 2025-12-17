@@ -43,6 +43,7 @@
         'wizards/potting_generate_lots_wizard_views.xml',
         'wizards/potting_generate_ot_from_order_wizard_views.xml',
         'wizards/potting_daily_report_wizard_views.xml',
+        'wizards/potting_create_delivery_note_wizard_views.xml',
         # Views
         'views/res_config_settings_views.xml',
         'views/potting_certification_views.xml',
@@ -50,6 +51,7 @@
         'views/potting_transit_order_views.xml',
         'views/potting_lot_views.xml',
         'views/potting_container_views.xml',
+        'views/potting_delivery_note_views.xml',
         'views/potting_consignee_views.xml',
         'views/potting_menu_views.xml',
         # Reports (must be before mail templates)

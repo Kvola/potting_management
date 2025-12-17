@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard Form View -->
+    <record id="potting_create_delivery_note_wizard_view_form" model="ir.ui.view">
+        <field name="name">potting.create.delivery.note.wizard.form</field>
+        <field name="model">potting.create.delivery.note.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Créer un Bon de Livraison">
+                <group>
+                    <group string="📋 Ordre de Transit">
+                        <field name="transit_order_id" readonly="1"/>
+                        <field name="customer_id" readonly="1"/>
+                        <field name="consignee_id" readonly="1"/>
+                        <field name="product_type_display" string="Produit"/>
+                        <field name="ot_total_tonnage" string="Tonnage OT"/>
+                        <field name="ot_lot_count" string="Lots OT"/>
+                    </group>
+                    <group string="📊 Sélection">
+                        <field name="selected_lot_count" class="fw-bold text-primary"/>
+                        <field name="selected_tonnage" class="fw-bold text-success"/>
+                        <field name="selected_units"/>
+                    </group>
+                </group>
+                
+                <separator string="🚚 Informations de livraison"/>
+                <group>
+                    <group>
+                        <field name="date_delivery" required="1"/>
+                        <field name="bl_number"/>
+                        <field name="bl_date"/>
+                        <field name="contract_number"/>
+                    </group>
+                    <group>
+                        <field name="destination"/>
+                        <field name="transport_mode"/>
+                        <field name="carrier_name"/>
+                    </group>
+                </group>
+                
+                <separator string="📦 Sélection des lots"/>
+                <div class="mb-3">
+                    <button name="action_select_all_lots" type="object" 
+                            string="✅ Tout sélectionner" class="btn-secondary me-2"/>
+                    <button name="action_deselect_all_lots" type="object" 
+                            string="❌ Tout désélectionner" class="btn-secondary me-2"/>
+                    <button name="action_select_potted_lots" type="object" 
+                            string="📦 Lots empotés uniquement" class="btn-secondary"/>
+                </div>
+                
+                <field name="available_lot_ids" invisible="1"/>
+                <field name="lot_ids" 
+                       domain="[('id', 'in', available_lot_ids)]"
+                       widget="many2many_checkboxes"
+                       options="{'no_create': True}">
+                    <tree string="Lots disponibles" create="0" delete="0">
+                        <field name="name"/>
+                        <field name="certification_id" optional="show"/>
+                        <field name="current_tonnage" sum="Total"/>
+                        <field name="current_units" sum="Total"/>
+                        <field name="container_id"/>
+                        <field name="state" widget="badge"/>
+                    </tree>
+                </field>
+                
+                <separator string="📝 Notes"/>
+                <field name="note" placeholder="Notes supplémentaires..."/>
+                
+                <footer>
+                    <button name="action_create_delivery_note" type="object" 
+                            string="Créer le Bon de Livraison" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Wizard Action -->
+    <record id="action_potting_create_delivery_note_wizard" model="ir.actions.act_window">
+        <field name="name">Créer un Bon de Livraison</field>
+        <field name="res_model">potting.create.delivery.note.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="potting_management.model_potting_transit_order"/>
+    </record>
+</odoo>

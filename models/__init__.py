@@ -9,3 +9,4 @@ from . import potting_container
 from . import potting_production_line
 from . import product_product
 from . import potting_consignee
+from . import potting_delivery_note

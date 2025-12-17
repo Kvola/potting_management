@@ -163,6 +163,14 @@ class ResConfigSettings(models.TransientModel):
         help="Liste des personnes à mettre en copie par défaut lors de l'envoi des rapports"
     )
     
+    potting_ceo_partner_id = fields.Many2one(
+        'res.partner',
+        string="PDG (Directeur Général)",
+        config_parameter='potting_management.ceo_partner_id',
+        domain="[('email', '!=', False)]",
+        help="Le PDG/Directeur Général qui recevra les rapports quotidiens OT"
+    )
+    
     # =========================================================================
     # NOTIFICATION SETTINGS
     # =========================================================================
@@ -635,8 +643,9 @@ class ResConfigSettings(models.TransientModel):
         max_number = 0
         for ot in existing_ots:
             if ot.name and search_pattern in ot.name:
-                # Extraire le numéro au début (ex: "3734/2025-2026-MA" -> 3734)
-                match = re.search(r'^(\d+)/', ot.name)
+                # Extraire le numéro (ex: "3734/2025-2026-MA" -> 3734 ou "CLI001-3734/2025-2026-MA" -> 3734)
+                # Pattern modifié pour gérer le préfixe client optionnel
+                match = re.search(r'(?:^|-)(\d+)/', ot.name)
                 if match:
                     try:
                         num = int(match.group(1))

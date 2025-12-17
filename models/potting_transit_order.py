@@ -14,8 +14,8 @@ class PottingTransitOrder(models.Model):
 
     # SQL Constraints
     _sql_constraints = [
-        ('name_company_uniq', 'unique(name, company_id)', 
-         'Le numéro OT doit être unique par société!'),
+        ('name_uniq', 'unique(name)', 
+         'Le numéro OT doit être unique!'),
         ('tonnage_positive', 'CHECK(tonnage > 0)', 
          'Le tonnage doit être supérieur à 0!'),
     ]
@@ -151,6 +151,19 @@ class PottingTransitOrder(models.Model):
         copy=False
     )
     
+    delivery_note_ids = fields.One2many(
+        'potting.delivery.note',
+        'transit_order_id',
+        string="Bons de Livraison",
+        copy=False
+    )
+    
+    delivery_note_count = fields.Integer(
+        string="Nombre de BL",
+        compute='_compute_delivery_note_count',
+        store=True
+    )
+    
     lot_count = fields.Integer(
         string="Nombre de lots",
         compute='_compute_lot_count',
@@ -178,6 +191,41 @@ class PottingTransitOrder(models.Model):
     current_tonnage = fields.Float(
         string="Tonnage actuel (T)",
         compute='_compute_current_tonnage',
+        store=True,
+        digits='Product Unit of Measure'
+    )
+    
+    # -------------------------------------------------------------------------
+    # DELIVERY STATUS FIELDS
+    # -------------------------------------------------------------------------
+    delivery_status = fields.Selection([
+        ('not_delivered', 'Non livré'),
+        ('partial', 'Livraison partielle'),
+        ('fully_delivered', 'Entièrement livré'),
+    ], string="Statut de livraison", 
+       compute='_compute_delivery_status', 
+       store=True, 
+       index=True,
+       help="Statut de livraison basé sur les bons de livraison")
+    
+    delivered_lot_count = fields.Integer(
+        string="Lots livrés",
+        compute='_compute_delivery_status',
+        store=True,
+        help="Nombre de lots ayant fait l'objet d'au moins un bon de livraison"
+    )
+    
+    delivered_tonnage = fields.Float(
+        string="Tonnage livré (T)",
+        compute='_compute_delivery_status',
+        store=True,
+        digits='Product Unit of Measure',
+        help="Tonnage total des lots livrés"
+    )
+    
+    remaining_to_deliver_tonnage = fields.Float(
+        string="Tonnage restant à livrer (T)",
+        compute='_compute_delivery_status',
         store=True,
         digits='Product Unit of Measure'
     )
@@ -256,6 +304,39 @@ class PottingTransitOrder(models.Model):
             order.lot_count = len(lots)
             order.potted_lot_count = len(lots.filtered(lambda l: l.state == 'potted'))
             order.pending_lot_count = len(lots.filtered(lambda l: l.state in ('draft', 'in_production', 'ready')))
+
+    @api.depends('delivery_note_ids')
+    def _compute_delivery_note_count(self):
+        for order in self:
+            order.delivery_note_count = len(order.delivery_note_ids)
+
+    @api.depends('delivery_note_ids', 'delivery_note_ids.state', 'delivery_note_ids.lot_ids', 'lot_ids', 'current_tonnage')
+    def _compute_delivery_status(self):
+        """Compute delivery status based on delivery notes."""
+        for order in self:
+            # Get all delivered lots (from confirmed or delivered BLs)
+            delivered_bls = order.delivery_note_ids.filtered(
+                lambda bl: bl.state in ('confirmed', 'delivered')
+            )
+            delivered_lot_ids = set()
+            for bl in delivered_bls:
+                delivered_lot_ids.update(bl.lot_ids.ids)
+            
+            delivered_lots = order.lot_ids.filtered(lambda l: l.id in delivered_lot_ids)
+            order.delivered_lot_count = len(delivered_lots)
+            order.delivered_tonnage = sum(delivered_lots.mapped('current_tonnage'))
+            order.remaining_to_deliver_tonnage = order.current_tonnage - order.delivered_tonnage
+            
+            # Determine delivery status
+            total_lots = len(order.lot_ids)
+            if total_lots == 0:
+                order.delivery_status = 'not_delivered'
+            elif len(delivered_lot_ids) == 0:
+                order.delivery_status = 'not_delivered'
+            elif len(delivered_lot_ids) >= total_lots:
+                order.delivery_status = 'fully_delivered'
+            else:
+                order.delivery_status = 'partial'
 
     @api.depends('lot_ids.name')
     def _compute_lot_range(self):
@@ -543,6 +624,42 @@ class PottingTransitOrder(models.Model):
             'res_model': 'potting.lot',
             'view_mode': 'tree,kanban,form',
             'domain': [('transit_order_id', '=', self.id), ('state', '=', 'potted')],
+        }
+
+    def action_create_delivery_note(self):
+        """Open wizard to create a delivery note with lot selection."""
+        self.ensure_one()
+        
+        if self.state not in ('in_progress', 'ready_validation', 'done'):
+            raise UserError(_("Les bons de livraison ne peuvent être créés que pour les OT en cours, prêts ou validés."))
+        
+        if not self.lot_ids:
+            raise UserError(_("Aucun lot disponible pour créer un bon de livraison."))
+        
+        return {
+            'name': _('Créer un Bon de Livraison'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'potting.create.delivery.note.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_id': self.id,
+                'active_model': 'potting.transit.order',
+            },
+        }
+
+    def action_view_delivery_notes(self):
+        """View delivery notes for this transit order."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Bons de Livraison - %s') % self.name,
+            'res_model': 'potting.delivery.note',
+            'view_mode': 'tree,kanban,form',
+            'domain': [('transit_order_id', '=', self.id)],
+            'context': {
+                'default_transit_order_id': self.id,
+            },
         }
 
     # -------------------------------------------------------------------------
