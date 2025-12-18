@@ -360,6 +360,46 @@
     flex-wrap: wrap;
 }
 
+/* Campaign Banner */
+.o_potting_dashboard .campaign-banner {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #2980b9;
+}
+
+/* Outline buttons */
+.o_potting_dashboard .btn-outline-primary {
+    color: #2980b9;
+    border: 1px solid #2980b9;
+    background: transparent;
+}
+
+.o_potting_dashboard .btn-outline-primary:hover {
+    background: #2980b9;
+    color: #fff;
+}
+
+/* List group items */
+.o_potting_dashboard .list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 0.875rem 1rem;
+}
+
+.o_potting_dashboard .list-group-item:first-child {
+    border-top: none;
+}
+
+.o_potting_dashboard .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Text utilities */
+.o_potting_dashboard .text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     .o_potting_dashboard {
@@ -372,6 +412,11 @@
 
     .o_potting_dashboard .dashboard-title {
         font-size: 1.25rem;
+    }
+
+    .o_potting_dashboard .campaign-banner .row > div {
+        text-align: center !important;
+        margin-bottom: 0.5rem;
     }
 }
 

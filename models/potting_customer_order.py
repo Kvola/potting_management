@@ -5,8 +5,17 @@ from odoo.exceptions import UserError, ValidationError
 
 
 class PottingCustomerOrder(models.Model):
+    """Commande Client / Contrat d'exportation de cacao
+    
+    Le contrat représente une commande client avec:
+    - Un numéro unique (référence)
+    - Un tonnage total
+    - Un prix unitaire et total
+    - Des droits d'exportation
+    - Un lien avec les Ordres de Transit (OT)
+    """
     _name = 'potting.customer.order'
-    _description = 'Commande Client'
+    _description = 'Contrat / Commande Client'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'create_date desc'
     _check_company_auto = True
@@ -14,7 +23,9 @@ class PottingCustomerOrder(models.Model):
     # SQL Constraints
     _sql_constraints = [
         ('name_company_uniq', 'unique(name, company_id)', 
-         'La référence de la commande doit être unique par société!'),
+         'La référence du contrat doit être unique par société!'),
+        ('contract_number_uniq', 'unique(contract_number)', 
+         'Le numéro de contrat doit être unique!'),
     ]
 
     name = fields.Char(
@@ -24,6 +35,14 @@ class PottingCustomerOrder(models.Model):
         readonly=True,
         default=lambda self: _('Nouveau'),
         index=True
+    )
+    
+    contract_number = fields.Char(
+        string="Numéro de contrat",
+        copy=False,
+        tracking=True,
+        index=True,
+        help="Numéro unique du contrat d'exportation"
     )
     
     customer_id = fields.Many2one(
@@ -50,12 +69,206 @@ class PottingCustomerOrder(models.Model):
     )
     
     campaign_period = fields.Char(
+        string="Période Campagne",
+        compute='_compute_campaign_period',
+        store=True,
+        help="Période de la campagne Café-Cacao (ex: 2025-2026). "
+             "Calculée automatiquement depuis la campagne sélectionnée."
+    )
+    
+    campaign_id = fields.Many2one(
+        'potting.campaign',
         string="Campagne Café-Cacao",
         required=True,
         tracking=True,
-        default=lambda self: self._get_default_campaign_period(),
-        help="Période de la campagne Café-Cacao (ex: 2025-2026). "
-             "Utilisée pour la numérotation des OT."
+        default=lambda self: self._get_default_campaign(),
+        domain="[('state', 'in', ['draft', 'active'])]",
+        help="Campagne café-cacao pour ce contrat. Détermine les prix et la période."
+    )
+    
+    product_type = fields.Selection([
+        ('cocoa_mass', 'Masse de cacao'),
+        ('cocoa_butter', 'Beurre de cacao'),
+        ('cocoa_cake', 'Cake (Tourteau) de cacao'),
+        ('cocoa_powder', 'Poudre de cacao'),
+    ], string="Type de produit", required=True, tracking=True,
+       help="Type de produit semi-fini du cacao pour ce contrat")
+    
+    # =========================================================================
+    # CHAMPS - PRIX ET MONTANTS
+    # =========================================================================
+    
+    currency_id = fields.Many2one(
+        'res.currency',
+        string="Devise",
+        default=lambda self: self._get_default_currency(),
+        required=True,
+        tracking=True,
+        help="Devise utilisée pour ce contrat. Modifiable par l'utilisateur."
+    )
+    
+    unit_price = fields.Monetary(
+        string="Prix unitaire (par tonne)",
+        currency_field='currency_id',
+        tracking=True,
+        help="Prix de vente par tonne de produit"
+    )
+    
+    official_cocoa_price = fields.Monetary(
+        string="Prix officiel du cacao",
+        currency_field='currency_id',
+        compute='_compute_official_cocoa_price',
+        store=True,
+        help="Prix de vente officiel du cacao fixé par l'État"
+    )
+    
+    use_official_price = fields.Boolean(
+        string="Utiliser le prix officiel",
+        default=False,
+        tracking=True,
+        help="Si coché, le prix officiel du cacao sera utilisé comme base de calcul"
+    )
+    
+    certification_ids = fields.Many2many(
+        'potting.certification',
+        'potting_customer_order_certification_rel',
+        'order_id',
+        'certification_id',
+        string="Certifications",
+        help="Certifications applicables à cette commande"
+    )
+    
+    certification_premium = fields.Monetary(
+        string="Prime de certification",
+        currency_field='currency_id',
+        compute='_compute_certification_premium',
+        store=True,
+        help="Montant total des primes de certification"
+    )
+    
+    subtotal_amount = fields.Monetary(
+        string="Sous-total",
+        currency_field='currency_id',
+        compute='_compute_amounts',
+        store=True,
+        help="Montant avant déduction des droits d'exportation"
+    )
+    
+    total_amount = fields.Monetary(
+        string="Montant total",
+        currency_field='currency_id',
+        compute='_compute_amounts',
+        store=True,
+        help="Montant total du contrat (prix × tonnage + primes)"
+    )
+    
+    # =========================================================================
+    # CHAMPS - DROITS D'EXPORTATION
+    # =========================================================================
+    
+    export_duty_rate = fields.Float(
+        string="Taux droits d'export (%)",
+        default=lambda self: self._get_default_export_duty_rate(),
+        tracking=True,
+        help="Taux des droits d'exportation en pourcentage (reversés à l'État)"
+    )
+    
+    export_duty_amount = fields.Monetary(
+        string="Droits d'exportation",
+        currency_field='currency_id',
+        compute='_compute_export_duties',
+        store=True,
+        help="Montant des droits d'exportation à reverser à l'État"
+    )
+    
+    export_duty_collected = fields.Boolean(
+        string="Droits encaissés",
+        default=False,
+        tracking=True,
+        help="Indique si les droits d'exportation ont été encaissés avant l'exportation"
+    )
+    
+    export_duty_collection_date = fields.Date(
+        string="Date d'encaissement droits",
+        tracking=True,
+        help="Date à laquelle les droits d'exportation ont été encaissés"
+    )
+    
+    net_amount = fields.Monetary(
+        string="Montant net",
+        currency_field='currency_id',
+        compute='_compute_amounts',
+        store=True,
+        help="Montant après déduction des droits d'exportation"
+    )
+    
+    # =========================================================================
+    # CHAMPS - COÛTS
+    # =========================================================================
+    
+    transport_cost = fields.Monetary(
+        string="Coût de transport",
+        currency_field='currency_id',
+        tracking=True,
+        help="Coût du transport des marchandises"
+    )
+    
+    storage_cost = fields.Monetary(
+        string="Coût de stockage",
+        currency_field='currency_id',
+        tracking=True,
+        help="Coût de stockage des marchandises"
+    )
+    
+    insurance_cost = fields.Monetary(
+        string="Coût d'assurance",
+        currency_field='currency_id',
+        tracking=True,
+        help="Coût de l'assurance des marchandises"
+    )
+    
+    other_costs = fields.Monetary(
+        string="Autres coûts",
+        currency_field='currency_id',
+        tracking=True,
+        help="Autres coûts supplémentaires"
+    )
+    
+    total_costs = fields.Monetary(
+        string="Total des coûts",
+        currency_field='currency_id',
+        compute='_compute_total_costs',
+        store=True,
+        help="Total de tous les coûts supplémentaires"
+    )
+    
+    estimated_cost = fields.Monetary(
+        string="Coût estimé",
+        currency_field='currency_id',
+        compute='_compute_costs',
+        store=True,
+        help="Coût estimé basé sur les fèves de cacao utilisées"
+    )
+    
+    actual_cost = fields.Monetary(
+        string="Coût réel",
+        currency_field='currency_id',
+        compute='_compute_costs',
+        store=True,
+        help="Coût réel calculé à partir des lots de fèves consommées"
+    )
+    
+    estimated_margin = fields.Monetary(
+        string="Marge estimée",
+        currency_field='currency_id',
+        compute='_compute_costs',
+        store=True
+    )
+    
+    margin_percentage = fields.Float(
+        string="Marge (%)",
+        compute='_compute_costs',
+        store=True
     )
     
     transit_order_ids = fields.One2many(
@@ -71,11 +284,29 @@ class PottingCustomerOrder(models.Model):
         store=True
     )
     
+    contract_tonnage = fields.Float(
+        string="Tonnage du contrat (T)",
+        digits='Product Unit of Measure',
+        tracking=True,
+        help="Tonnage total prévu dans le contrat d'exportation. "
+             "Ce champ est saisi manuellement et sert de valeur par défaut "
+             "pour la génération des OT."
+    )
+    
     total_tonnage = fields.Float(
-        string="Tonnage total (T)",
+        string="Tonnage total OT (T)",
         compute='_compute_total_tonnage',
         store=True,
-        digits='Product Unit of Measure'
+        digits='Product Unit of Measure',
+        help="Tonnage total des OT créés pour cette commande (calculé automatiquement)"
+    )
+    
+    remaining_contract_tonnage = fields.Float(
+        string="Tonnage restant à allouer (T)",
+        compute='_compute_remaining_contract_tonnage',
+        store=True,
+        digits='Product Unit of Measure',
+        help="Différence entre le tonnage du contrat et le tonnage des OT créés"
     )
     
     state = fields.Selection([
@@ -102,13 +333,6 @@ class PottingCustomerOrder(models.Model):
         default=lambda self: self.env.user,
         tracking=True,
         index=True
-    )
-    
-    currency_id = fields.Many2one(
-        'res.currency',
-        string="Devise",
-        default=lambda self: self.env.company.currency_id,
-        readonly=True
     )
     
     # Computed fields for statistics
@@ -146,10 +370,18 @@ class PottingCustomerOrder(models.Model):
     # DEFAULT METHODS
     # -------------------------------------------------------------------------
     @api.model
-    def _get_default_campaign_period(self):
-        """Get the default campaign period from settings."""
-        return self.env['res.config.settings'].get_campaign_year()
+    def _get_default_currency(self):
+        """Get the default currency for the potting module.
+        
+        Returns the configured default currency if set, otherwise falls back
+        to the company currency.
+        
+        Returns:
+            res.currency: The default currency record
+        """
+        return self.env['res.config.settings'].get_default_currency()
     
+    @api.model
     @api.model
     def _get_default_customer(self):
         """Get the default customer from settings"""
@@ -165,6 +397,144 @@ class PottingCustomerOrder(models.Model):
             pass
         return False
 
+    @api.model
+    def _get_default_export_duty_rate(self):
+        """Get the default export duty rate from settings"""
+        ICP = self.env['ir.config_parameter'].sudo()
+        rate = ICP.get_param('potting_management.export_duty_rate', '14.6')
+        try:
+            return float(rate)
+        except (ValueError, TypeError):
+            return 14.6  # Default rate
+
+    @api.model
+    def _get_default_campaign(self):
+        """Get the default campaign (current active campaign).
+        
+        Returns:
+            potting.campaign: The current active campaign or False
+        """
+        return self.env['potting.campaign'].get_current_campaign()
+
+    # -------------------------------------------------------------------------
+    # COMPUTE METHODS - PRIX & MONTANTS
+    # -------------------------------------------------------------------------
+    
+    @api.depends('campaign_id', 'campaign_id.name')
+    def _compute_campaign_period(self):
+        """Calcule la période de campagne depuis la campagne sélectionnée."""
+        for order in self:
+            if order.campaign_id:
+                order.campaign_period = order.campaign_id.name
+            else:
+                order.campaign_period = False
+    
+    @api.depends('use_official_price', 'campaign_id', 'campaign_id.official_cocoa_price')
+    def _compute_official_cocoa_price(self):
+        """Get the official cocoa price from the campaign or settings.
+        
+        Priorité:
+        1. Prix officiel général de la campagne
+        2. Prix dans les paramètres système (fallback)
+        
+        Note: Le prix spécifique par type de produit est géré au niveau de l'OT.
+        """
+        ICP = self.env['ir.config_parameter'].sudo()
+        default_price = ICP.get_param('potting_management.official_cocoa_price', '0')
+        try:
+            default_price = float(default_price)
+        except (ValueError, TypeError):
+            default_price = 0.0
+            
+        for order in self:
+            if not order.use_official_price:
+                order.official_cocoa_price = 0.0
+            elif order.campaign_id and order.campaign_id.official_cocoa_price:
+                order.official_cocoa_price = order.campaign_id.official_cocoa_price
+            else:
+                order.official_cocoa_price = default_price
+
+    @api.depends('transit_order_ids.lot_ids.certification_id', 'certification_ids', 'total_tonnage')
+    def _compute_certification_premium(self):
+        """Calculate total certification premium based on lots and order certifications"""
+        for order in self:
+            total_premium = 0.0
+            # Premium from lots certifications
+            for ot in order.transit_order_ids:
+                for lot in ot.lot_ids:
+                    if lot.certification_id and lot.certification_id.price_per_ton:
+                        total_premium += lot.certification_id.price_per_ton * lot.current_tonnage
+            # Premium from order-level certifications
+            for certification in order.certification_ids:
+                if certification.price_per_ton:
+                    total_premium += certification.price_per_ton * order.total_tonnage
+            order.certification_premium = total_premium
+
+    @api.depends('transport_cost', 'storage_cost', 'insurance_cost', 'other_costs')
+    def _compute_total_costs(self):
+        """Calculate total of all additional costs"""
+        for order in self:
+            order.total_costs = (
+                (order.transport_cost or 0.0) +
+                (order.storage_cost or 0.0) +
+                (order.insurance_cost or 0.0) +
+                (order.other_costs or 0.0)
+            )
+
+    @api.depends('unit_price', 'total_tonnage', 'certification_premium', 'use_official_price', 'official_cocoa_price', 'export_duty_amount')
+    def _compute_amounts(self):
+        """Calculate subtotal, total and net amounts"""
+        for order in self:
+            # Determine the base price
+            if order.use_official_price and order.official_cocoa_price:
+                base_price = order.official_cocoa_price
+            else:
+                base_price = order.unit_price or 0.0
+            
+            # Calculate subtotal (price × tonnage)
+            order.subtotal_amount = base_price * order.total_tonnage
+            
+            # Calculate total (subtotal + certification premiums)
+            order.total_amount = order.subtotal_amount + order.certification_premium
+            
+            # Calculate net amount (after export duties)
+            order.net_amount = order.total_amount - order.export_duty_amount
+
+    @api.depends('total_amount', 'export_duty_rate')
+    def _compute_export_duties(self):
+        """Calculate export duties based on total amount and rate"""
+        for order in self:
+            if order.total_amount and order.export_duty_rate:
+                order.export_duty_amount = order.total_amount * (order.export_duty_rate / 100)
+            else:
+                order.export_duty_amount = 0.0
+
+    @api.depends('transit_order_ids.lot_ids', 'total_amount', 'total_tonnage')
+    def _compute_costs(self):
+        """Calculate costs based on cocoa bean lots used"""
+        for order in self:
+            estimated_cost = 0.0
+            actual_cost = 0.0
+            
+            # Calculate cost from linked bean lots (if cocoa_bean_management is installed)
+            for ot in order.transit_order_ids:
+                for lot in ot.lot_ids:
+                    # Check if bean_lot_ids exists (from cocoa_bean_management module)
+                    if hasattr(lot, 'bean_lot_ids') and lot.bean_lot_ids:
+                        for bean_lot in lot.bean_lot_ids:
+                            if hasattr(bean_lot, 'unit_cost') and hasattr(bean_lot, 'quantity_used'):
+                                actual_cost += bean_lot.unit_cost * bean_lot.quantity_used
+            
+            order.actual_cost = actual_cost
+            order.estimated_cost = actual_cost if actual_cost else order.total_tonnage * 1500  # Default estimation
+            
+            # Calculate margin
+            order.estimated_margin = order.net_amount - order.estimated_cost
+            if order.net_amount > 0:
+                order.margin_percentage = (order.estimated_margin / order.net_amount) * 100
+            else:
+                order.margin_percentage = 0.0
+
     # -------------------------------------------------------------------------
     # CRUD METHODS
     # -------------------------------------------------------------------------
@@ -173,6 +543,9 @@ class PottingCustomerOrder(models.Model):
         for vals in vals_list:
             if vals.get('name', _('Nouveau')) == _('Nouveau'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('potting.customer.order') or _('Nouveau')
+            # Generate contract number if not provided
+            if not vals.get('contract_number'):
+                vals['contract_number'] = self.env['ir.sequence'].next_by_code('potting.contract') or False
         return super().create(vals_list)
 
     def copy(self, default=None):
@@ -180,8 +553,11 @@ class PottingCustomerOrder(models.Model):
         default = dict(default or {})
         default.update({
             'name': _('Nouveau'),
+            'contract_number': False,
             'state': 'draft',
             'date_order': fields.Date.context_today(self),
+            'export_duty_collected': False,
+            'export_duty_collection_date': False,
         })
         return super().copy(default)
 
@@ -202,7 +578,7 @@ class PottingCustomerOrder(models.Model):
         return super().unlink()
 
     # -------------------------------------------------------------------------
-    # COMPUTE METHODS
+    # COMPUTE METHODS - STATISTIQUES
     # -------------------------------------------------------------------------
     @api.depends('transit_order_ids')
     def _compute_transit_order_count(self):
@@ -213,6 +589,15 @@ class PottingCustomerOrder(models.Model):
     def _compute_total_tonnage(self):
         for order in self:
             order.total_tonnage = sum(order.transit_order_ids.mapped('tonnage'))
+
+    @api.depends('contract_tonnage', 'total_tonnage')
+    def _compute_remaining_contract_tonnage(self):
+        """Calcule le tonnage restant à allouer (contrat - OT créés)."""
+        for order in self:
+            if order.contract_tonnage:
+                order.remaining_contract_tonnage = order.contract_tonnage - order.total_tonnage
+            else:
+                order.remaining_contract_tonnage = 0.0
 
     @api.depends('transit_order_ids.lot_ids.current_tonnage', 'transit_order_ids.lot_ids.state', 'total_tonnage')
     def _compute_potted_stats(self):
@@ -244,6 +629,23 @@ class PottingCustomerOrder(models.Model):
             for ot in self.transit_order_ids:
                 if not ot.consignee_id:
                     ot.consignee_id = self.customer_id
+
+    @api.onchange('product_type', 'campaign_id')
+    def _onchange_product_type_campaign(self):
+        """Pré-remplit le prix unitaire depuis la campagne en fonction du type de produit."""
+        if self.product_type and self.campaign_id:
+            # Récupérer le prix spécifique au produit depuis la campagne
+            price = self.campaign_id.get_price_for_product(self.product_type)
+            if price and not self.unit_price:
+                self.unit_price = price
+        elif self.product_type and not self.unit_price:
+            # Fallback: récupérer le prix depuis les paramètres
+            ICP = self.env['ir.config_parameter'].sudo()
+            default_price = ICP.get_param('potting_management.official_cocoa_price', '0')
+            try:
+                self.unit_price = float(default_price)
+            except (ValueError, TypeError):
+                pass
 
     # -------------------------------------------------------------------------
     # ACTION METHODS

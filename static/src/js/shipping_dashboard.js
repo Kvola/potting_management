@@ -11,6 +11,15 @@ export class PottingShippingDashboard extends Component {
         this.orm = useService("orm");
         this.action = useService("action");
         this.state = useState({
+            // Current campaign
+            currentCampaign: null,
+            // Contract statistics
+            contractStats: {
+                total: 0,
+                totalTonnage: 0,
+                usedTonnage: 0,
+                remainingTonnage: 0,
+            },
             orders: {
                 draft: 0,
                 confirmed: 0,
@@ -36,6 +45,36 @@ export class PottingShippingDashboard extends Component {
     }
 
     async loadData() {
+        // Load current campaign
+        try {
+            const campaigns = await this.orm.searchRead(
+                "potting.campaign",
+                [['state', '=', 'active']],
+                ["name", "code", "date_start", "date_end"],
+                { limit: 1 }
+            );
+            if (campaigns.length > 0) {
+                this.state.currentCampaign = campaigns[0];
+            }
+        } catch (e) {
+            console.log("Campaign model not available");
+        }
+
+        // Load contract statistics
+        const allContracts = await this.orm.searchRead(
+            "potting.customer.order",
+            [['state', 'not in', ['cancelled']]],
+            ["contract_tonnage", "total_tonnage"]
+        );
+        this.state.contractStats.total = allContracts.length;
+        this.state.contractStats.totalTonnage = allContracts.reduce(
+            (sum, c) => sum + (c.contract_tonnage || 0), 0
+        );
+        this.state.contractStats.usedTonnage = allContracts.reduce(
+            (sum, c) => sum + (c.total_tonnage || 0), 0
+        );
+        this.state.contractStats.remainingTonnage = this.state.contractStats.totalTonnage - this.state.contractStats.usedTonnage;
+
         // Load customer orders counts
         const orderStates = ['draft', 'confirmed', 'in_progress', 'done'];
         for (const state of orderStates) {
@@ -182,6 +221,25 @@ export class PottingShippingDashboard extends Component {
             'cocoa_powder': 'Poudre'
         };
         return labels[type] || type;
+    }
+
+    formatNumber(num, decimals = 2) {
+        if (typeof num !== 'number') return '0.00';
+        return num.toLocaleString('fr-FR', { 
+            minimumFractionDigits: decimals, 
+            maximumFractionDigits: decimals 
+        });
+    }
+
+    openCampaigns() {
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            name: 'Campagnes',
+            res_model: 'potting.campaign',
+            views: [[false, 'list'], [false, 'kanban'], [false, 'form']],
+            domain: [],
+            context: {},
+        });
     }
 }
 

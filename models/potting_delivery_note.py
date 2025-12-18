@@ -141,6 +141,30 @@ class PottingDeliveryNote(models.Model):
     )
     
     # -------------------------------------------------------------------------
+    # INVOICE INFORMATION (Facturation partielle)
+    # -------------------------------------------------------------------------
+    invoice_id = fields.Many2one(
+        'account.move',
+        string="Facture",
+        copy=False,
+        readonly=True,
+        tracking=True,
+        help="Facture générée pour ce bon de livraison"
+    )
+    
+    invoice_state = fields.Selection(
+        string="État facture",
+        related='invoice_id.state',
+        store=True
+    )
+    
+    is_invoiced = fields.Boolean(
+        string="Facturé",
+        compute='_compute_is_invoiced',
+        store=True
+    )
+    
+    # -------------------------------------------------------------------------
     # DELIVERY INFORMATION
     # -------------------------------------------------------------------------
     date_delivery = fields.Date(
@@ -267,6 +291,11 @@ class PottingDeliveryNote(models.Model):
             note.total_tonnage = sum(note.lot_ids.mapped('current_tonnage'))
             note.total_units = sum(note.lot_ids.mapped('current_units'))
 
+    @api.depends('invoice_id')
+    def _compute_is_invoiced(self):
+        for note in self:
+            note.is_invoiced = bool(note.invoice_id)
+
     # -------------------------------------------------------------------------
     # CONSTRAINTS
     # -------------------------------------------------------------------------
@@ -298,7 +327,71 @@ class PottingDeliveryNote(models.Model):
         for vals in vals_list:
             if vals.get('name', _('Nouveau')) == _('Nouveau') or not vals.get('name'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('potting.delivery.note') or _('Nouveau')
-        return super().create(vals_list)
+        
+        records = super().create(vals_list)
+        
+        # Générer automatiquement la facture de l'OT lors de la création du BL
+        for record in records:
+            record._auto_create_invoice_for_transit_order()
+        
+        return records
+
+    def _auto_create_invoice_for_transit_order(self):
+        """
+        Génère automatiquement une facture partielle pour le tonnage du BL.
+        Facturation partielle : chaque BL génère sa propre facture pour le tonnage livré.
+        """
+        self.ensure_one()
+        
+        transit_order = self.transit_order_id
+        if not transit_order:
+            return
+        
+        # Vérifier si ce BL a déjà une facture
+        if self.invoice_id:
+            return
+        
+        # Vérifier si l'OT est dans un état permettant la facturation
+        if transit_order.state not in ('ready_validation', 'done', 'in_progress'):
+            return
+        
+        # Vérifier si les droits d'exportation ont été encaissés
+        if not transit_order.export_duty_collected:
+            self.message_post(body=_(
+                "⚠️ La facture n'a pas été générée car les droits d'exportation "
+                "de l'OT %s n'ont pas encore été encaissés."
+            ) % transit_order.name)
+            return
+        
+        # Vérifier si le module account est installé
+        if 'account.move' not in self.env:
+            return
+        
+        # Vérifier qu'il y a du tonnage à facturer
+        if self.total_tonnage <= 0:
+            self.message_post(body=_(
+                "⚠️ Aucune facture générée : le tonnage du BL est de 0."
+            ))
+            return
+        
+        # Vérifier qu'on ne dépasse pas le reste à facturer de l'OT
+        if self.total_tonnage > transit_order.remaining_to_invoice + 0.001:
+            self.message_post(body=_(
+                "⚠️ Le tonnage du BL (%.3f T) dépasse le reste à facturer de l'OT (%.3f T). "
+                "Facture non générée automatiquement."
+            ) % (self.total_tonnage, transit_order.remaining_to_invoice))
+            return
+        
+        try:
+            # Créer la facture partielle pour le tonnage de ce BL
+            transit_order._create_invoice(tonnage=self.total_tonnage, delivery_note=self)
+            self.message_post(body=_(
+                "✅ Facture %s générée automatiquement pour %.3f T (OT: %s)."
+            ) % (self.invoice_id.name, self.total_tonnage, transit_order.name))
+        except Exception as e:
+            self.message_post(body=_(
+                "⚠️ Erreur lors de la génération automatique de la facture: %s"
+            ) % str(e))
 
     def copy(self, default=None):
         self.ensure_one()
@@ -390,6 +483,47 @@ class PottingDeliveryNote(models.Model):
             'domain': [('id', 'in', self.lot_ids.ids)],
             'context': {'create': False},
         }
+
+    def action_view_invoice(self):
+        """View the invoice for this delivery note."""
+        self.ensure_one()
+        if not self.invoice_id:
+            raise UserError(_("Aucune facture n'a été créée pour ce BL."))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Facture'),
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'res_id': self.invoice_id.id,
+        }
+
+    def action_create_invoice(self):
+        """Manually create an invoice for this delivery note."""
+        self.ensure_one()
+        
+        if self.invoice_id:
+            raise UserError(_("Une facture existe déjà pour ce BL."))
+        
+        if self.state == 'cancelled':
+            raise UserError(_("Impossible de facturer un BL annulé."))
+        
+        transit_order = self.transit_order_id
+        
+        if not transit_order.export_duty_collected:
+            raise UserError(_(
+                "Les droits d'exportation de l'OT %s doivent être encaissés avant de facturer."
+            ) % transit_order.name)
+        
+        if self.total_tonnage <= 0:
+            raise UserError(_("Le tonnage du BL est de 0. Impossible de facturer."))
+        
+        if self.total_tonnage > transit_order.remaining_to_invoice + 0.001:
+            raise UserError(_(
+                "Le tonnage du BL (%.3f T) dépasse le reste à facturer de l'OT (%.3f T)."
+            ) % (self.total_tonnage, transit_order.remaining_to_invoice))
+        
+        return transit_order._create_invoice(tonnage=self.total_tonnage, delivery_note=self)
 
     # -------------------------------------------------------------------------
     # BUSINESS METHODS

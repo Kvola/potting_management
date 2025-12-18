@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Forwarding Agent Tree View -->
+    <record id="potting_forwarding_agent_view_tree" model="ir.ui.view">
+        <field name="name">potting.forwarding.agent.tree</field>
+        <field name="model">potting.forwarding.agent</field>
+        <field name="arch" type="xml">
+            <tree string="Transitaires">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="phone"/>
+                <field name="email"/>
+                <field name="transit_order_count"/>
+                <field name="active_transit_order_count"/>
+                <field name="total_invoiced"/>
+                <field name="total_paid"/>
+                <field name="balance_due"/>
+                <field name="payment_progress" widget="progressbar"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Forwarding Agent Form View -->
+    <record id="potting_forwarding_agent_view_form" model="ir.ui.view">
+        <field name="name">potting.forwarding.agent.form</field>
+        <field name="model">potting.forwarding.agent</field>
+        <field name="arch" type="xml">
+            <form string="Transitaire">
+                <field name="active" invisible="1"/>
+                <header>
+                    <button name="action_create_payment_request" 
+                            type="object" 
+                            string="Créer un paiement" 
+                            class="btn-primary"
+                            invisible="balance_due &lt;= 0"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_transit_orders" 
+                                type="object" 
+                                class="oe_stat_button" 
+                                icon="fa-truck">
+                            <field name="transit_order_count" widget="statinfo" string="OT"/>
+                        </button>
+                        <button name="action_view_payments" 
+                                type="object" 
+                                class="oe_stat_button" 
+                                icon="fa-money">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Paiements</span>
+                            </div>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archivé" bg_color="bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <label for="code"/>
+                        <h1>
+                            <field name="code" placeholder="Code"/>
+                        </h1>
+                        <label for="partner_id"/>
+                        <h2>
+                            <field name="partner_id" options="{'no_create': True}"/>
+                        </h2>
+                    </div>
+                    <group>
+                        <group string="Contact">
+                            <field name="phone"/>
+                            <field name="email"/>
+                            <field name="address"/>
+                        </group>
+                        <group string="Configuration">
+                            <field name="default_bank_account_id"/>
+                            <field name="commission_rate"/>
+                            <field name="fixed_fee_per_container"/>
+                            <field name="currency_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Statistiques Paiements">
+                            <field name="total_invoiced"/>
+                            <field name="total_advances"/>
+                            <field name="total_paid"/>
+                            <field name="balance_due"/>
+                            <field name="payment_progress" widget="progressbar"/>
+                        </group>
+                        <group string="Ordres de Transit">
+                            <field name="transit_order_count"/>
+                            <field name="active_transit_order_count"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Paiements" name="payments">
+                            <field name="payment_line_ids">
+                                <tree editable="bottom" create="1">
+                                    <field name="name" readonly="1"/>
+                                    <field name="payment_type"/>
+                                    <field name="payment_date"/>
+                                    <field name="amount"/>
+                                    <field name="payment_method"/>
+                                    <field name="reference"/>
+                                    <field name="state" widget="badge" 
+                                           decoration-success="state == 'confirmed'"
+                                           decoration-warning="state == 'pending'"
+                                           decoration-muted="state == 'cancelled'"/>
+                                    <field name="payment_request_id" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Comptes Bancaires" name="banks">
+                            <field name="bank_account_ids">
+                                <tree>
+                                    <field name="bank_id"/>
+                                    <field name="acc_number"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Forwarding Agent Kanban View -->
+    <record id="potting_forwarding_agent_view_kanban" model="ir.ui.view">
+        <field name="name">potting.forwarding.agent.kanban</field>
+        <field name="model">potting.forwarding.agent</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="balance_due"/>
+                <field name="transit_order_count"/>
+                <field name="currency_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                </div>
+                                <span class="badge bg-secondary">
+                                    <field name="code"/>
+                                </span>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div>
+                                    <span><field name="transit_order_count"/> OT</span>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <span t-if="record.balance_due.raw_value > 0" class="text-danger">
+                                        Solde: <field name="balance_due" widget="monetary"/>
+                                    </span>
+                                    <span t-else="" class="text-success">Soldé</span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Forwarding Agent Search View -->
+    <record id="potting_forwarding_agent_view_search" model="ir.ui.view">
+        <field name="name">potting.forwarding.agent.search</field>
+        <field name="model">potting.forwarding.agent</field>
+        <field name="arch" type="xml">
+            <search string="Transitaires">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="partner_id"/>
+                <filter name="has_balance" string="Avec solde" domain="[('balance_due', '>', 0)]"/>
+                <filter name="no_balance" string="Soldé" domain="[('balance_due', '&lt;=', 0)]"/>
+                <separator/>
+                <filter name="active_ot" string="Avec OT actifs" domain="[('active_transit_order_count', '>', 0)]"/>
+                <separator/>
+                <filter name="inactive" string="Archivés" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Grouper par">
+                    <filter name="group_company" string="Société" context="{'group_by': 'company_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Forwarding Agent Action -->
+    <record id="potting_forwarding_agent_action" model="ir.actions.act_window">
+        <field name="name">Transitaires</field>
+        <field name="res_model">potting.forwarding.agent</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="context">{'search_default_has_balance': 0}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un nouveau transitaire
+            </p>
+            <p>
+                Les transitaires s'occupent des opérations d'exportation.
+                Vous pouvez suivre leurs paiements et les OT associés.
+            </p>
+        </field>
+    </record>
+
+    <!-- Forwarding Agent Payment Tree View -->
+    <record id="potting_forwarding_agent_payment_view_tree" model="ir.ui.view">
+        <field name="name">potting.forwarding.agent.payment.tree</field>
+        <field name="model">potting.forwarding.agent.payment</field>
+        <field name="arch" type="xml">
+            <tree string="Paiements Transitaires">
+                <field name="name"/>
+                <field name="forwarding_agent_id"/>
+                <field name="payment_type"/>
+                <field name="payment_date"/>
+                <field name="amount" sum="Total"/>
+                <field name="payment_method"/>
+                <field name="payment_request_id" optional="show"/>
+                <field name="state" widget="badge" 
+                       decoration-success="state == 'confirmed'"
+                       decoration-warning="state == 'pending'"
+                       decoration-muted="state == 'cancelled'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Forwarding Agent Payment Form View -->
+    <record id="potting_forwarding_agent_payment_view_form" model="ir.ui.view">
+        <field name="name">potting.forwarding.agent.payment.form</field>
+        <field name="model">potting.forwarding.agent.payment</field>
+        <field name="arch" type="xml">
+            <form string="Paiement Transitaire">
+                <header>
+                    <button name="action_confirm" 
+                            type="object" 
+                            string="Confirmer" 
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_create_payment_request" 
+                            type="object" 
+                            string="Créer demande de paiement" 
+                            invisible="state != 'draft' or payment_request_id"/>
+                    <button name="action_cancel" 
+                            type="object" 
+                            string="Annuler"
+                            invisible="state in ('confirmed', 'cancelled')"/>
+                    <button name="action_draft" 
+                            type="object" 
+                            string="Remettre en brouillon"
+                            invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,pending,confirmed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Transitaire">
+                            <field name="forwarding_agent_id"/>
+                            <field name="transit_order_id"/>
+                        </group>
+                        <group string="Paiement">
+                            <field name="payment_type"/>
+                            <field name="payment_date"/>
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="payment_method"/>
+                            <field name="reference"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Demande de paiement">
+                            <field name="payment_request_id"/>
+                            <field name="check_id" invisible="payment_method != 'check'"/>
+                            <field name="transfer_id" invisible="payment_method != 'bank_transfer'"/>
+                        </group>
+                        <group string="Confirmation">
+                            <field name="confirmed_by_id" readonly="1"/>
+                            <field name="confirmed_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="notes"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Forwarding Agent Payment Action -->
+    <record id="potting_forwarding_agent_payment_action" model="ir.actions.act_window">
+        <field name="name">Paiements Transitaires</field>
+        <field name="res_model">potting.forwarding.agent.payment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Create Forwarding Payment Wizard View -->
+    <record id="potting_create_forwarding_payment_wizard_view_form" model="ir.ui.view">
+        <field name="name">potting.create.forwarding.payment.wizard.form</field>
+        <field name="model">potting.create.forwarding.payment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Créer un Paiement Transitaire">
+                <group>
+                    <group string="Transitaire">
+                        <field name="forwarding_agent_id" readonly="1"/>
+                        <field name="partner_id" readonly="1"/>
+                        <field name="balance_due"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                    <group string="Paiement">
+                        <field name="payment_type"/>
+                        <field name="amount"/>
+                        <field name="payment_method"/>
+                        <field name="expected_payment_date"/>
+                    </group>
+                </group>
+                <group>
+                    <group string="Demande de paiement">
+                        <field name="create_payment_request"/>
+                        <field name="existing_payment_request_id" 
+                               invisible="not create_payment_request"/>
+                        <field name="subject" 
+                               invisible="not create_payment_request or existing_payment_request_id"/>
+                    </group>
+                    <group string="Ordres de Transit">
+                        <field name="transit_order_ids" widget="many2many_tags"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="notes"/>
+                </group>
+                <footer>
+                    <button name="action_create_payment" 
+                            type="object" 
+                            string="Créer le paiement" 
+                            class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

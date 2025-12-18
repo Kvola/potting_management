@@ -11,6 +11,27 @@
                     
                     <!-- Configuration Générale -->
                     <block title="👥 Configuration Générale" name="potting_general_config">
+                        <setting id="potting_default_currency_setting" 
+                                 title="Devise par défaut" 
+                                 help="Devise utilisée par défaut pour les opérations du module (commandes, OT, etc.)">
+                            <div class="content-group">
+                                <div class="row mt-2">
+                                    <label string="Devise" for="potting_default_currency_id" class="col-lg-3 o_light_label"/>
+                                    <field name="potting_default_currency_id" 
+                                           placeholder="Sélectionner une devise..."
+                                           options="{'no_create': True}"
+                                           class="col-lg-4"/>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-12">
+                                        <small class="text-muted fst-italic">
+                                            <i class="fa fa-info-circle me-1"/>Si aucune devise n'est définie, la devise de la société sera utilisée. Les utilisateurs peuvent modifier la devise sur chaque contrat.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </setting>
+                        
                         <setting id="potting_default_customer_setting" 
                                  title="Client par défaut" 
                                  help="Client qui sera sélectionné par défaut lors de la création d'une commande"
@@ -245,28 +266,36 @@
                     <!-- Configuration Campagne et Numérotation -->
                     <block title="📅 Campagne &amp; Numérotation" name="potting_sequence_config">
                         <setting id="potting_campaign_setting" 
-                                 title="Campagne Café-Cacao par défaut" 
-                                 help="Période de campagne par défaut pour les nouvelles commandes">
+                                 title="Campagne Café-Cacao" 
+                                 help="Période de campagne et prix officiels">
                             <div class="content-group">
                                 <div class="row mt-2">
-                                    <label string="Période campagne" 
+                                    <label string="Période campagne (par défaut)" 
                                            for="potting_campaign_year" 
-                                           class="col-lg-3 o_light_label"/>
+                                           class="col-lg-4 o_light_label"/>
                                     <field name="potting_campaign_year" class="col-lg-3" placeholder="2025-2026"/>
-                                    <span class="col-lg-4 text-muted">Format: AAAA-AAAA (ex: 2025-2026)</span>
+                                    <span class="col-lg-4 text-muted">Format: AAAA-AAAA</span>
                                 </div>
-                                <div class="row mt-1">
-                                    <div class="col-12">
-                                        <small class="text-muted fst-italic">
-                                            <i class="fa fa-info-circle me-1"/>Cette valeur est utilisée par défaut lors de la création d'une commande client. La campagne de la commande détermine ensuite la numérotation des OT.
-                                        </small>
-                                    </div>
+                                <div class="row mt-2">
+                                    <label string="Campagne active" 
+                                           for="potting_current_campaign_id" 
+                                           class="col-lg-4 o_light_label"/>
+                                    <field name="potting_current_campaign_id" class="col-lg-4" readonly="1"/>
                                 </div>
-                                <div class="row mt-1">
+                                <div class="row mt-2">
+                                    <label string="Prix cacao campagne" 
+                                           for="potting_current_campaign_price" 
+                                           class="col-lg-4 o_light_label"/>
+                                    <field name="potting_current_campaign_price" class="col-lg-3" readonly="1"/>
+                                    <span class="col-lg-4 text-muted">€/T (depuis la campagne active)</span>
+                                </div>
+                                <div class="row mt-2">
                                     <div class="col-12">
-                                        <small class="text-muted fst-italic">
-                                            <i class="fa fa-info-circle me-1"/>Format des numéros d'OT: NNNN/AAAA-AAAA-XX (ex: 1/2025-2026-MA pour Masse)
-                                        </small>
+                                        <button name="%(potting_management.potting_campaign_action)d" 
+                                                type="action" 
+                                                string="⚙️ Gérer les Campagnes" 
+                                                class="btn-link"
+                                                icon="fa-calendar"/>
                                     </div>
                                 </div>
                             </div>

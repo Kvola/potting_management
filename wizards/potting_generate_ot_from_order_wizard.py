@@ -60,16 +60,30 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
         digits='Product Unit of Measure',
         help="Tonnage total des OT déjà créés pour cette commande"
     )
+    
+    contract_tonnage = fields.Float(
+        string="Tonnage du contrat (T)",
+        related='customer_order_id.contract_tonnage',
+        readonly=True,
+        digits='Product Unit of Measure'
+    )
+    
+    remaining_contract_tonnage = fields.Float(
+        string="Tonnage restant disponible (T)",
+        compute='_compute_existing_ot_count',
+        digits='Product Unit of Measure',
+        help="Tonnage encore disponible pour créer des OT"
+    )
 
     # =========================================================================
     # FIELDS - Configuration de la génération
     # =========================================================================
     
     total_tonnage = fields.Float(
-        string="Tonnage total à générer (T)",
+        string="Tonnage à générer (T)",
         required=True,
         digits='Product Unit of Measure',
-        help="Tonnage total pour lequel générer des OT"
+        help="Tonnage total pour lequel générer des OT (max = tonnage restant du contrat)"
     )
     
     consignee_id = fields.Many2one(
@@ -97,7 +111,7 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
         string="Tonnage par OT (T)",
         required=True,
         digits='Product Unit of Measure',
-        default=22.0,
+        default=0.0,
         help="Tonnage pour chaque OT à générer. "
              "Peut être configuré par défaut sur le produit."
     )
@@ -142,7 +156,7 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
     
     @api.model
     def default_get(self, fields_list):
-        """Pré-remplit le destinataire avec le client de la commande."""
+        """Pré-remplit le wizard avec les infos de la commande."""
         res = super().default_get(fields_list)
         
         # Récupérer la commande depuis le contexte
@@ -150,8 +164,19 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
         if customer_order_id:
             order = self.env['potting.customer.order'].browse(customer_order_id)
             if order.exists():
+                # Destinataire par défaut = client
                 if order.customer_id:
                     res['consignee_id'] = order.customer_id.id
+                
+                # Tonnage par défaut = tonnage contrat - tonnage OT existants
+                if order.contract_tonnage:
+                    existing_tonnage = sum(order.transit_order_ids.mapped('tonnage'))
+                    remaining = order.contract_tonnage - existing_tonnage
+                    res['total_tonnage'] = max(0, remaining)
+                
+                # Type de produit par défaut
+                if order.product_type:
+                    res['product_type'] = order.product_type
         
         return res
 
@@ -159,16 +184,22 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
     # COMPUTE METHODS
     # =========================================================================
     
-    @api.depends('customer_order_id')
+    @api.depends('customer_order_id', 'customer_order_id.contract_tonnage', 'customer_order_id.transit_order_ids.tonnage')
     def _compute_existing_ot_count(self):
-        """Calcule le nombre et tonnage des OT existants."""
+        """Calcule le nombre et tonnage des OT existants, et le tonnage restant."""
         for wizard in self:
             if wizard.customer_order_id:
                 wizard.existing_ot_count = len(wizard.customer_order_id.transit_order_ids)
                 wizard.existing_tonnage = sum(wizard.customer_order_id.transit_order_ids.mapped('tonnage'))
+                # Calculer le tonnage restant
+                if wizard.customer_order_id.contract_tonnage > 0:
+                    wizard.remaining_contract_tonnage = max(0, wizard.customer_order_id.contract_tonnage - wizard.existing_tonnage)
+                else:
+                    wizard.remaining_contract_tonnage = 0.0
             else:
                 wizard.existing_ot_count = 0
                 wizard.existing_tonnage = 0.0
+                wizard.remaining_contract_tonnage = 0.0
     
     @api.depends('total_tonnage', 'tonnage_per_ot')
     def _compute_ot_count_to_generate(self):
@@ -250,6 +281,22 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
         
         if self.ot_count_to_generate <= 0:
             raise ValidationError(_("Aucun OT à générer."))
+        
+        # Vérifier que le tonnage ne dépasse pas le contrat
+        if self.customer_order_id.contract_tonnage > 0:
+            new_total = self.existing_tonnage + self.total_tonnage
+            if new_total > self.customer_order_id.contract_tonnage:
+                raise ValidationError(_(
+                    "Le tonnage total (%.2f T existant + %.2f T nouveau = %.2f T) "
+                    "dépasserait le tonnage du contrat (%.2f T).\n\n"
+                    "Tonnage maximum à générer: %.2f T"
+                ) % (
+                    self.existing_tonnage,
+                    self.total_tonnage,
+                    new_total,
+                    self.customer_order_id.contract_tonnage,
+                    self.customer_order_id.contract_tonnage - self.existing_tonnage
+                ))
         
         # Générer les OT
         created_ots = self.env['potting.transit.order']

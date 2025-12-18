@@ -64,6 +64,14 @@ class PottingTransitOrder(models.Model):
         help="Période de la campagne Café-Cacao héritée de la commande"
     )
     
+    campaign_id = fields.Many2one(
+        'potting.campaign',
+        string="Campagne Café-Cacao",
+        compute='_compute_campaign_id',
+        store=True,
+        help="Campagne café-cacao liée (calculée depuis le nom de la campagne)"
+    )
+    
     customer_id = fields.Many2one(
         related='customer_order_id.customer_id',
         string="Client",
@@ -76,6 +84,180 @@ class PottingTransitOrder(models.Model):
         string="Destinataire (Consignee)",
         required=True,
         tracking=True
+    )
+    
+    # =========================================================================
+    # CHAMPS - TRANSITAIRE
+    # =========================================================================
+    
+    forwarding_agent_id = fields.Many2one(
+        'potting.forwarding.agent',
+        string="Transitaire",
+        tracking=True,
+        help="Transitaire responsable de l'exportation"
+    )
+    
+    forwarding_agent_fee = fields.Monetary(
+        string="Frais transitaire",
+        currency_field='currency_id',
+        compute='_compute_forwarding_agent_fee',
+        store=True,
+        help="Frais du transitaire pour cet OT"
+    )
+    
+    # =========================================================================
+    # CHAMPS - PRIX ET MONTANTS
+    # =========================================================================
+    
+    currency_id = fields.Many2one(
+        'res.currency',
+        string="Devise",
+        related='customer_order_id.currency_id',
+        store=True
+    )
+    
+    unit_price = fields.Monetary(
+        string="Prix unitaire (par tonne)",
+        currency_field='currency_id',
+        related='customer_order_id.unit_price',
+        store=True
+    )
+    
+    subtotal_amount = fields.Monetary(
+        string="Sous-total",
+        currency_field='currency_id',
+        compute='_compute_ot_amounts',
+        store=True,
+        help="Prix × Tonnage"
+    )
+    
+    certification_premium = fields.Monetary(
+        string="Prime certification",
+        currency_field='currency_id',
+        compute='_compute_ot_amounts',
+        store=True
+    )
+    
+    total_amount = fields.Monetary(
+        string="Montant total",
+        currency_field='currency_id',
+        compute='_compute_ot_amounts',
+        store=True
+    )
+    
+    # =========================================================================
+    # CHAMPS - DROITS D'EXPORTATION
+    # =========================================================================
+    
+    export_duty_rate = fields.Float(
+        string="Taux droits d'export (%)",
+        related='customer_order_id.export_duty_rate',
+        store=True
+    )
+    
+    export_duty_amount = fields.Monetary(
+        string="Droits d'exportation",
+        currency_field='currency_id',
+        compute='_compute_export_duties',
+        store=True,
+        help="Droits d'exportation calculés sur le poids de l'OT (reversés à l'État)"
+    )
+    
+    export_duty_collected = fields.Boolean(
+        string="Droits encaissés",
+        default=False,
+        tracking=True,
+        help="Les droits d'exportation doivent être encaissés avant l'exportation"
+    )
+    
+    export_duty_collection_date = fields.Date(
+        string="Date encaissement droits",
+        tracking=True
+    )
+    
+    export_allowed = fields.Boolean(
+        string="Exportation autorisée",
+        compute='_compute_export_allowed',
+        store=True,
+        help="L'exportation n'est autorisée que si les droits ont été encaissés"
+    )
+    
+    net_amount = fields.Monetary(
+        string="Montant net",
+        currency_field='currency_id',
+        compute='_compute_ot_amounts',
+        store=True,
+        help="Montant après déduction des droits d'exportation"
+    )
+    
+    # =========================================================================
+    # CHAMPS - FACTURATION (Facturation partielle supportée)
+    # =========================================================================
+    
+    invoice_ids = fields.One2many(
+        'account.move',
+        'potting_transit_order_id',
+        string="Factures",
+        copy=False,
+        help="Factures générées pour cet OT (facturation partielle possible)"
+    )
+    
+    invoice_count = fields.Integer(
+        string="Nombre de factures",
+        compute='_compute_invoice_info',
+        store=True
+    )
+    
+    invoiced_tonnage = fields.Float(
+        string="Tonnage facturé (T)",
+        compute='_compute_invoice_info',
+        store=True,
+        digits='Product Unit of Measure',
+        help="Tonnage total déjà facturé"
+    )
+    
+    remaining_to_invoice = fields.Float(
+        string="Reste à facturer (T)",
+        compute='_compute_invoice_info',
+        store=True,
+        digits='Product Unit of Measure',
+        help="Tonnage restant à facturer"
+    )
+    
+    invoicing_progress = fields.Float(
+        string="Progression facturation (%)",
+        compute='_compute_invoice_info',
+        store=True,
+        help="Pourcentage du tonnage facturé"
+    )
+    
+    is_fully_invoiced = fields.Boolean(
+        string="Entièrement facturé",
+        compute='_compute_invoice_info',
+        store=True,
+        help="Indique si tout le tonnage a été facturé"
+    )
+    
+    is_invoiced = fields.Boolean(
+        string="Partiellement facturé",
+        compute='_compute_invoice_info',
+        store=True,
+        help="Indique si au moins une facture existe"
+    )
+    
+    # Champ de compatibilité (dernière facture)
+    invoice_id = fields.Many2one(
+        'account.move',
+        string="Dernière facture",
+        compute='_compute_invoice_info',
+        store=True,
+        help="Dernière facture générée (compatibilité)"
+    )
+    
+    invoice_state = fields.Selection(
+        string="État dernière facture",
+        related='invoice_id.state',
+        store=True
     )
     
     product_type = fields.Selection([
@@ -290,6 +472,18 @@ class PottingTransitOrder(models.Model):
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
     # -------------------------------------------------------------------------
+    
+    @api.depends('campaign_period')
+    def _compute_campaign_id(self):
+        """Lie automatiquement l'OT à la campagne correspondante."""
+        Campaign = self.env['potting.campaign']
+        for order in self:
+            if order.campaign_period:
+                campaign = Campaign.get_campaign_by_name(order.campaign_period)
+                order.campaign_id = campaign.id if campaign else False
+            else:
+                order.campaign_id = False
+    
     @api.depends('product_type')
     def _compute_max_tonnage_per_lot(self):
         for order in self:
@@ -364,6 +558,89 @@ class PottingTransitOrder(models.Model):
             order.current_tonnage = sum(order.lot_ids.mapped('current_tonnage'))
 
     # -------------------------------------------------------------------------
+    # COMPUTE METHODS - PRIX, DROITS ET TRANSITAIRE
+    # -------------------------------------------------------------------------
+    
+    @api.depends('forwarding_agent_id', 'tonnage', 'lot_ids.container_id')
+    def _compute_forwarding_agent_fee(self):
+        """Calculate forwarding agent fees based on commission and fixed fees"""
+        for order in self:
+            fee = 0.0
+            if order.forwarding_agent_id:
+                agent = order.forwarding_agent_id
+                # Commission based on tonnage
+                if agent.commission_rate:
+                    base_amount = order.subtotal_amount or (order.tonnage * (order.unit_price or 0))
+                    fee += base_amount * (agent.commission_rate / 100)
+                # Fixed fee per container
+                if agent.fixed_fee_per_container:
+                    container_count = len(order.lot_ids.mapped('container_id'))
+                    fee += agent.fixed_fee_per_container * max(container_count, 1)
+            order.forwarding_agent_fee = fee
+    
+    @api.depends('unit_price', 'tonnage', 'lot_ids.certification_id', 'lot_ids.current_tonnage', 'export_duty_amount')
+    def _compute_ot_amounts(self):
+        """Calculate OT amounts: subtotal, certification premium, total and net"""
+        for order in self:
+            # Subtotal = price × tonnage
+            order.subtotal_amount = (order.unit_price or 0) * order.tonnage
+            
+            # Certification premium
+            cert_premium = 0.0
+            for lot in order.lot_ids:
+                if lot.certification_id and lot.certification_id.price_per_ton:
+                    cert_premium += lot.certification_id.price_per_ton * lot.current_tonnage
+            order.certification_premium = cert_premium
+            
+            # Total amount
+            order.total_amount = order.subtotal_amount + order.certification_premium
+            
+            # Net amount (after export duties)
+            order.net_amount = order.total_amount - (order.export_duty_amount or 0)
+    
+    @api.depends('total_amount', 'export_duty_rate', 'current_tonnage')
+    def _compute_export_duties(self):
+        """Calculate export duties based on weight and rate
+        
+        Les droits d'exportation sont calculés sur le poids de l'OT.
+        Ces droits sont reversés à l'État.
+        """
+        for order in self:
+            if order.total_amount and order.export_duty_rate:
+                # Calcul basé sur le montant total
+                order.export_duty_amount = order.total_amount * (order.export_duty_rate / 100)
+            else:
+                order.export_duty_amount = 0.0
+    
+    @api.depends('export_duty_collected')
+    def _compute_export_allowed(self):
+        """Check if export is allowed (duties must be collected first)"""
+        for order in self:
+            order.export_allowed = order.export_duty_collected
+    
+    @api.depends('invoice_ids', 'invoice_ids.state', 'invoice_ids.potting_invoiced_tonnage', 'current_tonnage')
+    def _compute_invoice_info(self):
+        """Compute invoice-related fields for partial invoicing support"""
+        for order in self:
+            # Filtrer les factures non annulées
+            valid_invoices = order.invoice_ids.filtered(lambda inv: inv.state != 'cancel')
+            
+            order.invoice_count = len(valid_invoices)
+            order.invoiced_tonnage = sum(valid_invoices.mapped('potting_invoiced_tonnage'))
+            order.remaining_to_invoice = max(0, order.current_tonnage - order.invoiced_tonnage)
+            
+            if order.current_tonnage > 0:
+                order.invoicing_progress = (order.invoiced_tonnage / order.current_tonnage) * 100
+            else:
+                order.invoicing_progress = 0
+            
+            order.is_invoiced = order.invoice_count > 0
+            order.is_fully_invoiced = order.remaining_to_invoice <= 0 and order.is_invoiced
+            
+            # Dernière facture (compatibilité)
+            order.invoice_id = valid_invoices[-1] if valid_invoices else False
+
+    # -------------------------------------------------------------------------
     # ONCHANGE METHODS
     # -------------------------------------------------------------------------
     @api.onchange('vessel_id')
@@ -389,6 +666,27 @@ class PottingTransitOrder(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            # Vérifier que le tonnage du contrat n'est pas dépassé
+            customer_order_id = vals.get('customer_order_id')
+            if customer_order_id:
+                customer_order = self.env['potting.customer.order'].browse(customer_order_id)
+                if customer_order.exists():
+                    new_tonnage = vals.get('tonnage', 0)
+                    if customer_order.contract_tonnage > 0:
+                        current_ot_tonnage = sum(customer_order.transit_order_ids.mapped('tonnage'))
+                        if current_ot_tonnage + new_tonnage > customer_order.contract_tonnage:
+                            raise ValidationError(_(
+                                "Impossible d'ajouter cet OT: le tonnage total des OT (%.2f T + %.2f T = %.2f T) "
+                                "dépasserait le tonnage du contrat (%.2f T).\n\n"
+                                "Tonnage restant disponible: %.2f T"
+                            ) % (
+                                current_ot_tonnage, 
+                                new_tonnage, 
+                                current_ot_tonnage + new_tonnage,
+                                customer_order.contract_tonnage,
+                                customer_order.contract_tonnage - current_ot_tonnage
+                            ))
+            
             # Générer automatiquement le numéro OT si non fourni ou si 'Nouveau'
             if vals.get('name', _('Nouveau')) == _('Nouveau') or not vals.get('name'):
                 # Le nom de l'OT dépend du type de produit et de la campagne de la commande
@@ -397,7 +695,6 @@ class PottingTransitOrder(models.Model):
                 # Récupérer la campagne et la référence client depuis la commande
                 campaign_period = None
                 customer_ref = None
-                customer_order_id = vals.get('customer_order_id')
                 if customer_order_id:
                     customer_order = self.env['potting.customer.order'].browse(customer_order_id)
                     if customer_order.exists():
@@ -417,6 +714,31 @@ class PottingTransitOrder(models.Model):
                 vals['is_created_from_order'] = True
         
         return super().create(vals_list)
+
+    def write(self, vals):
+        """Vérifie que le tonnage du contrat n'est pas dépassé lors de la modification."""
+        if 'tonnage' in vals:
+            for order in self:
+                if order.customer_order_id and order.customer_order_id.contract_tonnage > 0:
+                    new_tonnage = vals.get('tonnage', order.tonnage)
+                    # Calculer le total des autres OT (sans l'OT actuel)
+                    other_ot_tonnage = sum(
+                        ot.tonnage for ot in order.customer_order_id.transit_order_ids 
+                        if ot.id != order.id
+                    )
+                    if other_ot_tonnage + new_tonnage > order.customer_order_id.contract_tonnage:
+                        raise ValidationError(_(
+                            "Impossible de modifier le tonnage: le total (%.2f T + %.2f T = %.2f T) "
+                            "dépasserait le tonnage du contrat (%.2f T).\n\n"
+                            "Tonnage maximum pour cet OT: %.2f T"
+                        ) % (
+                            other_ot_tonnage,
+                            new_tonnage,
+                            other_ot_tonnage + new_tonnage,
+                            order.customer_order_id.contract_tonnage,
+                            order.customer_order_id.contract_tonnage - other_ot_tonnage
+                        ))
+        return super().write(vals)
 
     def copy(self, default=None):
         self.ensure_one()
@@ -683,6 +1005,194 @@ class PottingTransitOrder(models.Model):
                 'state': lot.state,
             } for lot in self.lot_ids.sorted('name')],
         }
+
+    # -------------------------------------------------------------------------
+    # INVOICE METHODS (Facturation partielle supportée)
+    # -------------------------------------------------------------------------
+    def action_create_invoice(self):
+        """Create an invoice for the remaining tonnage of this transit order"""
+        self.ensure_one()
+        
+        if self.is_fully_invoiced:
+            raise UserError(_("Cet OT est déjà entièrement facturé."))
+        
+        if self.state not in ('in_progress', 'ready_validation', 'done'):
+            raise UserError(_("L'OT doit être en cours, prêt pour validation ou validé pour générer une facture."))
+        
+        if not self.export_duty_collected:
+            raise UserError(_(
+                "Les droits d'exportation doivent être encaissés avant de générer la facture. "
+                "Veuillez d'abord encaisser les droits d'exportation."
+            ))
+        
+        # Check if account module is installed
+        if 'account.move' not in self.env:
+            raise UserError(_(
+                "Le module de comptabilité doit être installé pour créer des factures."
+            ))
+        
+        # Facturer le reste à facturer
+        return self._create_invoice(tonnage=self.remaining_to_invoice)
+    
+    def _create_invoice(self, tonnage=None, delivery_note=None):
+        """
+        Internal method to create an invoice.
+        
+        Args:
+            tonnage: Tonnage à facturer (si None, facture le tonnage total restant)
+            delivery_note: Bon de livraison associé (si facture partielle par BL)
+        
+        Returns:
+            dict: Action pour ouvrir la facture créée
+        """
+        self.ensure_one()
+        
+        # Déterminer le tonnage à facturer
+        if tonnage is None:
+            tonnage = self.remaining_to_invoice
+        
+        if tonnage <= 0:
+            raise UserError(_("Aucun tonnage à facturer."))
+        
+        # Vérifier qu'on ne dépasse pas le reste à facturer
+        if tonnage > self.remaining_to_invoice + 0.001:  # Tolérance pour arrondis
+            raise UserError(_(
+                "Le tonnage à facturer (%.3f T) dépasse le reste à facturer (%.3f T)."
+            ) % (tonnage, self.remaining_to_invoice))
+        
+        # Préparer les lignes de facture
+        invoice_lines = self._prepare_invoice_lines(tonnage=tonnage)
+        
+        # Construire la référence
+        if delivery_note:
+            origin = f"{self.name} / {delivery_note.name}"
+            ref = f"OT {self.name} - BL {delivery_note.name}"
+        else:
+            origin = self.name
+            ref = f"OT {self.name}"
+        
+        # Préparer les valeurs de la facture
+        invoice_vals = {
+            'move_type': 'out_invoice',
+            'partner_id': self.customer_id.id,
+            'invoice_date': fields.Date.context_today(self),
+            'invoice_origin': origin,
+            'ref': ref,
+            'potting_transit_order_id': self.id,
+            'potting_delivery_note_id': delivery_note.id if delivery_note else False,
+            'potting_invoiced_tonnage': tonnage,
+            'invoice_line_ids': [(0, 0, line) for line in invoice_lines],
+            'narration': _(
+                "Facture pour l'Ordre de Transit %s\n"
+                "Contrat: %s\n"
+                "Produit: %s\n"
+                "Tonnage facturé: %.3f T%s"
+            ) % (
+                self.name,
+                self.customer_order_id.contract_number or self.customer_order_id.name,
+                dict(self._fields['product_type'].selection).get(self.product_type),
+                tonnage,
+                f"\nBon de livraison: {delivery_note.name}" if delivery_note else ""
+            ),
+        }
+        
+        # Créer la facture
+        invoice = self.env['account.move'].create(invoice_vals)
+        
+        # Lier la facture au BL si applicable
+        if delivery_note:
+            delivery_note.invoice_id = invoice
+        
+        # Message dans le chatter
+        msg = _("Facture %s créée pour %.3f T.") % (invoice.name, tonnage)
+        if delivery_note:
+            msg += _(" (BL: %s)") % delivery_note.name
+        self.message_post(body=msg)
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Facture'),
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'res_id': invoice.id,
+        }
+    
+    def _prepare_invoice_lines(self, tonnage=None):
+        """
+        Prepare invoice lines for the OT invoice.
+        
+        Args:
+            tonnage: Tonnage à facturer (si None, utilise current_tonnage)
+        """
+        self.ensure_one()
+        lines = []
+        
+        if tonnage is None:
+            tonnage = self.current_tonnage
+        
+        # Main product line
+        product = self.product_id or self.env.ref('potting_management.product_cocoa_mass', raise_if_not_found=False)
+        
+        lines.append({
+            'name': _("%s - OT %s") % (
+                dict(self._fields['product_type'].selection).get(self.product_type),
+                self.name
+            ),
+            'product_id': product.id if product else False,
+            'quantity': tonnage,
+            'price_unit': self.unit_price or 0,
+            'product_uom_id': self.env.ref('uom.product_uom_ton', raise_if_not_found=False).id if self.env.ref('uom.product_uom_ton', raise_if_not_found=False) else False,
+        })
+        
+        # Certification premium line (proportionnel au tonnage facturé)
+        if self.certification_premium > 0 and self.current_tonnage > 0:
+            # Calculer la prime au prorata du tonnage facturé
+            prorata_premium = (tonnage / self.current_tonnage) * self.certification_premium
+            lines.append({
+                'name': _("Prime de certification (prorata %.1f%%)") % ((tonnage / self.current_tonnage) * 100),
+                'quantity': 1,
+                'price_unit': prorata_premium,
+            })
+        
+        return lines
+    
+    def action_view_invoice(self):
+        """View invoices for this OT"""
+        self.ensure_one()
+        if not self.invoice_ids:
+            raise UserError(_("Aucune facture n'a été créée pour cet OT."))
+        
+        if len(self.invoice_ids) == 1:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Facture'),
+                'res_model': 'account.move',
+                'view_mode': 'form',
+                'res_id': self.invoice_ids[0].id,
+            }
+        else:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Factures - %s') % self.name,
+                'res_model': 'account.move',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', self.invoice_ids.ids)],
+            }
+    
+    def action_collect_export_duties(self):
+        """Mark export duties as collected"""
+        for order in self:
+            if order.export_duty_collected:
+                continue
+            if order.export_duty_amount <= 0:
+                raise UserError(_("Aucun droit d'exportation à encaisser pour cet OT."))
+            order.write({
+                'export_duty_collected': True,
+                'export_duty_collection_date': fields.Date.context_today(self),
+            })
+            order.message_post(body=_(
+                "✅ Droits d'exportation encaissés: %s %s"
+            ) % (order.export_duty_amount, order.currency_id.symbol))
 
 
 class PottingVessel(models.Model):

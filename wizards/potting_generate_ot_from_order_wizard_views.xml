@@ -9,47 +9,65 @@
                 <sheet>
                     <div class="oe_title mb-3">
                         <h2>
-                            <i class="fa fa-magic me-2 text-primary"/>
+                            <i class="fa fa-magic me-2 text-primary" />
                             <span>Génération automatique d'OT</span>
                         </h2>
                         <div class="text-muted mt-2">
                             <span>Commande: </span>
-                            <field name="customer_order_id" readonly="1" class="oe_inline fw-bold"/>
+                            <field name="customer_order_id" readonly="1" class="oe_inline fw-bold" />
                             <span class="mx-2">|</span>
                             <span>Campagne: </span>
-                            <field name="campaign_period" readonly="1" class="oe_inline fw-bold text-primary"/>
+                            <field name="campaign_period" readonly="1"
+                                class="oe_inline fw-bold text-primary" />
                         </div>
                     </div>
-                    
+
                     <!-- Informations existantes -->
-                    <div class="alert alert-info" role="alert" invisible="existing_ot_count == 0">
-                        <i class="fa fa-info-circle me-1"/>
-                        <span>Cette commande a déjà </span>
-                        <field name="existing_ot_count" readonly="1" class="oe_inline fw-bold"/>
-                        <span> OT pour un total de </span>
-                        <field name="existing_tonnage" readonly="1" class="oe_inline fw-bold"/>
-                        <span> T.</span>
+                    <div class="alert alert-info" role="alert" invisible="contract_tonnage == 0">
+                        <div class="row">
+                            <div class="col-4">
+                                <i class="fa fa-file-text-o me-1" />
+                                <span>Tonnage contrat: </span>
+                                <field name="contract_tonnage" readonly="1" class="oe_inline fw-bold" />
+                                <span> T</span>
+                            </div>
+                            <div class="col-4">
+                                <i class="fa fa-truck me-1" />
+                                <span>OT existants: </span>
+                                <field name="existing_ot_count" readonly="1" class="oe_inline fw-bold" />
+                                <span> (</span>
+                                <field name="existing_tonnage" readonly="1" class="oe_inline fw-bold" />
+                                <span> T)</span>
+                            </div>
+                            <div class="col-4">
+                                <i class="fa fa-balance-scale me-1" />
+                                <span>Restant: </span>
+                                <field name="remaining_contract_tonnage" readonly="1" class="oe_inline fw-bold text-success" />
+                                <span> T</span>
+                            </div>
+                        </div>
                     </div>
-                    
+
                     <group>
                         <group string="📦 Configuration des OT">
-                            <field name="company_id" invisible="1"/>
-                            <field name="customer_id" readonly="1"/>
-                            <field name="consignee_id" 
-                                   placeholder="Sélectionner un destinataire..."
-                                   domain="[('is_potting_consignee', '=', True)]"
-                                   context="{'default_is_potting_consignee': True}"
-                                   options="{'no_quick_create': True}"/>
-                            <field name="product_type" widget="radio" options="{'horizontal': true}"/>
-                            <field name="product_id" 
-                                   placeholder="Produit spécifique (optionnel)"
-                                   invisible="not product_type"
-                                   options="{'no_create': True}"/>
+                            <field name="company_id" invisible="1" />
+                            <field name="customer_id" readonly="1" />
+                            <field name="consignee_id"
+                                placeholder="Sélectionner un destinataire..."
+                                domain="[('is_potting_consignee', '=', True)]"
+                                context="{'default_is_potting_consignee': True}"
+                                options="{'no_quick_create': True}" />
+                            <field name="product_type" widget="radio" options="{'horizontal': true}" readonly="1"/>
+                            <field name="product_id"
+                                placeholder="Produit spécifique (optionnel)"
+                                invisible="not product_type"
+                                options="{'no_create': True}" />
                         </group>
                         <group string="⚖️ Tonnage">
-                            <field name="total_tonnage" class="fw-bold text-primary"/>
-                            <field name="tonnage_per_ot"/>
-                            <div class="alert alert-secondary py-2 mb-0" invisible="ot_count_to_generate == 0">
+                            <field name="total_tonnage" class="fw-bold text-primary" />
+                            <field name="tonnage_per_ot" />
+                            <!-- <div class="alert alert-secondary py-2 mb-0"
+                            invisible="ot_count_to_generate == 0">
                                 <div class="d-flex align-items-center">
                                     <i class="fa fa-calculator me-2 text-primary"/>
                                     <span>
@@ -63,53 +81,77 @@
                                     <field name="last_ot_tonnage" readonly="1" class="oe_inline fw-bold"/>
                                     <span> T</span>
                                 </div>
-                            </div>
+                            </div> -->
                         </group>
                     </group>
-                    
+                    <div class="alert alert-secondary py-2 mb-0" invisible="ot_count_to_generate == 0">
+                        <div class="d-flex align-items-center">
+                            <i class="fa fa-calculator me-2 text-primary" />
+                            <span>
+                                <strong>
+                                    <field name="ot_count_to_generate" readonly="1"
+                                        class="oe_inline" />
+                                </strong>
+                                <span> OT seront générés</span>
+                            </span>
+                        </div>
+                        <div class="text-muted small mt-1" invisible="last_ot_tonnage == tonnage_per_ot">
+                            <i class="fa fa-info-circle me-1" />
+                            <span>Le dernier OT aura un tonnage de </span>
+                            <field name="last_ot_tonnage" readonly="1" class="oe_inline fw-bold" />
+                            <span> T</span>
+                        </div>
+                    </div>
                     <group>
                         <group string="🚢 Transport (optionnel)">
-                            <field name="vessel_id" 
-                                   placeholder="Sélectionner un navire..."
-                                   options="{'no_create_edit': True}"/>
-                            <field name="pod" placeholder="Ex: HAMBURG, ROTTERDAM..."/>
-                            <field name="container_size" widget="radio" options="{'horizontal': true}"/>
+                            <field name="vessel_id"
+                                placeholder="Sélectionner un navire..."
+                                options="{'no_create_edit': True}" />
+                            <field name="pod" placeholder="Ex: HAMBURG, ROTTERDAM..." />
+                            <field name="container_size" widget="radio"
+                                options="{'horizontal': true}" />
                         </group>
                         <group string="📝 Notes">
-                            <field name="note" nolabel="1" placeholder="Notes ou instructions particulières..." widget="text"/>
+                            <field name="note" nolabel="1"
+                                placeholder="Notes ou instructions particulières..." widget="text" />
                         </group>
                     </group>
-                    
+
                     <!-- Résumé de la génération -->
-                    <div class="alert alert-success mt-3" role="alert" invisible="ot_count_to_generate == 0">
+                    <div class="alert alert-success mt-3" role="alert"
+                        invisible="ot_count_to_generate == 0">
                         <h5 class="alert-heading">
-                            <i class="fa fa-check-circle me-2"/>Résumé de la génération
-                        </h5>
-                        <hr class="my-2"/>
+                            <i class="fa fa-check-circle me-2" />Résumé de la génération </h5>
+                        <hr class="my-2" />
                         <div class="row">
                             <div class="col-md-4">
                                 <strong>Nombre d'OT:</strong>
-                                <span class="ms-2"><field name="ot_count_to_generate" readonly="1" class="oe_inline"/></span>
+                                <span class="ms-2">
+                                    <field name="ot_count_to_generate" readonly="1"
+                                        class="oe_inline" />
+                                </span>
                             </div>
                             <div class="col-md-4">
                                 <strong>Tonnage total:</strong>
-                                <span class="ms-2"><field name="total_tonnage" readonly="1" class="oe_inline"/> T</span>
+                                <span class="ms-2"><field name="total_tonnage" readonly="1"
+                                        class="oe_inline" /> T</span>
                             </div>
                             <div class="col-md-4">
                                 <strong>Tonnage/OT:</strong>
-                                <span class="ms-2"><field name="tonnage_per_ot" readonly="1" class="oe_inline"/> T</span>
+                                <span class="ms-2"><field name="tonnage_per_ot" readonly="1"
+                                        class="oe_inline" /> T</span>
                             </div>
                         </div>
                     </div>
                 </sheet>
-                
+
                 <footer>
-                    <button name="action_generate_ots" 
-                            type="object" 
-                            string="🚀 Générer les OT" 
-                            class="btn-primary"
-                            invisible="ot_count_to_generate == 0"/>
-                    <button string="Annuler" class="btn-light" special="cancel"/>
+                    <button name="action_generate_ots"
+                        type="object"
+                        string="🚀 Générer les OT"
+                        class="btn-primary"
+                        invisible="ot_count_to_generate == 0" />
+                    <button string="Annuler" class="btn-light" special="cancel" />
                 </footer>
             </form>
         </field>
@@ -121,7 +163,7 @@
         <field name="res_model">potting.generate.ot.from.order.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
-        <field name="binding_model_id" ref="model_potting_customer_order"/>
+        <field name="binding_model_id" ref="model_potting_customer_order" />
         <field name="binding_view_types">form</field>
     </record>
 </odoo>

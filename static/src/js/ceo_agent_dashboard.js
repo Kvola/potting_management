@@ -11,6 +11,8 @@ export class PottingCeoAgentDashboard extends Component {
         this.orm = useService("orm");
         this.action = useService("action");
         this.state = useState({
+            // Current campaign
+            currentCampaign: null,
             lots: {
                 draft: 0,
                 in_production: 0,
@@ -20,6 +22,11 @@ export class PottingCeoAgentDashboard extends Component {
             transitOrders: {
                 in_progress: 0,
                 ready_validation: 0,
+            },
+            // Tonnage stats
+            productionStats: {
+                totalProduced: 0,
+                totalPotted: 0,
             },
             lotsInProduction: [],
             lotsReadyToPot: [],
@@ -34,12 +41,40 @@ export class PottingCeoAgentDashboard extends Component {
     }
 
     async loadData() {
+        // Load current campaign
+        try {
+            const campaigns = await this.orm.searchRead(
+                "potting.campaign",
+                [['state', '=', 'active']],
+                ["name", "code", "date_start", "date_end"],
+                { limit: 1 }
+            );
+            if (campaigns.length > 0) {
+                this.state.currentCampaign = campaigns[0];
+            }
+        } catch (e) {
+            console.log("Campaign model not available");
+        }
+
         // Load lots counts
         const lotStates = ['draft', 'in_production', 'ready', 'potted'];
         for (const state of lotStates) {
             const count = await this.orm.searchCount("potting.lot", [['state', '=', state]]);
             this.state.lots[state] = count;
         }
+
+        // Load production tonnage stats
+        const allLots = await this.orm.searchRead(
+            "potting.lot",
+            [],
+            ["current_tonnage", "state"]
+        );
+        this.state.productionStats.totalProduced = allLots.reduce(
+            (sum, l) => sum + (l.current_tonnage || 0), 0
+        );
+        this.state.productionStats.totalPotted = allLots
+            .filter(l => l.state === 'potted')
+            .reduce((sum, l) => sum + (l.current_tonnage || 0), 0);
 
         // Load transit orders counts for validation
         this.state.transitOrders.in_progress = await this.orm.searchCount(
@@ -192,6 +227,25 @@ export class PottingCeoAgentDashboard extends Component {
             'night': 'Nuit'
         };
         return labels[shift] || shift || '-';
+    }
+
+    formatNumber(num, decimals = 2) {
+        if (typeof num !== 'number') return '0.00';
+        return num.toLocaleString('fr-FR', { 
+            minimumFractionDigits: decimals, 
+            maximumFractionDigits: decimals 
+        });
+    }
+
+    openCampaigns() {
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            name: 'Campagnes',
+            res_model: 'potting.campaign',
+            views: [[false, 'list'], [false, 'kanban'], [false, 'form']],
+            domain: [],
+            context: {},
+        });
     }
 }
 

@@ -21,6 +21,16 @@ class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     # =========================================================================
+    # DEFAULT CURRENCY
+    # =========================================================================
+    
+    potting_default_currency_id = fields.Many2one(
+        'res.currency',
+        string="Devise par défaut",
+        help="Devise par défaut utilisée pour les opérations du module (commandes, OT, etc.)"
+    )
+    
+    # =========================================================================
     # DEFAULT CUSTOMER
     # =========================================================================
     
@@ -116,6 +126,42 @@ class ResConfigSettings(models.TransientModel):
     )
 
     # =========================================================================
+    # PRIX OFFICIEL DU CACAO
+    # =========================================================================
+    
+    potting_official_cocoa_price = fields.Float(
+        string="Prix officiel du cacao (par tonne)",
+        config_parameter='potting_management.official_cocoa_price',
+        help="Prix de vente officiel du cacao fixé par l'État (en devise de la société). "
+             "Ce prix peut être utilisé comme base de calcul pour les contrats."
+    )
+    
+    potting_official_cocoa_price_date = fields.Datetime(
+        string="Date de mise à jour du prix officiel",
+        config_parameter='potting_management.official_cocoa_price_date',
+        help="Date de la dernière mise à jour du prix officiel du cacao"
+    )
+    
+    # =========================================================================
+    # DROITS D'EXPORTATION
+    # =========================================================================
+    
+    potting_export_duty_rate = fields.Float(
+        string="Taux droits d'exportation (%)",
+        config_parameter='potting_management.export_duty_rate',
+        default=14.6,
+        help="Taux des droits d'exportation en pourcentage. "
+             "Ces droits sont reversés à l'État et doivent être encaissés avant l'exportation."
+    )
+    
+    potting_export_duty_account_id = fields.Many2one(
+        'account.account',
+        string="Compte comptable droits d'export",
+        config_parameter='potting_management.export_duty_account_id',
+        help="Compte comptable utilisé pour enregistrer les droits d'exportation"
+    )
+
+    # =========================================================================
     # PRODUCTION CONFIGURATION
     # =========================================================================
     
@@ -199,6 +245,19 @@ class ResConfigSettings(models.TransientModel):
         default='2025-2026',
         help="Période de la campagne Café-Cacao au format AAAA-AAAA (ex: 2025-2026). "
              "Utilisé dans la numérotation des OT."
+    )
+    
+    potting_current_campaign_id = fields.Many2one(
+        'potting.campaign',
+        string="Campagne active",
+        compute='_compute_current_campaign_id',
+        help="La campagne café-cacao actuellement active (basée sur les dates)"
+    )
+    
+    potting_current_campaign_price = fields.Float(
+        string="Prix cacao campagne (€/T)",
+        compute='_compute_current_campaign_id',
+        help="Prix officiel du cacao défini pour la campagne en cours"
     )
 
     # =========================================================================
@@ -350,6 +409,17 @@ class ResConfigSettings(models.TransientModel):
         res = super().get_values()
         ICP = self.env['ir.config_parameter'].sudo()
         
+        # Get default currency from config parameter
+        default_currency_id = int(ICP.get_param('potting_management.default_currency_id', 0) or 0)
+        if default_currency_id:
+            currency = self.env['res.currency'].sudo().browse(default_currency_id).exists()
+            if currency:
+                default_currency_id = currency.id
+            else:
+                default_currency_id = False
+        else:
+            default_currency_id = False
+        
         # Get CC partners from config parameter
         cc_partner_ids = self._safe_get_partner_ids(
             ICP.get_param('potting_management.default_cc_partner_ids', '[]')
@@ -362,6 +432,7 @@ class ResConfigSettings(models.TransientModel):
         current_lot_number = lot_sequence.number_next_actual if lot_sequence else 10001
         
         res.update(
+            potting_default_currency_id=default_currency_id,
             potting_default_cc_partner_ids=[(6, 0, cc_partner_ids)],
             potting_lot_initial_number=current_lot_number,
         )
@@ -371,6 +442,12 @@ class ResConfigSettings(models.TransientModel):
         """Enregistre les valeurs des paramètres de configuration."""
         super().set_values()
         ICP = self.env['ir.config_parameter'].sudo()
+        
+        # Save default currency
+        ICP.set_param(
+            'potting_management.default_currency_id',
+            str(self.potting_default_currency_id.id) if self.potting_default_currency_id else '0'
+        )
         
         # Save CC partners as string list
         ICP.set_param(
@@ -428,6 +505,27 @@ class ResConfigSettings(models.TransientModel):
                 e, param_value
             )
         return []
+    
+    @api.model
+    def get_default_currency(self):
+        """Get the default currency for the potting module.
+        
+        Returns the configured default currency if set, otherwise falls back
+        to the company currency.
+        
+        Returns:
+            res.currency: The default currency record
+        """
+        ICP = self.env['ir.config_parameter'].sudo()
+        default_currency_id = int(ICP.get_param('potting_management.default_currency_id', 0) or 0)
+        
+        if default_currency_id:
+            currency = self.env['res.currency'].sudo().browse(default_currency_id).exists()
+            if currency:
+                return currency
+        
+        # Fallback to company currency
+        return self.env.company.currency_id
 
     @api.model
     def get_max_tonnage_for_product(self, product_type):
@@ -578,11 +676,27 @@ class ResConfigSettings(models.TransientModel):
     def get_campaign_year(self):
         """Get the current campaign year.
         
+        Priorité:
+        1. Campagne active en cours
+        2. Paramètre système
+        
         Returns:
-            str: Campaign year in format AABB (e.g., '2425' for 2024-2025)
+            str: Campaign year in format AAAA-AAAA (e.g., '2024-2025')
         """
+        # Essayer d'abord la campagne active
+        current_campaign = self.env['potting.campaign'].get_current_campaign()
+        if current_campaign:
+            return current_campaign.name
+        # Fallback sur le paramètre
         ICP = self.env['ir.config_parameter'].sudo()
-        return ICP.get_param('potting_management.campaign_year', '2425') or '2425'
+        return ICP.get_param('potting_management.campaign_year', '2025-2026') or '2025-2026'
+    
+    def _compute_current_campaign_id(self):
+        """Calcule la campagne actuellement en cours."""
+        current_campaign = self.env['potting.campaign'].get_current_campaign()
+        for record in self:
+            record.potting_current_campaign_id = current_campaign.id if current_campaign else False
+            record.potting_current_campaign_price = current_campaign.official_cocoa_price if current_campaign else 0.0
 
     @api.model
     def get_default_cc_partners(self):

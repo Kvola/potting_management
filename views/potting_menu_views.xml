@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Dashboard Actions (must be defined before menus that reference them) -->
+    <record id="action_potting_dashboard_commercial" model="ir.actions.client">
+        <field name="name">📊 Tableau de bord Commercial</field>
+        <field name="tag">potting_commercial_dashboard</field>
+    </record>
+
     <record id="action_potting_dashboard_shipping" model="ir.actions.client">
         <field name="name">📊 Tableau de bord Shipping</field>
         <field name="tag">potting_shipping_dashboard</field>
@@ -24,6 +29,13 @@
               parent="menu_potting_root" 
               sequence="5"
               groups="potting_management.group_potting_user"/>
+
+    <menuitem id="menu_potting_dashboard_commercial" 
+              name="💼 Commercial" 
+              parent="menu_potting_dashboards" 
+              action="action_potting_dashboard_commercial" 
+              sequence="5"
+              groups="potting_management.group_potting_commercial,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_dashboard_shipping" 
               name="🚢 Shipping" 
@@ -51,7 +63,7 @@
               parent="menu_potting_operations" 
               action="action_potting_customer_order" 
               sequence="10"
-              groups="potting_management.group_potting_user"/>
+              groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_transit_order" 
               name="🚚 Ordres de Transit" 
@@ -150,10 +162,31 @@
         sequence="20"
         groups="potting_management.group_potting_shipping"/>
 
+    <menuitem id="menu_potting_forwarding_agent"
+        name="🚚 Transitaires"
+        parent="menu_potting_config"
+        action="potting_forwarding_agent_action"
+        sequence="25"
+        groups="potting_management.group_potting_shipping"/>
+
+    <menuitem id="menu_potting_forwarding_agent_payments"
+        name="💳 Paiements transitaires"
+        parent="menu_potting_config"
+        action="potting_forwarding_agent_payment_action"
+        sequence="26"
+        groups="potting_management.group_potting_manager"/>
+
     <menuitem id="menu_potting_settings"
         name="⚙️ Paramètres"
         parent="menu_potting_config"  
         action="action_potting_config_settings"
         sequence="100"
+        groups="potting_management.group_potting_manager"/>
+
+    <menuitem id="menu_potting_campaign"
+        name="📅 Campagnes"
+        parent="menu_potting_config"
+        action="potting_campaign_action"
+        sequence="1"
         groups="potting_management.group_potting_manager"/>
 </odoo>

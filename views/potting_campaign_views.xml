@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================== -->
+    <!-- VUE TREE - CAMPAGNES CAFÉ-CACAO -->
+    <!-- ============================================================== -->
+    
+    <record id="potting_campaign_view_tree" model="ir.ui.view">
+        <field name="name">potting.campaign.view.tree</field>
+        <field name="model">potting.campaign</field>
+        <field name="arch" type="xml">
+            <tree string="Campagnes Café-Cacao" 
+                  decoration-success="is_current == True"
+                  decoration-muted="state == 'closed'"
+                  default_order="date_start desc">
+                <field name="name" string="Campagne"/>
+                <field name="code"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="is_current" string="En cours" widget="boolean"/>
+                <field name="official_cocoa_price" string="Prix cacao (€/T)" widget="monetary"/>
+                <field name="export_duty_rate" string="Droits export (%)"/>
+                <field name="transit_order_count" string="Nb OT"/>
+                <field name="total_tonnage" string="Tonnage (T)"/>
+                <field name="state" widget="badge" 
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'active'"
+                       decoration-muted="state == 'closed'"/>
+                <field name="currency_id" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- VUE FORM - CAMPAGNES CAFÉ-CACAO -->
+    <!-- ============================================================== -->
+    
+    <record id="potting_campaign_view_form" model="ir.ui.view">
+        <field name="name">potting.campaign.view.form</field>
+        <field name="model">potting.campaign</field>
+        <field name="arch" type="xml">
+            <form string="Campagne Café-Cacao">
+                <header>
+                    <button name="action_activate" 
+                            type="object" 
+                            string="Activer" 
+                            class="btn-primary"
+                            invisible="state != 'draft'"
+                            confirm="Voulez-vous activer cette campagne ?"/>
+                    <button name="action_close" 
+                            type="object" 
+                            string="Clôturer" 
+                            class="btn-secondary"
+                            invisible="state != 'active'"
+                            confirm="Voulez-vous clôturer cette campagne ? Cette action est irréversible."/>
+                    <button name="action_draft" 
+                            type="object" 
+                            string="Remettre en brouillon" 
+                            invisible="state != 'active'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_transit_orders" 
+                                type="object"
+                                class="oe_stat_button" 
+                                icon="fa-ship"
+                                invisible="transit_order_count == 0">
+                            <field name="transit_order_count" widget="statinfo" string="OT"/>
+                        </button>
+                        <button name="action_view_customer_orders" 
+                                type="object"
+                                class="oe_stat_button" 
+                                icon="fa-file-text-o"
+                                invisible="customer_order_count == 0">
+                            <field name="customer_order_count" widget="statinfo" string="Commandes"/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" 
+                            title="EN COURS" 
+                            bg_color="bg-success" 
+                            invisible="not is_current"/>
+                    <widget name="web_ribbon" 
+                            title="Clôturée" 
+                            bg_color="bg-secondary" 
+                            invisible="state != 'closed'"/>
+                    
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Ex: 2024-2025" required="1"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group string="📅 Période">
+                            <field name="code" required="1"/>
+                            <field name="date_start" required="1"/>
+                            <field name="date_end" required="1"/>
+                            <field name="is_current" readonly="1"/>
+                        </group>
+                        <group string="💰 Prix par défaut">
+                            <field name="currency_id" 
+                                   options="{'no_create': True}"
+                                   readonly="state == 'active'"/>
+                            <field name="official_cocoa_price" widget="monetary"/>
+                            <field name="export_duty_rate"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Prix par produit" name="prices">
+                            <group>
+                                <group string="Prix officiels (€/Tonne)">
+                                    <field name="official_price_cocoa_mass" widget="monetary"/>
+                                    <field name="official_price_cocoa_butter" widget="monetary"/>
+                                    <field name="official_price_cocoa_cake" widget="monetary"/>
+                                    <field name="official_price_cocoa_powder" widget="monetary"/>
+                                </group>
+                                <group string="Informations">
+                                    <p class="text-muted">
+                                        <i class="fa fa-info-circle"/> 
+                                        Définissez les prix officiels pour chaque type de produit.
+                                        Si un prix spécifique n'est pas défini, le "Prix officiel général" sera utilisé.
+                                    </p>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Statistiques" name="statistics">
+                            <group>
+                                <group string="📊 Volumes">
+                                    <field name="transit_order_count" readonly="1"/>
+                                    <field name="customer_order_count" readonly="1"/>
+                                    <field name="total_tonnage" readonly="1"/>
+                                </group>
+                                <group string="💵 Montants">
+                                    <field name="total_amount" readonly="1" widget="monetary"/>
+                                </group>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                <strong><i class="fa fa-info-circle"/> Info:</strong>
+                                Les statistiques sont calculées automatiquement à partir des OT et commandes 
+                                liés à cette campagne.
+                            </div>
+                        </page>
+                        
+                        <page string="Notes" name="notes">
+                            <field name="note" placeholder="Ajoutez des notes ou commentaires sur cette campagne..."/>
+                        </page>
+                    </notebook>
+                    
+                    <field name="company_id" invisible="1"/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- VUE SEARCH - CAMPAGNES CAFÉ-CACAO -->
+    <!-- ============================================================== -->
+    
+    <record id="potting_campaign_view_search" model="ir.ui.view">
+        <field name="name">potting.campaign.view.search</field>
+        <field name="model">potting.campaign</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher une campagne">
+                <field name="name" string="Campagne"/>
+                <field name="code"/>
+                <separator/>
+                <filter string="En cours" name="filter_current" domain="[('is_current', '=', True)]"/>
+                <filter string="Active" name="filter_active" domain="[('state', '=', 'active')]"/>
+                <filter string="Brouillon" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Clôturée" name="filter_closed" domain="[('state', '=', 'closed')]"/>
+                <separator/>
+                <filter string="Archivé" name="filter_inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="État" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Année de début" name="group_year" context="{'group_by': 'date_start:year'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- VUE KANBAN - CAMPAGNES CAFÉ-CACAO -->
+    <!-- ============================================================== -->
+    
+    <record id="potting_campaign_view_kanban" model="ir.ui.view">
+        <field name="name">potting.campaign.view.kanban</field>
+        <field name="model">potting.campaign</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" default_order="date_start desc">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="is_current"/>
+                <field name="state"/>
+                <field name="official_cocoa_price"/>
+                <field name="transit_order_count"/>
+                <field name="total_tonnage"/>
+                <field name="currency_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click #{record.is_current.raw_value ? 'border-success' : ''}">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <span t-if="record.is_current.raw_value" class="badge bg-success me-2">EN COURS</span>
+                                            <field name="name"/>
+                                        </strong>
+                                    </div>
+                                    <field name="state" widget="label_selection" options="{'classes': {'draft': 'info', 'active': 'success', 'closed': 'secondary'}}"/>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <field name="date_start"/> → <field name="date_end"/>
+                                    <div class="mt-2">
+                                        <span class="text-muted">Prix cacao:</span>
+                                        <strong><field name="official_cocoa_price" widget="monetary"/> /T</strong>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span class="badge bg-primary">
+                                            <field name="transit_order_count"/> OT
+                                        </span>
+                                        <span class="badge bg-info ms-1">
+                                            <field name="total_tonnage"/> T
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- ACTION - CAMPAGNES CAFÉ-CACAO -->
+    <!-- ============================================================== -->
+    
+    <record id="potting_campaign_action" model="ir.actions.act_window">
+        <field name="name">Campagnes Café-Cacao</field>
+        <field name="res_model">potting.campaign</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="potting_campaign_view_search"/>
+        <field name="context">{'search_default_filter_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer une nouvelle campagne café-cacao
+            </p>
+            <p>
+                Les campagnes café-cacao permettent de gérer les prix officiels du cacao
+                et les taux des droits d'exportation pour chaque période.
+            </p>
+            <p>
+                Une campagne s'étend généralement d'octobre à septembre de l'année suivante
+                (ex: 2024-2025 = 1er octobre 2024 au 30 septembre 2025).
+            </p>
+        </field>
+    </record>
+
+    <!-- ============================================================== -->
+    <!-- MENU - CAMPAGNES CAFÉ-CACAO -->
+    <!-- ============================================================== -->
+    
+</odoo>

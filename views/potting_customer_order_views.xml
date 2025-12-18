@@ -13,14 +13,21 @@
                   multi_edit="1"
                   sample="1">
                 <field name="company_id" column_invisible="1"/>
+                <field name="currency_id" column_invisible="1"/>
                 <field name="name" decoration-bf="1"/>
+                <field name="contract_number" optional="show"/>
                 <field name="customer_id"/>
-                <field name="campaign_period" optional="show"/>
+                <field name="product_type"/>
+                <field name="campaign_id" optional="show"/>
+                <field name="campaign_period" column_invisible="1"/>
                 <field name="date_order" widget="date"/>
                 <field name="date_expected" widget="date" optional="show"/>
                 <field name="transit_order_count" string="OT"/>
-                <field name="total_tonnage" sum="Total" decoration-bf="1" class="text-primary"/>
-                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="contract_tonnage" string="Contrat (T)" optional="show" decoration-bf="1"/>
+                <field name="total_tonnage" string="OT (T)" sum="Total" decoration-bf="1" class="text-primary"/>
+                <field name="remaining_contract_tonnage" string="Restant (T)" optional="hide" decoration-danger="remaining_contract_tonnage &lt; 0" decoration-success="remaining_contract_tonnage == 0"/>
+                <field name="unit_price" string="Prix (€/T)" widget="monetary" optional="show"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="hide"/>
                 <field name="state" widget="badge" 
                        decoration-info="state == 'draft'" 
                        decoration-warning="state in ('confirmed', 'in_progress')" 
@@ -66,14 +73,59 @@
                         <group string="👤 Client">
                             <field name="company_id" invisible="1"/>
                             <field name="customer_id" options="{'no_create': True}"/>
-                            <field name="campaign_period" placeholder="2025-2026"/>
+                            <field name="product_type" required="1"/>
+                            <field name="campaign_id" options="{'no_create': True}"/>
+                            <field name="campaign_period" invisible="1"/>
                             <field name="date_order" widget="date"/>
                             <field name="date_expected" widget="date"/>
                         </group>
-                        <group string="📊 Informations">
+                        <group string="📋 Contrat">
+                            <field name="contract_number"/>
                             <field name="user_id" widget="many2one_avatar_user"/>
-                            <field name="total_tonnage" widget="float" class="fw-bold text-primary"/>
+                            <label for="contract_tonnage"/>
+                            <div class="o_row">
+                                <field name="contract_tonnage" class="oe_inline fw-bold"
+                                       readonly="state not in ('draft', 'confirmed')" 
+                                       groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+                                <span class="text-muted">tonnes prévues</span>
+                            </div>
+                            <label for="total_tonnage"/>
+                            <div class="o_row">
+                                <field name="total_tonnage" widget="float" class="oe_inline text-primary fw-bold" readonly="1"/>
+                                <span class="text-muted">tonnes OT</span>
+                            </div>
+                            <label for="remaining_contract_tonnage"/>
+                            <div class="o_row">
+                                <field name="remaining_contract_tonnage" class="oe_inline" readonly="1"
+                                       decoration-danger="remaining_contract_tonnage &lt; 0"
+                                       decoration-success="remaining_contract_tonnage == 0"/>
+                                <span class="text-muted">tonnes restantes</span>
+                            </div>
                             <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="💰 Prix du contrat">
+                            <field name="currency_id" 
+                                   options="{'no_create': True}"
+                                   readonly="state not in ('draft', 'confirmed')"/>
+                            <label for="unit_price"/>
+                            <div class="o_row">
+                                <field name="unit_price" class="oe_inline fw-bold text-primary"
+                                       readonly="state not in ('draft', 'confirmed')"
+                                       groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+                                <span class="text-muted">/T</span>
+                            </div>
+                            <field name="official_cocoa_price" readonly="1" 
+                                   invisible="not use_official_price"/>
+                            <field name="use_official_price"/>
+                            <field name="certification_ids" widget="many2many_tags"/>
+                            <field name="certification_premium" readonly="1"/>
+                        </group>
+                        <group string="📊 Montants">
+                            <field name="total_amount" readonly="1"/>
+                            <field name="export_duty_rate"/>
+                            <field name="export_duty_amount" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -95,6 +147,22 @@
                         </page>
                         <page string="Notes" name="notes">
                             <field name="note" placeholder="Ajoutez des notes ici..."/>
+                        </page>
+                        <page string="💰 Coûts &amp; Droits" name="costs">
+                            <group>
+                                <group string="Droits d'exportation">
+                                    <field name="export_duty_rate"/>
+                                    <field name="export_duty_amount"/>
+                                    <field name="export_duty_collected" widget="boolean_toggle"/>
+                                </group>
+                                <group string="Coûts supplémentaires">
+                                    <field name="transport_cost"/>
+                                    <field name="storage_cost"/>
+                                    <field name="insurance_cost"/>
+                                    <field name="other_costs"/>
+                                    <field name="total_costs"/>
+                                </group>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>
@@ -195,6 +263,29 @@
             <p>
                 Commencez par créer une commande client, puis ajoutez les Ordres de Transit correspondants.
             </p>
+            <p>
+                <a type="action" name="%(potting_management.action_potting_import_contracts_wizard)d">
+                    📥 Importer des contrats depuis Excel
+                </a>
+            </p>
+        </field>
+    </record>
+
+    <!-- Import Button for Tree View Header -->
+    <record id="potting_customer_order_view_tree_inherit_import" model="ir.ui.view">
+        <field name="name">potting.customer.order.tree.import</field>
+        <field name="model">potting.customer.order</field>
+        <field name="inherit_id" ref="potting_customer_order_view_tree"/>
+        <field name="arch" type="xml">
+            <tree position="inside">
+                <header>
+                    <button name="%(action_potting_import_contracts_wizard)d" 
+                            string="📥 Importer (Excel)" 
+                            type="action" 
+                            class="btn-secondary"
+                            groups="potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+                </header>
+            </tree>
         </field>
     </record>
 </odoo>
