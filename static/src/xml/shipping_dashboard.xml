@@ -13,11 +13,11 @@
 
             <!-- Quick Actions -->
             <div class="quick-actions mb-4">
-                <button class="btn btn-primary" t-on-click="createCustomerOrder">
-                    <i class="fa fa-plus me-1"/>Nouvelle commande
-                </button>
-                <button class="btn btn-secondary" t-on-click="createTransitOrder">
+                <button class="btn btn-primary" t-on-click="createTransitOrder">
                     <i class="fa fa-plus me-1"/>Nouvel OT
+                </button>
+                <button class="btn btn-secondary" t-on-click="importContracts">
+                    <i class="fa fa-upload me-1"/>Importer les contrats
                 </button>
                 <button class="btn btn-outline-primary" t-on-click="openCampaigns">
                     <i class="fa fa-calendar me-1"/>Campagnes

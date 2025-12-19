@@ -167,13 +167,13 @@ export class PottingShippingDashboard extends Component {
         });
     }
 
-    createCustomerOrder() {
+    importContracts() {
         this.action.doAction({
             type: 'ir.actions.act_window',
-            name: 'Nouvelle commande',
-            res_model: 'potting.customer.order',
+            name: 'Importer des contrats (Excel)',
+            res_model: 'potting.import.contracts.wizard',
             views: [[false, 'form']],
-            target: 'current',
+            target: 'new',
         });
     }
 
