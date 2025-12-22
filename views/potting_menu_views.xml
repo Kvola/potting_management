@@ -18,7 +18,7 @@
 
     <!-- Main Menu - Now uses base group -->
     <menuitem id="menu_potting_root" 
-              name="📦 Empotages" 
+              name="📦 Exportations" 
               sequence="3"
               web_icon="potting_management,static/description/icon.png"
               groups="potting_management.group_potting_user"/>
