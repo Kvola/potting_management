@@ -68,24 +68,6 @@ class PottingCustomerOrder(models.Model):
         tracking=True
     )
     
-    campaign_period = fields.Char(
-        string="Période Campagne",
-        compute='_compute_campaign_period',
-        store=True,
-        help="Période de la campagne Café-Cacao (ex: 2025-2026). "
-             "Calculée automatiquement depuis la campagne sélectionnée."
-    )
-    
-    campaign_id = fields.Many2one(
-        'potting.campaign',
-        string="Campagne Café-Cacao",
-        required=True,
-        tracking=True,
-        default=lambda self: self._get_default_campaign(),
-        domain="[('state', 'in', ['draft', 'active'])]",
-        help="Campagne café-cacao pour ce contrat. Détermine les prix et la période."
-    )
-    
     product_type = fields.Selection([
         ('cocoa_mass', 'Masse de cacao'),
         ('cocoa_butter', 'Beurre de cacao'),
@@ -112,21 +94,6 @@ class PottingCustomerOrder(models.Model):
         currency_field='currency_id',
         tracking=True,
         help="Prix de vente par tonne de produit"
-    )
-    
-    official_cocoa_price = fields.Monetary(
-        string="Prix officiel du cacao",
-        currency_field='currency_id',
-        compute='_compute_official_cocoa_price',
-        store=True,
-        help="Prix de vente officiel du cacao fixé par l'État"
-    )
-    
-    use_official_price = fields.Boolean(
-        string="Utiliser le prix officiel",
-        default=False,
-        tracking=True,
-        help="Si coché, le prix officiel du cacao sera utilisé comme base de calcul"
     )
     
     certification_ids = fields.Many2many(
@@ -355,6 +322,40 @@ class PottingCustomerOrder(models.Model):
         store=True
     )
 
+    # =========================================================================
+    # CHAMPS - CONVERSION DEVISE SOCIÉTÉ
+    # =========================================================================
+    
+    company_currency_id = fields.Many2one(
+        'res.currency',
+        string="Devise société",
+        related='company_id.currency_id',
+        readonly=True,
+        help="Devise de la société"
+    )
+    
+    total_amount_company_currency = fields.Monetary(
+        string="Montant total (devise société)",
+        currency_field='company_currency_id',
+        compute='_compute_amount_company_currency',
+        store=True,
+        help="Montant total du contrat converti dans la devise de la société"
+    )
+    
+    net_amount_company_currency = fields.Monetary(
+        string="Montant net (devise société)",
+        currency_field='company_currency_id',
+        compute='_compute_amount_company_currency',
+        store=True,
+        help="Montant net du contrat converti dans la devise de la société"
+    )
+    
+    conversion_rate_display = fields.Char(
+        string="Taux de conversion",
+        compute='_compute_amount_company_currency',
+        help="Taux de conversion appliqué"
+    )
+
     # -------------------------------------------------------------------------
     # CONSTRAINTS
     # -------------------------------------------------------------------------
@@ -407,52 +408,9 @@ class PottingCustomerOrder(models.Model):
         except (ValueError, TypeError):
             return 14.6  # Default rate
 
-    @api.model
-    def _get_default_campaign(self):
-        """Get the default campaign (current active campaign).
-        
-        Returns:
-            potting.campaign: The current active campaign or False
-        """
-        return self.env['potting.campaign'].get_current_campaign()
-
     # -------------------------------------------------------------------------
     # COMPUTE METHODS - PRIX & MONTANTS
     # -------------------------------------------------------------------------
-    
-    @api.depends('campaign_id', 'campaign_id.name')
-    def _compute_campaign_period(self):
-        """Calcule la période de campagne depuis la campagne sélectionnée."""
-        for order in self:
-            if order.campaign_id:
-                order.campaign_period = order.campaign_id.name
-            else:
-                order.campaign_period = False
-    
-    @api.depends('use_official_price', 'campaign_id', 'campaign_id.official_cocoa_price')
-    def _compute_official_cocoa_price(self):
-        """Get the official cocoa price from the campaign or settings.
-        
-        Priorité:
-        1. Prix officiel général de la campagne
-        2. Prix dans les paramètres système (fallback)
-        
-        Note: Le prix spécifique par type de produit est géré au niveau de l'OT.
-        """
-        ICP = self.env['ir.config_parameter'].sudo()
-        default_price = ICP.get_param('potting_management.official_cocoa_price', '0')
-        try:
-            default_price = float(default_price)
-        except (ValueError, TypeError):
-            default_price = 0.0
-            
-        for order in self:
-            if not order.use_official_price:
-                order.official_cocoa_price = 0.0
-            elif order.campaign_id and order.campaign_id.official_cocoa_price:
-                order.official_cocoa_price = order.campaign_id.official_cocoa_price
-            else:
-                order.official_cocoa_price = default_price
 
     @api.depends('transit_order_ids.lot_ids.certification_id', 'certification_ids', 'total_tonnage')
     def _compute_certification_premium(self):
@@ -481,15 +439,12 @@ class PottingCustomerOrder(models.Model):
                 (order.other_costs or 0.0)
             )
 
-    @api.depends('unit_price', 'total_tonnage', 'certification_premium', 'use_official_price', 'official_cocoa_price', 'export_duty_amount')
+    @api.depends('unit_price', 'total_tonnage', 'certification_premium', 'export_duty_amount')
     def _compute_amounts(self):
         """Calculate subtotal, total and net amounts"""
         for order in self:
-            # Determine the base price
-            if order.use_official_price and order.official_cocoa_price:
-                base_price = order.official_cocoa_price
-            else:
-                base_price = order.unit_price or 0.0
+            # Use contract unit price
+            base_price = order.unit_price or 0.0
             
             # Calculate subtotal (price × tonnage)
             order.subtotal_amount = base_price * order.total_tonnage
@@ -508,6 +463,63 @@ class PottingCustomerOrder(models.Model):
                 order.export_duty_amount = order.total_amount * (order.export_duty_rate / 100)
             else:
                 order.export_duty_amount = 0.0
+
+    @api.depends('total_amount', 'net_amount', 'currency_id', 'company_id.currency_id', 'date_order')
+    def _compute_amount_company_currency(self):
+        """Convertit les montants du contrat dans la devise de la société.
+        
+        Cette méthode calcule automatiquement les montants convertis en utilisant
+        le taux de change à la date de la commande. Si la devise du contrat est
+        la même que celle de la société, aucune conversion n'est effectuée.
+        """
+        for order in self:
+            company_currency = order.company_id.currency_id
+            contract_currency = order.currency_id
+            
+            # Si pas de devise définie ou mêmes devises, pas de conversion
+            if not company_currency or not contract_currency:
+                order.total_amount_company_currency = order.total_amount
+                order.net_amount_company_currency = order.net_amount
+                order.conversion_rate_display = ""
+                continue
+                
+            if company_currency == contract_currency:
+                order.total_amount_company_currency = order.total_amount
+                order.net_amount_company_currency = order.net_amount
+                order.conversion_rate_display = _("Même devise")
+                continue
+            
+            # Convertir les montants à la date de la commande
+            date = order.date_order or fields.Date.context_today(order)
+            
+            # Conversion du montant total
+            order.total_amount_company_currency = contract_currency._convert(
+                order.total_amount or 0.0,
+                company_currency,
+                order.company_id,
+                date
+            )
+            
+            # Conversion du montant net
+            order.net_amount_company_currency = contract_currency._convert(
+                order.net_amount or 0.0,
+                company_currency,
+                order.company_id,
+                date
+            )
+            
+            # Affichage du taux de conversion (1 devise contrat = X devise société)
+            rate = contract_currency._get_conversion_rate(
+                contract_currency,
+                company_currency,
+                order.company_id,
+                date
+            )
+            order.conversion_rate_display = _("1 %s = %.4f %s") % (
+                contract_currency.name,
+                rate,
+                company_currency.name
+            )
 
     @api.depends('transit_order_ids.lot_ids', 'total_amount', 'total_tonnage')
     def _compute_costs(self):
@@ -629,23 +641,6 @@ class PottingCustomerOrder(models.Model):
             for ot in self.transit_order_ids:
                 if not ot.consignee_id:
                     ot.consignee_id = self.customer_id
-
-    @api.onchange('product_type', 'campaign_id')
-    def _onchange_product_type_campaign(self):
-        """Pré-remplit le prix unitaire depuis la campagne en fonction du type de produit."""
-        if self.product_type and self.campaign_id:
-            # Récupérer le prix spécifique au produit depuis la campagne
-            price = self.campaign_id.get_price_for_product(self.product_type)
-            if price and not self.unit_price:
-                self.unit_price = price
-        elif self.product_type and not self.unit_price:
-            # Fallback: récupérer le prix depuis les paramètres
-            ICP = self.env['ir.config_parameter'].sudo()
-            default_price = ICP.get_param('potting_management.official_cocoa_price', '0')
-            try:
-                self.unit_price = float(default_price)
-            except (ValueError, TypeError):
-                pass
 
     # -------------------------------------------------------------------------
     # ACTION METHODS

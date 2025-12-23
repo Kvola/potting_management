@@ -15,10 +15,6 @@
                         <div class="text-muted mt-2">
                             <span>Commande: </span>
                             <field name="customer_order_id" readonly="1" class="oe_inline fw-bold" />
-                            <span class="mx-2">|</span>
-                            <span>Campagne: </span>
-                            <field name="campaign_period" readonly="1"
-                                class="oe_inline fw-bold text-primary" />
                         </div>
                     </div>
 
@@ -52,6 +48,10 @@
                         <group string="📦 Configuration des OT">
                             <field name="company_id" invisible="1" />
                             <field name="customer_id" readonly="1" />
+                            <field name="campaign_id" 
+                                   options="{'no_create': True}"
+                                   domain="[('state', 'in', ['draft', 'active'])]"
+                                   required="1"/>
                             <field name="consignee_id"
                                 placeholder="Sélectionner un destinataire..."
                                 domain="[('is_potting_consignee', '=', True)]"

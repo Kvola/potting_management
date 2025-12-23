@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'Gestion des Empotages',
+    'name': 'Gestion des Exportations',
     'version': '17.0.1.1.0',
     'category': 'Inventory/Logistics',
-    'summary': 'Gestion des empotages de produits semi-finis du cacao',
+    'summary': 'Gestion des exportations de produits semi-finis du cacao',
     'description': """
-        Module de gestion des empotages pour les produits semi-finis du cacao :
+        Module de gestion des exportations pour les produits semi-finis du cacao :
         - Masse de cacao
         - Beurre de cacao
         - Cake/Tourteau de cacao
@@ -16,7 +16,7 @@
         - Gestion des Ordres de Transit (OT)
         - Génération automatique des OT depuis les commandes clients
         - Génération automatique des lots selon le tonnage
-        - Suivi des productions et empotages
+        - Suivi des productions et exportations
         - Gestion des transitaires et leurs paiements
         - Calcul des droits d'exportation
         - Génération de factures depuis les OT
@@ -60,8 +60,9 @@
         'views/potting_consignee_views.xml',
         'views/potting_forwarding_agent_views.xml',
         'views/potting_campaign_views.xml',
-        'views/potting_menu_views.xml',
         'views/res_config_settings_views.xml',
+        # Menu must be last (references actions from other views)
+        'views/potting_menu_views.xml',
         # Reports (must be before mail templates)
         'reports/potting_report_templates.xml',
         'reports/potting_report_actions.xml',

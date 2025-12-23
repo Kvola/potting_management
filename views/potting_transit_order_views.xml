@@ -16,7 +16,8 @@
                 <field name="ot_reference" optional="show"/>
                 <field name="company_id" column_invisible="1"/>
                 <field name="customer_order_id" optional="show"/>
-                <field name="campaign_period" optional="show"/>
+                <field name="campaign_id" optional="show"/>
+                <field name="campaign_period" optional="hide"/>
                 <field name="consignee_id"/>
                 <field name="product_type" widget="badge" 
                        decoration-info="product_type == 'cocoa_mass'"
@@ -102,6 +103,10 @@
                             <field name="company_id" invisible="1"/>
                             <field name="is_created_from_order" invisible="1"/>
                             <field name="customer_order_id" options="{'no_create': True}" readonly="is_created_from_order or state != 'draft'"/>
+                            <field name="campaign_id" 
+                                   options="{'no_create': True}"
+                                   domain="[('state', 'in', ['draft', 'active'])]"
+                                   required="1"/>
                             <field name="campaign_period" readonly="1"/>
                             <field name="customer_id" options="{'no_create': True}"/>
                             <field name="consignee_id" 
@@ -153,11 +158,31 @@
                             <field name="unit_price"/>
                             <field name="certification_premium"/>
                             <field name="total_amount"/>
+                            <field name="net_amount"/>
                         </group>
                         <group string="📋 Droits d'exportation">
                             <field name="export_duty_rate"/>
                             <field name="export_duty_amount"/>
                             <field name="export_duty_collected" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    <!-- Section conversion devise société -->
+                    <group string="💱 Montants en devise société" 
+                           invisible="currency_id == company_currency_id"
+                           class="bg-light p-2 rounded">
+                        <group>
+                            <field name="company_currency_id" invisible="1"/>
+                            <field name="conversion_rate_display" readonly="1" 
+                                   string="Taux appliqué" 
+                                   class="text-info"/>
+                            <field name="total_amount_company_currency" readonly="1" 
+                                   string="Montant total converti"
+                                   class="fw-bold text-success"/>
+                        </group>
+                        <group>
+                            <field name="net_amount_company_currency" readonly="1" 
+                                   string="Montant net converti"
+                                   class="fw-bold text-primary"/>
                         </group>
                     </group>
                     <notebook>
@@ -281,7 +306,7 @@
                     <filter string="Type de produit" name="product_type" context="{'group_by': 'product_type'}"/>
                     <filter string="Navire" name="vessel" context="{'group_by': 'vessel_id'}"/>
                     <filter string="Port" name="pod" context="{'group_by': 'pod'}"/>
-                    <filter string="Campagne" name="campaign" context="{'group_by': 'campaign_period'}"/>
+                    <filter string="Campagne" name="campaign" context="{'group_by': 'campaign_id'}"/>
                     <filter string="État" name="state" context="{'group_by': 'state'}"/>
                     <filter string="Statut livraison" name="delivery_status" context="{'group_by': 'delivery_status'}"/>
                 </group>

@@ -453,7 +453,6 @@ class PottingImportContractsWizard(models.TransientModel):
             'currency_id': currency_id or self.env.company.currency_id.id,
             'date_order': date_order or fields.Date.context_today(self),
             'date_expected': date_expected,
-            'campaign_period': campaign or self._get_default_campaign_period(),
             'certification_ids': [(6, 0, certification_ids)] if certification_ids else False,
             'export_duty_rate': export_duty_rate,
             'notes': notes,
@@ -502,7 +501,6 @@ class PottingImportContractsWizard(models.TransientModel):
                     'contract_tonnage': line.tonnage,  # Le tonnage du fichier devient le tonnage du contrat
                     'date_order': line.date_order,
                     'date_expected': line.date_expected,
-                    'campaign_period': line.campaign_period,
                     'currency_id': line.currency_id.id,
                     'unit_price': line.unit_price,
                     'export_duty_rate': line.export_duty_rate,

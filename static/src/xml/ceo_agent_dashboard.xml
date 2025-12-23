@@ -69,6 +69,59 @@
                 </div>
             </div>
 
+            <!-- Lot Amounts Overview (NEW) -->
+            <div class="mb-4">
+                <div class="section-title">
+                    <i class="fa fa-money"/>💱 Valeur des lots
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="card border-accent-primary">
+                            <div class="stat-card">
+                                <div class="stat-value text-primary" style="font-size: 1.2rem;">
+                                    <t t-esc="formatCurrency(state.lotAmounts.total)"/>
+                                    <small class="ms-1" t-esc="state.lotAmounts.currency_symbol || '€'"/>
+                                </div>
+                                <div class="stat-label">Valeur totale lots</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-accent-success">
+                            <div class="stat-card">
+                                <div class="stat-value text-success" style="font-size: 1.2rem;">
+                                    <t t-esc="formatCurrency(state.lotAmounts.total_company_currency)"/>
+                                    <small class="ms-1" t-esc="state.lotAmounts.company_currency_symbol || 'XOF'"/>
+                                </div>
+                                <div class="stat-label">💱 Converti devise société</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-accent-info">
+                            <div class="stat-card">
+                                <div class="stat-value text-info" style="font-size: 1.2rem;">
+                                    <t t-esc="formatCurrency(state.lotAmounts.potted_total)"/>
+                                    <small class="ms-1" t-esc="state.lotAmounts.currency_symbol || '€'"/>
+                                </div>
+                                <div class="stat-label">Valeur lots empotés</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-accent-warning">
+                            <div class="stat-card">
+                                <div class="stat-value text-warning" style="font-size: 1.2rem;">
+                                    <t t-esc="formatCurrency(state.lotAmounts.potted_company_currency)"/>
+                                    <small class="ms-1" t-esc="state.lotAmounts.company_currency_symbol || 'XOF'"/>
+                                </div>
+                                <div class="stat-label">💱 Empotés (société)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Lots Stats -->
             <div class="mb-4">
                 <div class="section-title">

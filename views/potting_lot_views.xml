@@ -129,6 +129,21 @@
                         </group>
                     </group>
                     <group>
+                        <group string="💰 Montants du lot">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="unit_price" readonly="1"/>
+                            <field name="lot_amount" readonly="1"/>
+                            <field name="certification_premium_amount" readonly="1" invisible="not certification_id"/>
+                            <field name="total_lot_amount" readonly="1" class="fw-bold text-primary"/>
+                        </group>
+                        <group string="💱 Montant devise société" invisible="currency_id == company_currency_id">
+                            <field name="company_currency_id" invisible="1"/>
+                            <field name="conversion_rate_display" readonly="1" string="Taux appliqué" class="text-info"/>
+                            <field name="total_lot_amount_company_currency" readonly="1" 
+                                   string="Montant converti" class="fw-bold text-success"/>
+                        </group>
+                    </group>
+                    <group>
                         <group string="✅ Contrôle Qualité">
                             <field name="quality_check" widget="boolean_toggle"/>
                             <field name="quality_note" widget="text" invisible="not quality_check" placeholder="Notes qualité..."/>
@@ -154,7 +169,7 @@
                                     <field name="units_produced" string="Nb unités" class="fw-bold text-primary"/>
                                     <field name="tonnage" string="Tonnage (T)" readonly="1" sum="Total" class="text-success"/>
                                     <field name="tonnage_kg" string="Poids (kg)" readonly="1" optional="show"/>
-                                    <field name="batch_number"/>
+                                    <field name="batch_number" column_invisible="1"/>
                                     <field name="shift"/>
                                     <field name="operator_id"/>
                                     <field name="quality_ok" widget="boolean_toggle" optional="show"/>
@@ -344,7 +359,7 @@
                 <field name="tonnage" string="Tonnage (T)" readonly="1" sum="Total" class="text-success"/>
                 <field name="tonnage_kg" string="Poids (kg)" readonly="1" optional="show"/>
                 <field name="units_display" string="Résumé" readonly="1" optional="show"/>
-                <field name="batch_number"/>
+                <field name="batch_number" column_invisible="1"/>
                 <field name="shift"/>
                 <field name="operator_id"/>
                 <field name="quality_ok" widget="boolean_toggle" optional="show"/>
@@ -360,7 +375,7 @@
             <search string="Rechercher productions">
                 <field name="lot_id"/>
                 <field name="transit_order_id"/>
-                <field name="batch_number"/>
+                <field name="batch_number" invisible="1"/>
                 <field name="operator_id"/>
                 <filter string="Aujourd'hui" name="today" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
                 <filter string="Cette semaine" name="this_week" domain="[('date', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>

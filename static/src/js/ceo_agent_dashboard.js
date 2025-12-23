@@ -28,6 +28,15 @@ export class PottingCeoAgentDashboard extends Component {
                 totalProduced: 0,
                 totalPotted: 0,
             },
+            // Lot amounts (new)
+            lotAmounts: {
+                total: 0,
+                total_company_currency: 0,
+                potted_total: 0,
+                potted_company_currency: 0,
+                currency_symbol: '',
+                company_currency_symbol: '',
+            },
             lotsInProduction: [],
             lotsReadyToPot: [],
             otToValidate: [],
@@ -67,7 +76,7 @@ export class PottingCeoAgentDashboard extends Component {
         const allLots = await this.orm.searchRead(
             "potting.lot",
             [],
-            ["current_tonnage", "state"]
+            ["current_tonnage", "state", "total_lot_amount", "total_lot_amount_company_currency", "currency_id"]
         );
         this.state.productionStats.totalProduced = allLots.reduce(
             (sum, l) => sum + (l.current_tonnage || 0), 0
@@ -75,6 +84,60 @@ export class PottingCeoAgentDashboard extends Component {
         this.state.productionStats.totalPotted = allLots
             .filter(l => l.state === 'potted')
             .reduce((sum, l) => sum + (l.current_tonnage || 0), 0);
+
+        // Calculate lot amounts
+        this.state.lotAmounts.total = allLots.reduce(
+            (sum, l) => sum + (l.total_lot_amount || 0), 0
+        );
+        this.state.lotAmounts.total_company_currency = allLots.reduce(
+            (sum, l) => sum + (l.total_lot_amount_company_currency || 0), 0
+        );
+        this.state.lotAmounts.potted_total = allLots
+            .filter(l => l.state === 'potted')
+            .reduce((sum, l) => sum + (l.total_lot_amount || 0), 0);
+        this.state.lotAmounts.potted_company_currency = allLots
+            .filter(l => l.state === 'potted')
+            .reduce((sum, l) => sum + (l.total_lot_amount_company_currency || 0), 0);
+        
+        // Get currency symbols
+        if (allLots.length > 0 && allLots[0].currency_id) {
+            try {
+                const currency = await this.orm.searchRead(
+                    "res.currency",
+                    [['id', '=', allLots[0].currency_id[0]]],
+                    ["symbol"],
+                    { limit: 1 }
+                );
+                if (currency.length > 0) {
+                    this.state.lotAmounts.currency_symbol = currency[0].symbol;
+                }
+            } catch (e) {
+                console.log("Could not load lot currency");
+            }
+        }
+        
+        // Get company currency symbol
+        try {
+            const companies = await this.orm.searchRead(
+                "res.company",
+                [['id', '=', 1]],
+                ["currency_id"],
+                { limit: 1 }
+            );
+            if (companies.length > 0 && companies[0].currency_id) {
+                const currency = await this.orm.searchRead(
+                    "res.currency",
+                    [['id', '=', companies[0].currency_id[0]]],
+                    ["symbol"],
+                    { limit: 1 }
+                );
+                if (currency.length > 0) {
+                    this.state.lotAmounts.company_currency_symbol = currency[0].symbol;
+                }
+            }
+        } catch (e) {
+            console.log("Could not load company currency");
+        }
 
         // Load transit orders counts for validation
         this.state.transitOrders.in_progress = await this.orm.searchCount(
@@ -234,6 +297,14 @@ export class PottingCeoAgentDashboard extends Component {
         return num.toLocaleString('fr-FR', { 
             minimumFractionDigits: decimals, 
             maximumFractionDigits: decimals 
+        });
+    }
+
+    formatCurrency(num) {
+        if (typeof num !== 'number') return '0';
+        return num.toLocaleString('fr-FR', { 
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 0 
         });
     }
 

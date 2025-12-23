@@ -82,7 +82,7 @@ class PottingCampaign(models.Model):
     ], string="État", default='draft', tracking=True, index=True)
 
     # =========================================================================
-    # PRIX OFFICIELS DU CACAO
+    # DEVISE (pour les statistiques)
     # =========================================================================
     
     currency_id = fields.Many2one(
@@ -91,43 +91,7 @@ class PottingCampaign(models.Model):
         default=lambda self: self._get_default_currency(),
         required=True,
         tracking=True,
-        help="Devise utilisée pour les prix de cette campagne. Modifiable par l'utilisateur."
-    )
-    
-    official_price_cocoa_mass = fields.Monetary(
-        string="Prix officiel - Masse de cacao (€/T)",
-        currency_field='currency_id',
-        tracking=True,
-        help="Prix officiel par tonne pour la Masse de cacao"
-    )
-    
-    official_price_cocoa_butter = fields.Monetary(
-        string="Prix officiel - Beurre de cacao (€/T)",
-        currency_field='currency_id',
-        tracking=True,
-        help="Prix officiel par tonne pour le Beurre de cacao"
-    )
-    
-    official_price_cocoa_cake = fields.Monetary(
-        string="Prix officiel - Cake de cacao (€/T)",
-        currency_field='currency_id',
-        tracking=True,
-        help="Prix officiel par tonne pour le Cake (Tourteau) de cacao"
-    )
-    
-    official_price_cocoa_powder = fields.Monetary(
-        string="Prix officiel - Poudre de cacao (€/T)",
-        currency_field='currency_id',
-        tracking=True,
-        help="Prix officiel par tonne pour la Poudre de cacao"
-    )
-    
-    # Prix générique (pour compatibilité)
-    official_cocoa_price = fields.Monetary(
-        string="Prix officiel général (€/T)",
-        currency_field='currency_id',
-        tracking=True,
-        help="Prix officiel général du cacao (utilisé si pas de prix spécifique par produit)"
+        help="Devise utilisée pour les statistiques de cette campagne."
     )
 
     # =========================================================================
@@ -237,22 +201,24 @@ class PottingCampaign(models.Model):
 
     @api.depends('name')
     def _compute_statistics(self):
-        """Calcule les statistiques de la campagne."""
+        """Calcule les statistiques de la campagne.
+        
+        Note: Les statistiques sont basées uniquement sur les OT liés à cette campagne.
+        Les contrats (commandes) ne sont pas liés directement à la campagne.
+        """
         for campaign in self:
-            # Rechercher les OT de cette campagne
+            # Rechercher les OT de cette campagne (par campaign_id directement)
             transit_orders = self.env['potting.transit.order'].search([
-                ('campaign_period', '=', campaign.name)
+                ('campaign_id', '=', campaign.id)
             ])
             
             campaign.transit_order_count = len(transit_orders)
             campaign.total_tonnage = sum(transit_orders.mapped('current_tonnage'))
             campaign.total_amount = sum(transit_orders.mapped('total_amount'))
             
-            # Rechercher les commandes de cette campagne
-            customer_orders = self.env['potting.customer.order'].search([
-                ('campaign_period', '=', campaign.name)
-            ])
-            campaign.customer_order_count = len(customer_orders)
+            # Le nombre de commandes est calculé depuis les OT (commandes uniques)
+            unique_orders = transit_orders.mapped('customer_order_id')
+            campaign.customer_order_count = len(unique_orders)
 
     # =========================================================================
     # CONSTRAINTS
@@ -341,46 +307,30 @@ class PottingCampaign(models.Model):
             'name': _('OT - Campagne %s') % self.name,
             'res_model': 'potting.transit.order',
             'view_mode': 'tree,kanban,form',
-            'domain': [('campaign_period', '=', self.name)],
-            'context': {'default_campaign_period': self.name},
+            'domain': [('campaign_id', '=', self.id)],
+            'context': {'default_campaign_id': self.id},
         }
 
     def action_view_customer_orders(self):
-        """Affiche les commandes de cette campagne."""
+        """Affiche les commandes liées à cette campagne (via les OT)."""
         self.ensure_one()
+        # Récupérer les commandes uniques depuis les OT de cette campagne
+        transit_orders = self.env['potting.transit.order'].search([
+            ('campaign_id', '=', self.id)
+        ])
+        order_ids = transit_orders.mapped('customer_order_id').ids
+        
         return {
             'type': 'ir.actions.act_window',
             'name': _('Commandes - Campagne %s') % self.name,
             'res_model': 'potting.customer.order',
             'view_mode': 'tree,kanban,form',
-            'domain': [('campaign_period', '=', self.name)],
-            'context': {'default_campaign_period': self.name},
+            'domain': [('id', 'in', order_ids)],
         }
 
     # =========================================================================
     # HELPER METHODS
     # =========================================================================
-    
-    def get_price_for_product(self, product_type):
-        """Retourne le prix officiel pour un type de produit.
-        
-        Args:
-            product_type: 'cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder'
-        
-        Returns:
-            float: Prix officiel pour ce produit, ou prix général si non défini
-        """
-        self.ensure_one()
-        
-        price_map = {
-            'cocoa_mass': self.official_price_cocoa_mass,
-            'cocoa_butter': self.official_price_cocoa_butter,
-            'cocoa_cake': self.official_price_cocoa_cake,
-            'cocoa_powder': self.official_price_cocoa_powder,
-        }
-        
-        specific_price = price_map.get(product_type, 0)
-        return specific_price if specific_price else self.official_cocoa_price
 
     @api.model
     def _get_default_currency(self):

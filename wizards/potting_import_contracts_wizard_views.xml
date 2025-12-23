@@ -94,7 +94,6 @@
                                             <field name="unit_price"/>
                                             <field name="currency_id"/>
                                             <field name="date_order"/>
-                                            <field name="campaign_period"/>
                                             <field name="error_message" string="Erreurs" 
                                                    widget="text" 
                                                    column_invisible="True"/>

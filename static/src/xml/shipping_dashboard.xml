@@ -192,6 +192,37 @@
                 </div>
             </div>
 
+            <!-- OT Amounts Overview (NEW) -->
+            <div class="mb-4">
+                <div class="section-title">
+                    <i class="fa fa-money"/>💱 Montants des OT
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card border-accent-primary">
+                            <div class="stat-card">
+                                <div class="stat-value text-primary">
+                                    <t t-esc="formatCurrency(state.otAmounts.total)"/>
+                                    <small class="ms-1" t-esc="state.otAmounts.currency_symbol || '€'"/>
+                                </div>
+                                <div class="stat-label">Montant total OT (devise contrat)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-accent-success">
+                            <div class="stat-card">
+                                <div class="stat-value text-success">
+                                    <t t-esc="formatCurrency(state.otAmounts.total_company_currency)"/>
+                                    <small class="ms-1" t-esc="state.otAmounts.company_currency_symbol || 'XOF'"/>
+                                </div>
+                                <div class="stat-label">💱 Montant converti (devise société)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Recent Data -->
             <div class="row g-3 mb-4">
                 <!-- Recent Customer Orders -->

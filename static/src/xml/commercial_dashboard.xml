@@ -41,28 +41,22 @@
                                 </div>
                                 <div class="col-md-8">
                                     <div class="row text-center">
-                                        <div class="col-3">
-                                            <small class="text-muted">Masse</small>
+                                        <div class="col-4">
+                                            <small class="text-muted">Droits d'export</small>
                                             <div class="fw-bold">
-                                                <t t-esc="formatNumber(state.currentCampaign.official_price_cocoa_mass, 0)"/> €/T
+                                                <t t-esc="formatNumber(state.currentCampaign.export_duty_rate, 1)"/> %
                                             </div>
                                         </div>
-                                        <div class="col-3">
-                                            <small class="text-muted">Beurre</small>
+                                        <div class="col-4">
+                                            <small class="text-muted">Nombre d'OT</small>
                                             <div class="fw-bold">
-                                                <t t-esc="formatNumber(state.currentCampaign.official_price_cocoa_butter, 0)"/> €/T
+                                                <t t-esc="state.currentCampaign.transit_order_count"/>
                                             </div>
                                         </div>
-                                        <div class="col-3">
-                                            <small class="text-muted">Cake</small>
+                                        <div class="col-4">
+                                            <small class="text-muted">Tonnage total</small>
                                             <div class="fw-bold">
-                                                <t t-esc="formatNumber(state.currentCampaign.official_price_cocoa_cake, 0)"/> €/T
-                                            </div>
-                                        </div>
-                                        <div class="col-3">
-                                            <small class="text-muted">Poudre</small>
-                                            <div class="fw-bold">
-                                                <t t-esc="formatNumber(state.currentCampaign.official_price_cocoa_powder, 0)"/> €/T
+                                                <t t-esc="formatNumber(state.currentCampaign.total_tonnage, 0)"/> T
                                             </div>
                                         </div>
                                     </div>
@@ -122,6 +116,37 @@
                         <div class="progress" style="height: 10px;">
                             <div class="progress-bar bg-success" 
                                  t-attf-style="width: #{Math.min(state.tonnage.percentage_used, 100)}%"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Amounts Overview (NEW) -->
+            <div class="mb-4">
+                <div class="section-title">
+                    <i class="fa fa-money"/>Aperçu des montants
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card border-accent-primary">
+                            <div class="stat-card">
+                                <div class="stat-value text-primary">
+                                    <t t-esc="formatCurrency(state.amounts.total_contract)"/>
+                                    <small class="ms-1" t-esc="state.amounts.currency_symbol || '€'"/>
+                                </div>
+                                <div class="stat-label">Montant total des contrats (devise contrat)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-accent-success">
+                            <div class="stat-card">
+                                <div class="stat-value text-success">
+                                    <t t-esc="formatCurrency(state.amounts.total_company_currency)"/>
+                                    <small class="ms-1" t-esc="state.amounts.company_currency_symbol || 'XOF'"/>
+                                </div>
+                                <div class="stat-label">💱 Montant converti (devise société)</div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -10,6 +10,7 @@
                 <field name="name" decoration-bf="1"/>
                 <field name="suffix" decoration-bf="1" class="text-primary"/>
                 <field name="price_type" optional="show"/>
+                <field name="currency_id" optional="show"/>
                 <field name="price_per_ton" optional="show"/>
                 <field name="price_percentage" optional="show"/>
                 <field name="description" optional="hide"/>
@@ -55,7 +56,7 @@
                     </group>
                     <group>
                         <group string="💰 Prime">
-                            <field name="currency_id" invisible="1"/>
+                            <field name="currency_id" options="{'no_create': True}"/>
                             <field name="price_type"/>
                             <field name="price_per_ton" invisible="price_type != 'fixed'"/>
                             <field name="price_percentage" invisible="price_type != 'percentage'"/>

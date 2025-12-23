@@ -35,11 +35,13 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
         readonly=True
     )
     
-    campaign_period = fields.Char(
-        related='customer_order_id.campaign_period',
-        string="Campagne",
-        readonly=True,
-        help="Période de la campagne Café-Cacao de la commande"
+    campaign_id = fields.Many2one(
+        'potting.campaign',
+        string="Campagne Café-Cacao",
+        required=True,
+        domain="[('state', 'in', ['draft', 'active'])]",
+        default=lambda self: self._get_default_campaign(),
+        help="Campagne café-cacao pour les OT générés"
     )
     
     company_id = fields.Many2one(
@@ -153,6 +155,15 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
     # =========================================================================
     # DEFAULT METHODS
     # =========================================================================
+    
+    @api.model
+    def _get_default_campaign(self):
+        """Get the default campaign (current active campaign).
+        
+        Returns:
+            potting.campaign: The current active campaign or False
+        """
+        return self.env['potting.campaign'].get_current_campaign()
     
     @api.model
     def default_get(self, fields_list):
@@ -314,6 +325,7 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
             # Créer l'OT
             ot_vals = {
                 'customer_order_id': self.customer_order_id.id,
+                'campaign_id': self.campaign_id.id,
                 'consignee_id': self.consignee_id.id,
                 'product_type': self.product_type,
                 'product_id': self.product_id.id if self.product_id else False,

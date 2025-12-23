@@ -338,6 +338,75 @@ class PottingLot(models.Model):
         help="Date de fin de production du lot"
     )
     
+    # =========================================================================
+    # CHAMPS - MONTANTS DU LOT
+    # =========================================================================
+    
+    currency_id = fields.Many2one(
+        'res.currency',
+        string="Devise",
+        related='transit_order_id.currency_id',
+        store=True,
+        help="Devise du contrat"
+    )
+    
+    unit_price = fields.Monetary(
+        string="Prix unitaire (par tonne)",
+        currency_field='currency_id',
+        related='transit_order_id.unit_price',
+        store=True
+    )
+    
+    lot_amount = fields.Monetary(
+        string="Montant du lot",
+        currency_field='currency_id',
+        compute='_compute_lot_amount',
+        store=True,
+        help="Montant du lot (prix unitaire × tonnage actuel)"
+    )
+    
+    certification_premium_amount = fields.Monetary(
+        string="Prime certification",
+        currency_field='currency_id',
+        compute='_compute_lot_amount',
+        store=True,
+        help="Prime de certification pour ce lot"
+    )
+    
+    total_lot_amount = fields.Monetary(
+        string="Montant total lot",
+        currency_field='currency_id',
+        compute='_compute_lot_amount',
+        store=True,
+        help="Montant total du lot (base + prime certification)"
+    )
+    
+    # =========================================================================
+    # CHAMPS - CONVERSION DEVISE SOCIÉTÉ
+    # =========================================================================
+    
+    company_currency_id = fields.Many2one(
+        'res.currency',
+        string="Devise société",
+        related='company_id.currency_id',
+        readonly=True,
+        help="Devise de la société"
+    )
+    
+    total_lot_amount_company_currency = fields.Monetary(
+        string="Montant total (devise société)",
+        currency_field='company_currency_id',
+        compute='_compute_lot_amount_company_currency',
+        store=True,
+        help="Montant total du lot converti dans la devise de la société"
+    )
+    
+    conversion_rate_display = fields.Char(
+        string="Taux de conversion",
+        compute='_compute_lot_amount_company_currency',
+        help="Taux de conversion appliqué"
+    )
+    
     # Tolerance for considering lot as full (in percentage)
     FILL_TOLERANCE = 95.0
 
@@ -489,6 +558,68 @@ class PottingLot(models.Model):
                 }
             else:
                 lot.packaging_display = ''
+
+    @api.depends('current_tonnage', 'unit_price', 'certification_id', 'certification_id.price_per_ton')
+    def _compute_lot_amount(self):
+        """Calcule les montants du lot basés sur le tonnage actuel et le prix unitaire."""
+        for lot in self:
+            # Montant de base = prix unitaire × tonnage actuel
+            lot.lot_amount = (lot.unit_price or 0.0) * lot.current_tonnage
+            
+            # Prime de certification
+            cert_premium = 0.0
+            if lot.certification_id and lot.certification_id.price_per_ton:
+                cert_premium = lot.certification_id.price_per_ton * lot.current_tonnage
+            lot.certification_premium_amount = cert_premium
+            
+            # Montant total du lot
+            lot.total_lot_amount = lot.lot_amount + lot.certification_premium_amount
+
+    @api.depends('total_lot_amount', 'currency_id', 'company_id.currency_id', 'transit_order_id.date_created')
+    def _compute_lot_amount_company_currency(self):
+        """Convertit le montant du lot dans la devise de la société.
+        
+        Cette méthode calcule automatiquement le montant converti en utilisant
+        le taux de change à la date de création de l'OT associé.
+        """
+        for lot in self:
+            company_currency = lot.company_id.currency_id
+            contract_currency = lot.currency_id
+            
+            # Si pas de devise définie ou mêmes devises, pas de conversion
+            if not company_currency or not contract_currency:
+                lot.total_lot_amount_company_currency = lot.total_lot_amount
+                lot.conversion_rate_display = ""
+                continue
+                
+            if company_currency == contract_currency:
+                lot.total_lot_amount_company_currency = lot.total_lot_amount
+                lot.conversion_rate_display = _("Même devise")
+                continue
+            
+            # Utiliser la date de l'OT ou la date du jour
+            date = lot.transit_order_id.date_created if lot.transit_order_id else fields.Date.context_today(lot)
+            
+            # Conversion du montant total
+            lot.total_lot_amount_company_currency = contract_currency._convert(
+                lot.total_lot_amount or 0.0,
+                company_currency,
+                lot.company_id,
+                date
+            )
+            
+            # Affichage du taux de conversion
+            rate = contract_currency._get_conversion_rate(
+                contract_currency,
+                company_currency,
+                lot.company_id,
+                date
+            )
+            lot.conversion_rate_display = _("1 %s = %.4f %s") % (
+                contract_currency.name,
+                rate,
+                company_currency.name
+            )
 
     # -------------------------------------------------------------------------
     # ONCHANGE METHODS

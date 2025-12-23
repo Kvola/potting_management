@@ -20,6 +20,13 @@ export class PottingShippingDashboard extends Component {
                 usedTonnage: 0,
                 remainingTonnage: 0,
             },
+            // OT Amount statistics (new)
+            otAmounts: {
+                total: 0,
+                total_company_currency: 0,
+                currency_symbol: '',
+                company_currency_symbol: '',
+            },
             orders: {
                 draft: 0,
                 confirmed: 0,
@@ -101,9 +108,64 @@ export class PottingShippingDashboard extends Component {
         this.state.recentTransitOrders = await this.orm.searchRead(
             "potting.transit.order",
             [],
-            ["name", "consignee_id", "product_type", "tonnage", "progress_percentage", "state"],
+            ["name", "consignee_id", "product_type", "tonnage", "progress_percentage", "state", 
+             "total_amount", "total_amount_company_currency"],
             { limit: 10, order: "create_date desc" }
         );
+
+        // Load OT amounts
+        const otsWithAmounts = await this.orm.searchRead(
+            "potting.transit.order",
+            [['state', '!=', 'cancelled']],
+            ["total_amount", "total_amount_company_currency", "currency_id", "company_currency_id"]
+        );
+        
+        this.state.otAmounts.total = otsWithAmounts.reduce(
+            (sum, o) => sum + (o.total_amount || 0), 0
+        );
+        this.state.otAmounts.total_company_currency = otsWithAmounts.reduce(
+            (sum, o) => sum + (o.total_amount_company_currency || 0), 0
+        );
+        
+        // Get currency symbols
+        if (otsWithAmounts.length > 0 && otsWithAmounts[0].currency_id) {
+            try {
+                const currency = await this.orm.searchRead(
+                    "res.currency",
+                    [['id', '=', otsWithAmounts[0].currency_id[0]]],
+                    ["symbol"],
+                    { limit: 1 }
+                );
+                if (currency.length > 0) {
+                    this.state.otAmounts.currency_symbol = currency[0].symbol;
+                }
+            } catch (e) {
+                console.log("Could not load OT currency");
+            }
+        }
+        
+        // Get company currency symbol
+        try {
+            const companies = await this.orm.searchRead(
+                "res.company",
+                [['id', '=', 1]],
+                ["currency_id"],
+                { limit: 1 }
+            );
+            if (companies.length > 0 && companies[0].currency_id) {
+                const currency = await this.orm.searchRead(
+                    "res.currency",
+                    [['id', '=', companies[0].currency_id[0]]],
+                    ["symbol"],
+                    { limit: 1 }
+                );
+                if (currency.length > 0) {
+                    this.state.otAmounts.company_currency_symbol = currency[0].symbol;
+                }
+            }
+        } catch (e) {
+            console.log("Could not load company currency");
+        }
 
         // Load product statistics
         const productTypes = ['cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder'];
@@ -228,6 +290,14 @@ export class PottingShippingDashboard extends Component {
         return num.toLocaleString('fr-FR', { 
             minimumFractionDigits: decimals, 
             maximumFractionDigits: decimals 
+        });
+    }
+
+    formatCurrency(num) {
+        if (typeof num !== 'number') return '0';
+        return num.toLocaleString('fr-FR', { 
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 0 
         });
     }
 

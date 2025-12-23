@@ -13,6 +13,8 @@ export class PottingCommercialDashboard extends Component {
         this.state = useState({
             // Current campaign
             currentCampaign: null,
+            // Company currency
+            companyCurrency: null,
             // Contract statistics
             contracts: {
                 draft: 0,
@@ -27,6 +29,13 @@ export class PottingCommercialDashboard extends Component {
                 ot_total: 0,
                 remaining: 0,
                 percentage_used: 0,
+            },
+            // Amount statistics (new)
+            amounts: {
+                total_contract: 0,
+                total_company_currency: 0,
+                currency_symbol: '',
+                company_currency_symbol: '',
             },
             // Product type statistics
             productStats: [],
@@ -49,8 +58,8 @@ export class PottingCommercialDashboard extends Component {
             const campaigns = await this.orm.searchRead(
                 "potting.campaign",
                 [['state', '=', 'active']],
-                ["name", "code", "date_start", "date_end", "official_price_cocoa_mass", 
-                 "official_price_cocoa_butter", "official_price_cocoa_cake", "official_price_cocoa_powder"],
+                ["name", "code", "date_start", "date_end", "export_duty_rate", 
+                 "transit_order_count", "total_tonnage"],
                 { limit: 1 }
             );
             if (campaigns.length > 0) {
@@ -70,6 +79,30 @@ export class PottingCommercialDashboard extends Component {
             (sum, state) => sum + this.state.contracts[state], 0
         );
 
+        // Load company currency
+        try {
+            const companies = await this.orm.searchRead(
+                "res.company",
+                [['id', '=', 1]],  // Current company
+                ["currency_id"],
+                { limit: 1 }
+            );
+            if (companies.length > 0 && companies[0].currency_id) {
+                const currencies = await this.orm.searchRead(
+                    "res.currency",
+                    [['id', '=', companies[0].currency_id[0]]],
+                    ["symbol", "name"],
+                    { limit: 1 }
+                );
+                if (currencies.length > 0) {
+                    this.state.companyCurrency = currencies[0];
+                    this.state.amounts.company_currency_symbol = currencies[0].symbol;
+                }
+            }
+        } catch (e) {
+            console.log("Could not load company currency");
+        }
+
         // Load tonnage statistics
         const allContracts = await this.orm.searchRead(
             "potting.customer.order",
@@ -87,6 +120,37 @@ export class PottingCommercialDashboard extends Component {
         this.state.tonnage.percentage_used = this.state.tonnage.contract_total > 0 
             ? (this.state.tonnage.ot_total / this.state.tonnage.contract_total) * 100 
             : 0;
+
+        // Load amount statistics
+        const contractsWithAmounts = await this.orm.searchRead(
+            "potting.customer.order",
+            [['state', 'not in', ['cancelled']]],
+            ["total_amount", "total_amount_company_currency", "currency_id", "company_currency_id"]
+        );
+        
+        this.state.amounts.total_contract = contractsWithAmounts.reduce(
+            (sum, c) => sum + (c.total_amount || 0), 0
+        );
+        this.state.amounts.total_company_currency = contractsWithAmounts.reduce(
+            (sum, c) => sum + (c.total_amount_company_currency || 0), 0
+        );
+        
+        // Get currency symbols from first contract
+        if (contractsWithAmounts.length > 0 && contractsWithAmounts[0].currency_id) {
+            try {
+                const currency = await this.orm.searchRead(
+                    "res.currency",
+                    [['id', '=', contractsWithAmounts[0].currency_id[0]]],
+                    ["symbol"],
+                    { limit: 1 }
+                );
+                if (currency.length > 0) {
+                    this.state.amounts.currency_symbol = currency[0].symbol;
+                }
+            } catch (e) {
+                console.log("Could not load contract currency");
+            }
+        }
 
         // Load product type statistics
         const productTypes = ['cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder'];

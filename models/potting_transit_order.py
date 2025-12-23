@@ -56,20 +56,22 @@ class PottingTransitOrder(models.Model):
         domain="[('state', 'not in', ['done', 'cancelled'])]"
     )
     
-    campaign_period = fields.Char(
-        related='customer_order_id.campaign_period',
-        string="Campagne",
-        store=True,
-        readonly=True,
-        help="Période de la campagne Café-Cacao héritée de la commande"
-    )
-    
     campaign_id = fields.Many2one(
         'potting.campaign',
         string="Campagne Café-Cacao",
-        compute='_compute_campaign_id',
+        required=True,
+        tracking=True,
+        default=lambda self: self._get_default_campaign(),
+        domain="[('state', 'in', ['draft', 'active'])]",
+        help="Campagne café-cacao pour cet OT. Détermine la période et les statistiques."
+    )
+    
+    campaign_period = fields.Char(
+        string="Période Campagne",
+        compute='_compute_campaign_period',
         store=True,
-        help="Campagne café-cacao liée (calculée depuis le nom de la campagne)"
+        help="Période de la campagne Café-Cacao (ex: 2025-2026). "
+             "Calculée automatiquement depuis la campagne sélectionnée."
     )
     
     customer_id = fields.Many2one(
@@ -450,6 +452,40 @@ class PottingTransitOrder(models.Model):
         copy=False
     )
 
+    # =========================================================================
+    # CHAMPS - CONVERSION DEVISE SOCIÉTÉ
+    # =========================================================================
+    
+    company_currency_id = fields.Many2one(
+        'res.currency',
+        string="Devise société",
+        related='company_id.currency_id',
+        readonly=True,
+        help="Devise de la société"
+    )
+    
+    total_amount_company_currency = fields.Monetary(
+        string="Montant total (devise société)",
+        currency_field='company_currency_id',
+        compute='_compute_amount_company_currency',
+        store=True,
+        help="Montant total de l'OT converti dans la devise de la société"
+    )
+    
+    net_amount_company_currency = fields.Monetary(
+        string="Montant net (devise société)",
+        currency_field='company_currency_id',
+        compute='_compute_amount_company_currency',
+        store=True,
+        help="Montant net de l'OT converti dans la devise de la société"
+    )
+    
+    conversion_rate_display = fields.Char(
+        string="Taux de conversion",
+        compute='_compute_amount_company_currency',
+        help="Taux de conversion appliqué"
+    )
+
     # -------------------------------------------------------------------------
     # CONSTRAINTS
     # -------------------------------------------------------------------------
@@ -473,16 +509,23 @@ class PottingTransitOrder(models.Model):
     # COMPUTE METHODS
     # -------------------------------------------------------------------------
     
-    @api.depends('campaign_period')
-    def _compute_campaign_id(self):
-        """Lie automatiquement l'OT à la campagne correspondante."""
-        Campaign = self.env['potting.campaign']
+    @api.model
+    def _get_default_campaign(self):
+        """Get the default campaign (current active campaign).
+        
+        Returns:
+            potting.campaign: The current active campaign or False
+        """
+        return self.env['potting.campaign'].get_current_campaign()
+    
+    @api.depends('campaign_id', 'campaign_id.name')
+    def _compute_campaign_period(self):
+        """Calcule la période de campagne depuis la campagne sélectionnée."""
         for order in self:
-            if order.campaign_period:
-                campaign = Campaign.get_campaign_by_name(order.campaign_period)
-                order.campaign_id = campaign.id if campaign else False
+            if order.campaign_id:
+                order.campaign_period = order.campaign_id.name
             else:
-                order.campaign_id = False
+                order.campaign_period = False
     
     @api.depends('product_type')
     def _compute_max_tonnage_per_lot(self):
@@ -597,6 +640,62 @@ class PottingTransitOrder(models.Model):
             
             # Net amount (after export duties)
             order.net_amount = order.total_amount - (order.export_duty_amount or 0)
+
+    @api.depends('total_amount', 'net_amount', 'currency_id', 'company_id.currency_id', 'date_created')
+    def _compute_amount_company_currency(self):
+        """Convertit les montants de l'OT dans la devise de la société.
+        
+        Cette méthode calcule automatiquement les montants convertis en utilisant
+        le taux de change à la date de création de l'OT.
+        """
+        for order in self:
+            company_currency = order.company_id.currency_id
+            contract_currency = order.currency_id
+            
+            # Si pas de devise définie ou mêmes devises, pas de conversion
+            if not company_currency or not contract_currency:
+                order.total_amount_company_currency = order.total_amount
+                order.net_amount_company_currency = order.net_amount
+                order.conversion_rate_display = ""
+                continue
+                
+            if company_currency == contract_currency:
+                order.total_amount_company_currency = order.total_amount
+                order.net_amount_company_currency = order.net_amount
+                order.conversion_rate_display = _("Même devise")
+                continue
+            
+            # Convertir les montants à la date de création
+            date = order.date_created or fields.Date.context_today(order)
+            
+            # Conversion du montant total
+            order.total_amount_company_currency = contract_currency._convert(
+                order.total_amount or 0.0,
+                company_currency,
+                order.company_id,
+                date
+            )
+            
+            # Conversion du montant net
+            order.net_amount_company_currency = contract_currency._convert(
+                order.net_amount or 0.0,
+                company_currency,
+                order.company_id,
+                date
+            )
+            
+            # Affichage du taux de conversion
+            rate = contract_currency._get_conversion_rate(
+                contract_currency,
+                company_currency,
+                order.company_id,
+                date
+            )
+            order.conversion_rate_display = _("1 %s = %.4f %s") % (
+                contract_currency.name,
+                rate,
+                company_currency.name
+            )
     
     @api.depends('total_amount', 'export_duty_rate', 'current_tonnage')
     def _compute_export_duties(self):
@@ -692,13 +791,19 @@ class PottingTransitOrder(models.Model):
                 # Le nom de l'OT dépend du type de produit et de la campagne de la commande
                 product_type = vals.get('product_type')
                 
-                # Récupérer la campagne et la référence client depuis la commande
+                # Récupérer la campagne depuis vals ou depuis la campagne par défaut
                 campaign_period = None
+                campaign_id = vals.get('campaign_id')
+                if campaign_id:
+                    campaign = self.env['potting.campaign'].browse(campaign_id)
+                    if campaign.exists():
+                        campaign_period = campaign.name
+                
+                # Récupérer la référence client depuis la commande
                 customer_ref = None
                 if customer_order_id:
                     customer_order = self.env['potting.customer.order'].browse(customer_order_id)
                     if customer_order.exists():
-                        campaign_period = customer_order.campaign_period
                         # Récupérer la référence du client si elle existe
                         if customer_order.customer_id and customer_order.customer_id.ref:
                             customer_ref = customer_order.customer_id.ref

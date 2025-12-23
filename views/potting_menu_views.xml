@@ -125,6 +125,13 @@
               action="action_potting_send_report_wizard" 
               sequence="30"/>
 
+    <menuitem id="menu_potting_daily_report"
+              name="📊 Rapport quotidien OT"
+              parent="menu_potting_ceo_agent"
+              action="action_potting_daily_report_wizard"
+              sequence="40"
+              groups="potting_management.group_potting_ceo_agent"/>
+
     <!-- Reports Menu -->
     <menuitem id="menu_potting_reports" 
               name="📊 Rapports" 

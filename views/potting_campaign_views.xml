@@ -18,7 +18,6 @@
                 <field name="date_start"/>
                 <field name="date_end"/>
                 <field name="is_current" string="En cours" widget="boolean"/>
-                <field name="official_cocoa_price" string="Prix cacao (€/T)" widget="monetary"/>
                 <field name="export_duty_rate" string="Droits export (%)"/>
                 <field name="transit_order_count" string="Nb OT"/>
                 <field name="total_tonnage" string="Tonnage (T)"/>
@@ -100,34 +99,15 @@
                             <field name="date_end" required="1"/>
                             <field name="is_current" readonly="1"/>
                         </group>
-                        <group string="💰 Prix par défaut">
+                        <group string="💰 Configuration">
                             <field name="currency_id" 
                                    options="{'no_create': True}"
                                    readonly="state == 'active'"/>
-                            <field name="official_cocoa_price" widget="monetary"/>
                             <field name="export_duty_rate"/>
                         </group>
                     </group>
                     
                     <notebook>
-                        <page string="Prix par produit" name="prices">
-                            <group>
-                                <group string="Prix officiels (€/Tonne)">
-                                    <field name="official_price_cocoa_mass" widget="monetary"/>
-                                    <field name="official_price_cocoa_butter" widget="monetary"/>
-                                    <field name="official_price_cocoa_cake" widget="monetary"/>
-                                    <field name="official_price_cocoa_powder" widget="monetary"/>
-                                </group>
-                                <group string="Informations">
-                                    <p class="text-muted">
-                                        <i class="fa fa-info-circle"/> 
-                                        Définissez les prix officiels pour chaque type de produit.
-                                        Si un prix spécifique n'est pas défini, le "Prix officiel général" sera utilisé.
-                                    </p>
-                                </group>
-                            </group>
-                        </page>
-                        
                         <page string="Statistiques" name="statistics">
                             <group>
                                 <group string="📊 Volumes">
@@ -141,8 +121,9 @@
                             </group>
                             <div class="alert alert-info" role="alert">
                                 <strong><i class="fa fa-info-circle"/> Info:</strong>
-                                Les statistiques sont calculées automatiquement à partir des OT et commandes 
-                                liés à cette campagne.
+                                Les statistiques sont calculées automatiquement à partir des OT 
+                                liés à cette campagne. Le nombre de commandes correspond aux
+                                commandes uniques dont au moins un OT est lié à cette campagne.
                             </div>
                         </page>
                         
@@ -203,7 +184,7 @@
                 <field name="date_end"/>
                 <field name="is_current"/>
                 <field name="state"/>
-                <field name="official_cocoa_price"/>
+                <field name="export_duty_rate"/>
                 <field name="transit_order_count"/>
                 <field name="total_tonnage"/>
                 <field name="currency_id"/>
@@ -223,8 +204,8 @@
                                 <div class="o_kanban_record_body">
                                     <field name="date_start"/> → <field name="date_end"/>
                                     <div class="mt-2">
-                                        <span class="text-muted">Prix cacao:</span>
-                                        <strong><field name="official_cocoa_price" widget="monetary"/> /T</strong>
+                                        <span class="text-muted">Droits export:</span>
+                                        <strong><field name="export_duty_rate"/> %</strong>
                                     </div>
                                 </div>
                                 <div class="o_kanban_record_bottom">
@@ -260,12 +241,16 @@
                 Créer une nouvelle campagne café-cacao
             </p>
             <p>
-                Les campagnes café-cacao permettent de gérer les prix officiels du cacao
-                et les taux des droits d'exportation pour chaque période.
+                Les campagnes café-cacao permettent de gérer les périodes 
+                et les taux des droits d'exportation.
             </p>
             <p>
                 Une campagne s'étend généralement d'octobre à septembre de l'année suivante
                 (ex: 2024-2025 = 1er octobre 2024 au 30 septembre 2025).
+            </p>
+            <p>
+                <strong>Note:</strong> Les prix sont définis au niveau des contrats (commandes),
+                pas au niveau de la campagne.
             </p>
         </field>
     </record>
