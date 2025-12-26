@@ -59,7 +59,7 @@
               groups="potting_management.group_potting_user"/>
 
     <menuitem id="menu_potting_customer_order" 
-              name="📋 Commandes clients" 
+              name="📋 Contrats clients" 
               parent="menu_potting_operations" 
               action="action_potting_customer_order" 
               sequence="10"

@@ -199,7 +199,7 @@ export class PottingShippingDashboard extends Component {
     openCustomerOrders(state) {
         this.action.doAction({
             type: 'ir.actions.act_window',
-            name: 'Commandes clients',
+            name: 'Contrats clients',
             res_model: 'potting.customer.order',
             views: [[false, 'list'], [false, 'kanban'], [false, 'form']],
             domain: state ? [['state', '=', state]] : [],

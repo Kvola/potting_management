@@ -34,10 +34,10 @@ class ProductProduct(models.Model):
 
     # Configuration des conditionnements par type de produit
     PACKAGING_CONFIG = {
-        'cocoa_mass': {'unit_name': 'cartons', 'weight_kg': 25, 'description': 'Cartons de 25 kg'},
-        'cocoa_butter': {'unit_name': 'cartons', 'weight_kg': 25, 'description': 'Cartons de 25 kg'},
-        'cocoa_cake': {'unit_name': 'big bags', 'weight_kg': 1000, 'description': 'Big bags de 1 tonne'},
-        'cocoa_powder': {'unit_name': 'sacs', 'weight_kg': 25, 'description': 'Sacs de 25 kg'},
+        'cocoa_mass': {'unit_name': 'carton', 'weight_kg': 25, 'description': 'carton de 25 kg'},
+        'cocoa_butter': {'unit_name': 'carton', 'weight_kg': 25, 'description': 'carton de 25 kg'},
+        'cocoa_cake': {'unit_name': 'big bag', 'weight_kg': 1000, 'description': 'big bag de 1 tonne'},
+        'cocoa_powder': {'unit_name': 'sac', 'weight_kg': 25, 'description': 'sac de 25 kg'},
     }
 
     @api.depends('potting_product_type')
@@ -81,10 +81,10 @@ class ProductTemplate(models.Model):
 
     # Configuration des conditionnements par type de produit
     PACKAGING_CONFIG = {
-        'cocoa_mass': {'unit_name': 'cartons', 'weight_kg': 25, 'description': 'Cartons de 25 kg'},
-        'cocoa_butter': {'unit_name': 'cartons', 'weight_kg': 25, 'description': 'Cartons de 25 kg'},
-        'cocoa_cake': {'unit_name': 'big bags', 'weight_kg': 1000, 'description': 'Big bags de 1 tonne'},
-        'cocoa_powder': {'unit_name': 'sacs', 'weight_kg': 25, 'description': 'Sacs de 25 kg'},
+        'cocoa_mass': {'unit_name': 'carton', 'weight_kg': 25, 'description': 'carton de 25 kg'},
+        'cocoa_butter': {'unit_name': 'carton', 'weight_kg': 25, 'description': 'carton de 25 kg'},
+        'cocoa_cake': {'unit_name': 'big bag', 'weight_kg': 1000, 'description': 'big bag de 1 tonne'},
+        'cocoa_powder': {'unit_name': 'sac', 'weight_kg': 25, 'description': 'sac de 25 kg'},
     }
 
     @api.depends('potting_product_type')

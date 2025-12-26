@@ -5,7 +5,7 @@
         <field name="name">potting.customer.order.tree</field>
         <field name="model">potting.customer.order</field>
         <field name="arch" type="xml">
-            <tree string="Commandes clients" 
+            <tree string="Contrats clients" 
                   decoration-info="state == 'draft'" 
                   decoration-warning="state == 'in_progress'" 
                   decoration-success="state == 'done'" 
@@ -265,7 +265,7 @@
 
     <!-- Action -->
     <record id="action_potting_customer_order" model="ir.actions.act_window">
-        <field name="name">Commandes clients</field>
+        <field name="name">Contrats clients</field>
         <field name="res_model">potting.customer.order</field>
         <field name="view_mode">tree,kanban,form</field>
         <field name="context">{'search_default_my_orders': 1}</field>

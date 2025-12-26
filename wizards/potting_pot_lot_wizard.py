@@ -90,14 +90,14 @@ class PottingPotLotWizard(models.TransientModel):
     # COMPUTE METHODS
     # =========================================================================
     
-    @api.depends('container_id', 'container_id.tonnage_loaded', 'container_id.max_capacity')
+    @api.depends('container_id', 'container_id.total_tonnage', 'container_id.max_capacity')
     def _compute_container_available_capacity(self):
         """Calcule la capacité disponible dans le conteneur sélectionné."""
         for wizard in self:
             if wizard.container_id:
                 wizard.container_available_capacity = (
                     wizard.container_id.max_capacity - 
-                    wizard.container_id.tonnage_loaded
+                    wizard.container_id.total_tonnage
                 )
             else:
                 wizard.container_available_capacity = 0.0

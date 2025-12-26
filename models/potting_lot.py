@@ -14,15 +14,15 @@ class PottingLot(models.Model):
     # -------------------------------------------------------------------------
     # CONSTANTES DE CONDITIONNEMENT PAR TYPE DE PRODUIT
     # -------------------------------------------------------------------------
-    # Masse de cacao : cartons de 25 kg
-    # Beurre de cacao : cartons de 25 kg
-    # Cake de cacao : big bags de 1 tonne (1000 kg)
-    # Poudre de cacao : sacs de 25 kg
+    # Masse de cacao : carton de 25 kg
+    # Beurre de cacao : carton de 25 kg
+    # Cake de cacao : big bag de 1 tonne (1000 kg)
+    # Poudre de cacao : sac de 25 kg
     PACKAGING_CONFIG = {
-        'cocoa_mass': {'unit_weight': 0.025, 'unit_name': 'carton', 'unit_name_plural': 'cartons'},  # 25 kg = 0.025 T
-        'cocoa_butter': {'unit_weight': 0.025, 'unit_name': 'carton', 'unit_name_plural': 'cartons'},  # 25 kg = 0.025 T
-        'cocoa_cake': {'unit_weight': 1.0, 'unit_name': 'big bag', 'unit_name_plural': 'big bags'},  # 1000 kg = 1 T
-        'cocoa_powder': {'unit_weight': 0.025, 'unit_name': 'sac', 'unit_name_plural': 'sacs'},  # 25 kg = 0.025 T
+        'cocoa_mass': {'unit_weight': 0.025, 'unit_name': 'carton', 'unit_name_plural': 'carton'},  # 25 kg = 0.025 T
+        'cocoa_butter': {'unit_weight': 0.025, 'unit_name': 'carton', 'unit_name_plural': 'carton'},  # 25 kg = 0.025 T
+        'cocoa_cake': {'unit_weight': 1.0, 'unit_name': 'big bag', 'unit_name_plural': 'big bag'},  # 1000 kg = 1 T
+        'cocoa_powder': {'unit_weight': 0.025, 'unit_name': 'sac', 'unit_name_plural': 'sac'},  # 25 kg = 0.025 T
     }
 
     # SQL Constraints
@@ -532,7 +532,7 @@ class PottingLot(models.Model):
 
     @api.depends('target_tonnage', 'current_tonnage', 'packaging_unit_weight')
     def _compute_packaging_units(self):
-        """Calcul du nombre d'unités de conditionnement (cartons, big bags, sacs)"""
+        """Calcul du nombre d'unités de conditionnement (carton, big bag, sac)"""
         for lot in self:
             if lot.packaging_unit_weight and lot.packaging_unit_weight > 0:
                 lot.target_units = int(lot.target_tonnage / lot.packaging_unit_weight)
@@ -787,7 +787,7 @@ class PottingLot(models.Model):
         Add a production line to the lot by specifying the number of units.
         The tonnage is calculated automatically based on the packaging configuration.
         
-        :param units_produced: Number of units (cartons, big bags, sacs) produced
+        :param units_produced: Number of units (carton, big bag, sac) produced
         :param batch_number: Optional batch number
         :param shift: Optional shift (morning, afternoon, night)
         :param operator_id: Optional operator user ID
@@ -904,10 +904,10 @@ class PottingLot(models.Model):
         Si aucun type n'est spécifié, retourne toute la configuration.
         
         Configuration :
-        - Masse de cacao : cartons de 25 kg
-        - Beurre de cacao : cartons de 25 kg
-        - Cake de cacao : big bags de 1 tonne
-        - Poudre de cacao : sacs de 25 kg
+        - Masse de cacao : carton de 25 kg
+        - Beurre de cacao : carton de 25 kg
+        - Cake de cacao : big bag de 1 tonne
+        - Poudre de cacao : sac de 25 kg
         """
         if product_type:
             return self.PACKAGING_CONFIG.get(product_type, {})

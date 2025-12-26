@@ -16,7 +16,7 @@ except ImportError:
 
 
 class PottingImportContractsWizard(models.TransientModel):
-    """Wizard pour importer des contrats (commandes clients) depuis un fichier Excel."""
+    """Wizard pour importer des contrats (Contrats clients) depuis un fichier Excel."""
     
     _name = 'potting.import.contracts.wizard'
     _description = 'Import de contrats depuis Excel'

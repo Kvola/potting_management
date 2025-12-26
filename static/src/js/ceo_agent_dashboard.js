@@ -232,8 +232,8 @@ export class PottingCeoAgentDashboard extends Component {
     addProduction() {
         this.action.doAction({
             type: 'ir.actions.act_window',
-            name: 'Nouvelle production',
-            res_model: 'potting.production.line',
+            name: 'Ajouter une production',
+            res_model: 'potting.add.production.wizard',
             views: [[false, 'form']],
             target: 'new',
         });

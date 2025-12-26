@@ -12,9 +12,9 @@
         - Poudre de cacao
         
         Fonctionnalités :
-        - Gestion des commandes clients (contrats)
+        - Gestion des Contrats clients (contrats)
         - Gestion des Ordres de Transit (OT)
-        - Génération automatique des OT depuis les commandes clients
+        - Génération automatique des OT depuis les Contrats clients
         - Génération automatique des lots selon le tonnage
         - Suivi des productions et exportations
         - Gestion des transitaires et leurs paiements
@@ -50,6 +50,7 @@
         'wizards/potting_daily_report_wizard_views.xml',
         'wizards/potting_create_delivery_note_wizard_views.xml',
         'wizards/potting_import_contracts_wizard_views.xml',
+        'wizards/potting_add_production_wizard_views.xml',
         # Views
         'views/potting_certification_views.xml',
         'views/potting_customer_order_views.xml',

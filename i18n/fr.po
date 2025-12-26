@@ -348,7 +348,7 @@ msgstr "Opérations"
 #. module: potting_management
 #: model:ir.ui.menu,name:potting_management.menu_potting_customer_order
 msgid "Customer Orders"
-msgstr "Commandes clients"
+msgstr "Contrats clients"
 
 #. module: potting_management
 #: model:ir.ui.menu,name:potting_management.menu_potting_transit_order

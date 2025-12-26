@@ -77,7 +77,7 @@ class PottingProductionLine(models.Model):
         string="Unités produites",
         required=True,
         default=1,
-        help="Nombre d'unités de conditionnement produites (cartons, big bags, sacs)"
+        help="Nombre d'unités de conditionnement produites (carton, big bag, sac)"
     )
     
     # Champ CALCULÉ : le tonnage est déduit des unités
