@@ -15,3 +15,4 @@ from . import potting_consignee
 from . import potting_delivery_note
 from . import potting_forwarding_agent
 from . import account_move
+from . import potting_api_token

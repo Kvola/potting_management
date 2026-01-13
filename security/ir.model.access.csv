@@ -83,3 +83,5 @@ access_potting_taxe_type_user,potting.taxe.type.user,model_potting_taxe_type,gro
 access_potting_taxe_type_commercial,potting.taxe.type.commercial,model_potting_taxe_type,group_potting_commercial,1,0,0,0
 access_potting_taxe_type_shipping,potting.taxe.type.shipping,model_potting_taxe_type,group_potting_shipping,1,1,1,0
 access_potting_taxe_type_manager,potting.taxe.type.manager,model_potting_taxe_type,group_potting_manager,1,1,1,1
+access_potting_api_token_user,potting.api.token.user,model_potting_api_token,group_potting_user,1,0,0,0
+access_potting_api_token_manager,potting.api.token.manager,model_potting_api_token,group_potting_manager,1,1,1,1
