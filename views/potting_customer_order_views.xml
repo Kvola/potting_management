@@ -77,6 +77,14 @@
                         </group>
                         <group string="📋 Contrat">
                             <field name="contract_number"/>
+                            <field name="confirmation_vente_id" 
+                                   options="{'no_create': True}"
+                                   readonly="state not in ('draft', 'confirmed')"
+                                   required="1"/>
+                            <field name="cv_reference" readonly="1" invisible="not confirmation_vente_id"/>
+                            <field name="cv_tonnage_restant" readonly="1" 
+                                   invisible="not confirmation_vente_id"
+                                   decoration-danger="cv_tonnage_restant &lt;= 0"/>
                             <field name="user_id" widget="many2one_avatar_user"/>
                             <label for="contract_tonnage"/>
                             <div class="o_row">

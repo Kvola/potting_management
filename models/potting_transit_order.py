@@ -18,6 +18,10 @@ class PottingTransitOrder(models.Model):
          'Le numéro OT doit être unique!'),
         ('tonnage_positive', 'CHECK(tonnage > 0)', 
          'Le tonnage doit être supérieur à 0!'),
+        ('ot_reference_uniq', 'unique(ot_reference)',
+         'La référence OT doit être unique!'),
+        ('booking_number_company_uniq', 'unique(booking_number, company_id)',
+         'Le numéro de booking doit être unique par société!'),
     ]
 
     name = fields.Char(
@@ -54,6 +58,51 @@ class PottingTransitOrder(models.Model):
         tracking=True,
         check_company=True,
         domain="[('state', 'not in', ['done', 'cancelled'])]"
+    )
+    
+    # =========================================================================
+    # CHAMP - FORMULE (FO) - OBLIGATOIRE
+    # =========================================================================
+    
+    formule_id = fields.Many2one(
+        'potting.formule',
+        string="Formule (FO)",
+        required=True,
+        ondelete='restrict',
+        tracking=True,
+        index=True,
+        domain="[('state', 'in', ['validated', 'partial_paid']), "
+               "('transit_order_id', '=', False)]",
+        help="Formule du Conseil Café-Cacao obligatoire pour cet OT. "
+             "Une FO ne peut être liée qu'à un seul OT."
+    )
+    
+    formule_reference = fields.Char(
+        string="Réf. FO",
+        related='formule_id.reference_ccc',
+        store=True,
+        help="Référence CCC de la Formule"
+    )
+    
+    formule_prix_tonnage = fields.Monetary(
+        string="Prix FO (FCFA/T)",
+        related='formule_id.prix_tonnage',
+        currency_field='formule_currency_id',
+        help="Prix au tonnage défini dans la Formule"
+    )
+    
+    formule_currency_id = fields.Many2one(
+        'res.currency',
+        related='formule_id.currency_id',
+        string="Devise FO"
+    )
+    
+    confirmation_vente_id = fields.Many2one(
+        'potting.confirmation.vente',
+        string="Confirmation de Vente",
+        related='formule_id.confirmation_vente_id',
+        store=True,
+        help="CV liée via la Formule"
     )
     
     campaign_id = fields.Many2one(
@@ -504,6 +553,51 @@ class PottingTransitOrder(models.Model):
                 raise ValidationError(_(
                     "Le produit sélectionné ne correspond pas au type de produit de l'OT."
                 ))
+    
+    @api.constrains('formule_id', 'tonnage')
+    def _check_formule_tonnage(self):
+        """Vérifie que le tonnage de l'OT est cohérent avec la Formule"""
+        for order in self:
+            if order.formule_id and order.tonnage:
+                # Vérifier si d'autres OT utilisent cette formule
+                other_ots = self.search([
+                    ('formule_id', '=', order.formule_id.id),
+                    ('id', '!=', order.id),
+                    ('state', '!=', 'cancelled')
+                ])
+                if other_ots:
+                    raise ValidationError(_(
+                        "La Formule %s est déjà utilisée par l'OT %s. "
+                        "Une Formule ne peut être liée qu'à un seul OT.",
+                        order.formule_id.name,
+                        other_ots[0].name
+                    ))
+    
+    @api.constrains('customer_order_id', 'product_type')
+    def _check_product_type_order(self):
+        """Vérifie la cohérence du type de produit avec la commande"""
+        for order in self:
+            if order.customer_order_id and order.product_type:
+                if order.customer_order_id.product_type != order.product_type:
+                    raise ValidationError(_(
+                        "Le type de produit de l'OT (%s) doit correspondre "
+                        "au type de produit de la commande (%s).",
+                        dict(order._fields['product_type'].selection).get(order.product_type),
+                        dict(order.customer_order_id._fields['product_type'].selection).get(
+                            order.customer_order_id.product_type
+                        )
+                    ))
+    
+    @api.constrains('export_duty_collected', 'state')
+    def _check_export_duty_before_validation(self):
+        """Vérifie que les droits d'export sont collectés avant validation"""
+        for order in self:
+            if order.state == 'done' and not order.export_duty_collected:
+                raise ValidationError(_(
+                    "Les droits d'exportation doivent être encaissés avant "
+                    "la validation de l'OT %s.",
+                    order.name
+                ))
 
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
@@ -818,10 +912,21 @@ class PottingTransitOrder(models.Model):
             if self.env.context.get('default_customer_order_id') or vals.get('customer_order_id'):
                 vals['is_created_from_order'] = True
         
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        
+        # Lier les formules aux OT créés
+        for record in records:
+            if record.formule_id and not record.formule_id.transit_order_id:
+                record.formule_id.transit_order_id = record.id
+        
+        return records
 
     def write(self, vals):
         """Vérifie que le tonnage du contrat n'est pas dépassé lors de la modification."""
+        # Gérer le changement de formule
+        if 'formule_id' in vals:
+            old_formule_ids = self.mapped('formule_id')
+            
         if 'tonnage' in vals:
             for order in self:
                 if order.customer_order_id and order.customer_order_id.contract_tonnage > 0:
@@ -843,7 +948,21 @@ class PottingTransitOrder(models.Model):
                             order.customer_order_id.contract_tonnage,
                             order.customer_order_id.contract_tonnage - other_ot_tonnage
                         ))
-        return super().write(vals)
+        
+        result = super().write(vals)
+        
+        # Mettre à jour les liens formule-OT si la formule a changé
+        if 'formule_id' in vals:
+            # Délier les anciennes formules
+            old_formule_ids.filtered(lambda f: f.transit_order_id not in self).write({
+                'transit_order_id': False
+            })
+            # Lier les nouvelles formules
+            for record in self:
+                if record.formule_id and record.formule_id.transit_order_id != record:
+                    record.formule_id.transit_order_id = record.id
+        
+        return result
 
     def copy(self, default=None):
         self.ensure_one()
@@ -857,6 +976,9 @@ class PottingTransitOrder(models.Model):
         return super().copy(default)
 
     def unlink(self):
+        # Délier les formules avant suppression
+        formule_ids = self.mapped('formule_id')
+        
         for order in self:
             if order.state not in ('draft', 'cancelled'):
                 raise UserError(_(
@@ -868,7 +990,13 @@ class PottingTransitOrder(models.Model):
                 raise UserError(_(
                     "Impossible de supprimer l'OT '%s': certains lots ont déjà de la production."
                 ) % order.name)
-        return super().unlink()
+        
+        result = super().unlink()
+        
+        # Délier les formules après suppression réussie
+        formule_ids.write({'transit_order_id': False})
+        
+        return result
 
     # -------------------------------------------------------------------------
     # ACTION METHODS

@@ -301,23 +301,135 @@ class PottingDailyReportWizard(models.TransientModel):
         if ot_numbers:
             ot_range = f"OT {min(ot_numbers)} à {max(ot_numbers)}"
         
-        # Préparer le corps de l'email
+        # Calcul des statistiques
+        total_tonnage_kg = sum(self.transit_order_ids.mapped('tonnage')) * 1000
+        total_current_kg = sum(self.transit_order_ids.mapped('current_tonnage')) * 1000
+        avg_progress = sum(self.transit_order_ids.mapped('progress_percentage')) / len(self.transit_order_ids) if self.transit_order_ids else 0
+        
+        # Comptage par état
+        in_tc_count = len(self.transit_order_ids.filtered(lambda o: o.state == 'done'))
+        prod_100_count = len(self.transit_order_ids.filtered(lambda o: o.progress_percentage >= 100 and o.state != 'done'))
+        in_prod_count = len(self.transit_order_ids.filtered(lambda o: o.progress_percentage < 100 and o.state not in ['done', 'cancelled']))
+        
+        # Préparer le corps de l'email avec design professionnel
         body_html = f'''
-        <p>Bonjour,</p>
-        <p>Veuillez trouver ci-joint le rapport quotidien OT du <strong>{self.report_date}</strong>.</p>
-        <p><strong>Résumé:</strong></p>
-        <ul>
-            <li>Nombre d'OT: {len(self.transit_order_ids)}</li>
-            <li>Plage: {ot_range}</li>
-            <li>Tonnage total: {sum(self.transit_order_ids.mapped('tonnage')):,.0f} Kg</li>
-        </ul>
+        <div style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+            <table width="100%" cellspacing="0" cellpadding="0" style="max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <!-- En-tête -->
+                <tr>
+                    <td style="background: linear-gradient(135deg, #1a5f2a 0%, #27ae60 100%); padding: 25px 30px;">
+                        <table width="100%" cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td style="vertical-align: middle;">
+                                    <span style="color: #90EE90; font-size: 20px; font-weight: bold;">IVORY</span><br/>
+                                    <span style="color: #D2691E; font-size: 20px; font-weight: bold;">COCOA</span>
+                                    <span style="color: #ffffff; font-size: 20px; font-weight: bold;">PRODUCTS</span><br/>
+                                    <span style="color: #ffffff; font-size: 11px;">Côte d'Ivoire</span>
+                                </td>
+                                <td style="text-align: right; vertical-align: middle;">
+                                    <span style="color: #ffffff; font-size: 20px; font-weight: bold;">📊 OT DAILY REPORT</span><br/>
+                                    <span style="color: #e8f5e9; font-size: 13px;">{self.report_date.strftime('%A %d %B %Y')}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                
+                <!-- Corps -->
+                <tr>
+                    <td style="padding: 30px;">
+                        <p style="margin: 0 0 20px 0; color: #333333; font-size: 15px;">
+                            Bonjour <strong>{self.recipient_id.name}</strong>,
+                        </p>
+                        <p style="margin: 0 0 25px 0; color: #333333; font-size: 15px;">
+                            Veuillez trouver ci-joint le rapport quotidien OT du <strong style="color: #1a5f2a;">{self.report_date.strftime('%d/%m/%Y')}</strong>.
+                        </p>
+                        
+                        <!-- Tableau de bord statistiques -->
+                        <table width="100%" cellspacing="8" cellpadding="0" style="margin-bottom: 25px;">
+                            <tr>
+                                <td style="width: 25%; text-align: center; background: linear-gradient(180deg, #1a5f2a, #27ae60); padding: 15px 10px; border-radius: 8px;">
+                                    <span style="color: #fff; font-size: 28px; font-weight: bold;">{len(self.transit_order_ids)}</span><br/>
+                                    <span style="color: #e8f5e9; font-size: 11px; text-transform: uppercase;">Total OT</span>
+                                </td>
+                                <td style="width: 25%; text-align: center; background: linear-gradient(180deg, #8B4513, #D2691E); padding: 15px 10px; border-radius: 8px;">
+                                    <span style="color: #fff; font-size: 22px; font-weight: bold;">{total_tonnage_kg:,.0f}</span><br/>
+                                    <span style="color: #ffe4c4; font-size: 11px; text-transform: uppercase;">Tonnage (Kg)</span>
+                                </td>
+                                <td style="width: 25%; text-align: center; background: linear-gradient(180deg, #2980b9, #3498db); padding: 15px 10px; border-radius: 8px;">
+                                    <span style="color: #fff; font-size: 22px; font-weight: bold;">{avg_progress:.1f}%</span><br/>
+                                    <span style="color: #e3f2fd; font-size: 11px; text-transform: uppercase;">Progression Moy.</span>
+                                </td>
+                                <td style="width: 25%; text-align: center; background: linear-gradient(180deg, #7b1fa2, #9c27b0); padding: 15px 10px; border-radius: 8px;">
+                                    <span style="color: #fff; font-size: 22px; font-weight: bold;">{total_current_kg:,.0f}</span><br/>
+                                    <span style="color: #f3e5f5; font-size: 11px; text-transform: uppercase;">Produit (Kg)</span>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <!-- Répartition par état -->
+                        <table width="100%" cellspacing="0" cellpadding="12" style="background-color: #f8f9fa; border-radius: 8px; margin-bottom: 25px;">
+                            <tr>
+                                <td colspan="3" style="background-color: #1a5f2a; color: #ffffff; font-weight: bold; border-radius: 8px 8px 0 0; padding: 12px; font-size: 14px;">
+                                    📦 RÉPARTITION PAR ÉTAT DE PRODUCTION
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: center; padding: 15px; border-right: 1px solid #e0e0e0;">
+                                    <span style="display: inline-block; width: 16px; height: 16px; background-color: #27ae60; border-radius: 50%; vertical-align: middle;"></span>
+                                    <span style="font-size: 20px; font-weight: bold; color: #27ae60; margin-left: 8px;">{in_tc_count}</span><br/>
+                                    <span style="font-size: 12px; color: #666;">100% In TC</span>
+                                </td>
+                                <td style="text-align: center; padding: 15px; border-right: 1px solid #e0e0e0;">
+                                    <span style="display: inline-block; width: 16px; height: 16px; background-color: #f9a825; border-radius: 50%; vertical-align: middle;"></span>
+                                    <span style="font-size: 20px; font-weight: bold; color: #f9a825; margin-left: 8px;">{prod_100_count}</span><br/>
+                                    <span style="font-size: 12px; color: #666;">100% Production</span>
+                                </td>
+                                <td style="text-align: center; padding: 15px;">
+                                    <span style="display: inline-block; width: 16px; height: 16px; background-color: #e53935; border-radius: 50%; vertical-align: middle;"></span>
+                                    <span style="font-size: 20px; font-weight: bold; color: #e53935; margin-left: 8px;">{in_prod_count}</span><br/>
+                                    <span style="font-size: 12px; color: #666;">En Production</span>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <!-- Plage OT -->
+                        <div style="background-color: #e8f5e9; border-left: 4px solid #27ae60; padding: 12px 15px; margin-bottom: 20px; border-radius: 0 8px 8px 0;">
+                            <strong style="color: #1a5f2a;">📋 Plage des OT:</strong> 
+                            <span style="color: #333; font-size: 14px;">{ot_range}</span>
+                        </div>
         '''
         
         if self.note:
-            body_html += f'<p><strong>Message:</strong></p><p>{self.note}</p>'
+            body_html += f'''
+                        <div style="background-color: #fff8e1; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 0 8px 8px 0;">
+                            <strong style="color: #f57c00;">📝 Message:</strong><br/>
+                            <span style="color: #333333;">{self.note}</span>
+                        </div>
+            '''
         
         body_html += f'''
-        <p>Cordialement,<br/>{self.env.user.name}</p>
+                        <p style="margin: 25px 0 0 0; color: #333333; font-size: 15px;">
+                            Cordialement,
+                        </p>
+                        <p style="margin: 5px 0 0 0; color: #1a5f2a; font-size: 15px; font-weight: bold;">
+                            {self.env.user.name}<br/>
+                            <span style="font-size: 13px; font-weight: normal; color: #666666;">{self.env.user.email or ''}</span>
+                        </p>
+                    </td>
+                </tr>
+                
+                <!-- Pied de page -->
+                <tr>
+                    <td style="background-color: #333333; padding: 20px 30px; text-align: center;">
+                        <span style="color: #ffffff; font-size: 12px;">
+                            IVORY COCOA PRODUCTS - Côte d'Ivoire<br/>
+                            <span style="color: #888888;">Ce rapport a été généré automatiquement</span>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
         '''
         
         # Créer et envoyer l'email
@@ -471,3 +583,50 @@ class PottingDailyReportWizard(models.TransientModel):
         if ot_numbers:
             return {'from': min(ot_numbers), 'to': max(ot_numbers)}
         return {'from': 0, 'to': 0}
+    
+    def get_report_statistics(self):
+        """Retourne les statistiques globales du rapport pour l'en-tête"""
+        self.ensure_one()
+        
+        total_ot = len(self.transit_order_ids)
+        total_tonnage_kg = sum(self.transit_order_ids.mapped('tonnage')) * 1000
+        total_current_kg = sum(self.transit_order_ids.mapped('current_tonnage')) * 1000
+        
+        # Calcul de la progression moyenne
+        if total_ot > 0:
+            avg_progress = sum(self.transit_order_ids.mapped('progress_percentage')) / total_ot
+        else:
+            avg_progress = 0
+        
+        # Comptage par état
+        in_tc_count = len(self.transit_order_ids.filtered(lambda o: o.state == 'done'))
+        prod_100_count = len(self.transit_order_ids.filtered(
+            lambda o: o.progress_percentage >= 100 and o.state != 'done'
+        ))
+        in_prod_count = len(self.transit_order_ids.filtered(
+            lambda o: o.progress_percentage < 100 and o.state not in ['done', 'cancelled']
+        ))
+        
+        # Comptage par statut de livraison
+        partial_delivery_count = len(self.transit_order_ids.filtered(
+            lambda o: o.delivery_status == 'partial'
+        ))
+        fully_delivered_count = len(self.transit_order_ids.filtered(
+            lambda o: o.delivery_status == 'fully_delivered'
+        ))
+        not_delivered_count = len(self.transit_order_ids.filtered(
+            lambda o: o.delivery_status == 'not_delivered'
+        ))
+        
+        return {
+            'total_ot': total_ot,
+            'total_tonnage_kg': total_tonnage_kg,
+            'total_current_kg': total_current_kg,
+            'avg_progress': avg_progress,
+            'in_tc_count': in_tc_count,
+            'prod_100_count': prod_100_count,
+            'in_prod_count': in_prod_count,
+            'partial_delivery_count': partial_delivery_count,
+            'fully_delivered_count': fully_delivered_count,
+            'not_delivered_count': not_delivered_count,
+        }

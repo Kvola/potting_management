@@ -100,6 +100,36 @@
               sequence="50"
               groups="potting_management.group_potting_ceo_agent"/>
 
+    <!-- ================================================================
+         MENU RÉGLEMENTATION CCC (Confirmations de Vente et Formules)
+         ================================================================ -->
+    <menuitem id="menu_potting_ccc" 
+              name="🏛️ Réglementation CCC" 
+              parent="menu_potting_root" 
+              sequence="15"
+              groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+
+    <menuitem id="menu_potting_confirmation_vente" 
+              name="📜 Confirmations de Vente" 
+              parent="menu_potting_ccc" 
+              action="action_potting_confirmation_vente" 
+              sequence="10"
+              groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+
+    <menuitem id="menu_potting_formule" 
+              name="📊 Formules (FO)" 
+              parent="menu_potting_ccc" 
+              action="action_potting_formule" 
+              sequence="20"
+              groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+
+    <menuitem id="menu_potting_taxe_type" 
+              name="🏛️ Types de Taxes" 
+              parent="menu_potting_ccc" 
+              action="action_potting_taxe_type" 
+              sequence="30"
+              groups="potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+
     <!-- CEO Agent Menu -->
     <menuitem id="menu_potting_ceo_agent" 
               name="✅ Validation" 

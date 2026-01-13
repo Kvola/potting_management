@@ -193,6 +193,146 @@
                 </div>
             </div>
 
+            <!-- CV (Confirmation de Vente) Statistics - NEW -->
+            <div class="mb-4">
+                <div class="section-title d-flex justify-content-between align-items-center">
+                    <span><i class="fa fa-certificate"/>Confirmations de Vente (CV)</span>
+                    <button class="btn btn-sm btn-outline-primary" t-on-click="createCV">
+                        <i class="fa fa-plus me-1"/>Nouvelle CV
+                    </button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer" t-on-click="() => this.openCVs()">
+                            <div class="stat-card">
+                                <div class="stat-value text-primary" t-esc="state.cvStats.total"/>
+                                <div class="stat-label">Total CV</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer border-accent-success" t-on-click="() => this.openCVs('active')">
+                            <div class="stat-card">
+                                <div class="stat-value text-success" t-esc="state.cvStats.active"/>
+                                <div class="stat-label">Actives</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer border-accent-warning" t-on-click="() => this.openCVs('consumed')">
+                            <div class="stat-card">
+                                <div class="stat-value text-warning" t-esc="state.cvStats.consumed"/>
+                                <div class="stat-label">Consommées</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer border-accent-danger" t-on-click="() => this.openCVs('expired')">
+                            <div class="stat-card">
+                                <div class="stat-value text-danger" t-esc="state.cvStats.expired"/>
+                                <div class="stat-label">Expirées</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer" t-on-click="openCVsExpiringSoon">
+                            <div class="stat-card">
+                                <div t-attf-class="stat-value #{state.cvStats.expiring_soon > 0 ? 'text-warning' : 'text-muted'}" 
+                                     t-esc="state.cvStats.expiring_soon"/>
+                                <div class="stat-label">Expire &lt;30j</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="card">
+                            <div class="stat-card">
+                                <div class="stat-value text-info" t-esc="formatNumber(state.cvStats.tonnage_restant, 0)"/>
+                                <div class="stat-label">Tonnage dispo (T)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formule (FO) Statistics - NEW -->
+            <div class="mb-4">
+                <div class="section-title d-flex justify-content-between align-items-center">
+                    <span><i class="fa fa-calculator"/>Formules (FO)</span>
+                    <button class="btn btn-sm btn-outline-primary" t-on-click="createFormule">
+                        <i class="fa fa-plus me-1"/>Nouvelle Formule
+                    </button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer" t-on-click="() => this.openFormules()">
+                            <div class="stat-card">
+                                <div class="stat-value text-primary" t-esc="state.formuleStats.total"/>
+                                <div class="stat-label">Total FO</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer" t-on-click="() => this.openFormules('draft')">
+                            <div class="stat-card">
+                                <div class="stat-value text-secondary" t-esc="state.formuleStats.draft"/>
+                                <div class="stat-label">Brouillon</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer border-accent-info" t-on-click="() => this.openFormules('validated')">
+                            <div class="stat-card">
+                                <div class="stat-value text-info" t-esc="state.formuleStats.validated"/>
+                                <div class="stat-label">Validées</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer border-accent-warning" t-on-click="() => this.openFormules('partial_paid')">
+                            <div class="stat-card">
+                                <div class="stat-value text-warning" t-esc="state.formuleStats.partial_paid"/>
+                                <div class="stat-label">Part. payées</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer border-accent-success" t-on-click="() => this.openFormules('paid')">
+                            <div class="stat-card">
+                                <div class="stat-value text-success" t-esc="state.formuleStats.paid"/>
+                                <div class="stat-label">Entièr. payées</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="card cursor-pointer" t-on-click="openFormulesAwaitingPayment">
+                            <div class="stat-card">
+                                <div t-attf-class="stat-value #{state.formuleStats.awaiting_payment > 0 ? 'text-warning' : 'text-muted'}" 
+                                     t-esc="state.formuleStats.awaiting_payment"/>
+                                <div class="stat-label">En att. paiement</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Formule payment progress -->
+                <t t-if="state.formuleStats.total_montant > 0">
+                    <div class="card mt-3">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted small">Progression des paiements Formules</span>
+                                <span class="fw-bold">
+                                    <t t-esc="formatCurrency(state.formuleStats.total_paye)"/> / 
+                                    <t t-esc="formatCurrency(state.formuleStats.total_montant)"/> FCFA
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" 
+                                     t-attf-style="width: #{Math.min((state.formuleStats.total_paye / state.formuleStats.total_montant) * 100, 100)}%"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+
             <!-- Product Type Statistics -->
             <div class="mb-4">
                 <div class="section-title">

@@ -37,6 +37,28 @@ export class PottingCommercialDashboard extends Component {
                 currency_symbol: '',
                 company_currency_symbol: '',
             },
+            // CV statistics (NEW)
+            cvStats: {
+                total: 0,
+                active: 0,
+                expired: 0,
+                consumed: 0,
+                tonnage_autorise: 0,
+                tonnage_utilise: 0,
+                tonnage_restant: 0,
+                expiring_soon: 0,  // Expire dans 30 jours
+            },
+            // Formule statistics (NEW)
+            formuleStats: {
+                total: 0,
+                draft: 0,
+                validated: 0,
+                partial_paid: 0,
+                paid: 0,
+                total_montant: 0,
+                total_paye: 0,
+                awaiting_payment: 0,
+            },
             // Product type statistics
             productStats: [],
             // Recent contracts
@@ -45,6 +67,8 @@ export class PottingCommercialDashboard extends Component {
             customerStats: [],
             // Monthly evolution
             monthlyContracts: [],
+            // Recent CV (NEW)
+            recentCVs: [],
         });
 
         onWillStart(async () => {
@@ -209,6 +233,94 @@ export class PottingCommercialDashboard extends Component {
             usedTonnage: g.total_tonnage || 0,
             percentage: g.contract_tonnage > 0 ? (g.total_tonnage / g.contract_tonnage) * 100 : 0,
         }));
+        
+        // ==============================================================
+        // CV STATISTICS (NEW)
+        // ==============================================================
+        try {
+            // Total CV par état
+            const cvStates = ['draft', 'active', 'consumed', 'expired', 'cancelled'];
+            for (const state of cvStates) {
+                const count = await this.orm.searchCount("potting.confirmation.vente", [['state', '=', state]]);
+                if (state === 'active') this.state.cvStats.active = count;
+                else if (state === 'expired') this.state.cvStats.expired = count;
+                else if (state === 'consumed') this.state.cvStats.consumed = count;
+            }
+            this.state.cvStats.total = await this.orm.searchCount("potting.confirmation.vente", []);
+            
+            // Tonnage CV
+            const allCVs = await this.orm.searchRead(
+                "potting.confirmation.vente",
+                [['state', '=', 'active']],
+                ["tonnage_autorise", "tonnage_utilise", "tonnage_restant", "date_end"]
+            );
+            this.state.cvStats.tonnage_autorise = allCVs.reduce(
+                (sum, cv) => sum + (cv.tonnage_autorise || 0), 0
+            );
+            this.state.cvStats.tonnage_utilise = allCVs.reduce(
+                (sum, cv) => sum + (cv.tonnage_utilise || 0), 0
+            );
+            this.state.cvStats.tonnage_restant = allCVs.reduce(
+                (sum, cv) => sum + (cv.tonnage_restant || 0), 0
+            );
+            
+            // CV expirant bientôt (30 jours)
+            const today = new Date();
+            const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+            this.state.cvStats.expiring_soon = await this.orm.searchCount(
+                "potting.confirmation.vente",
+                [
+                    ['state', '=', 'active'],
+                    ['date_end', '<=', in30Days.toISOString().split('T')[0]],
+                    ['date_end', '>=', today.toISOString().split('T')[0]]
+                ]
+            );
+            
+            // CV récentes
+            this.state.recentCVs = await this.orm.searchRead(
+                "potting.confirmation.vente",
+                [['state', 'in', ['active', 'consumed']]],
+                ["name", "reference_ccc", "tonnage_autorise", "tonnage_restant", 
+                 "tonnage_progress", "date_end", "state"],
+                { limit: 5, order: "date_emission desc" }
+            );
+        } catch (e) {
+            console.log("Could not load CV statistics:", e);
+        }
+        
+        // ==============================================================
+        // FORMULE STATISTICS (NEW)
+        // ==============================================================
+        try {
+            // Total Formules par état
+            const formuleStates = ['draft', 'validated', 'partial_paid', 'paid'];
+            for (const state of formuleStates) {
+                const count = await this.orm.searchCount("potting.formule", [['state', '=', state]]);
+                this.state.formuleStats[state] = count;
+            }
+            this.state.formuleStats.total = await this.orm.searchCount(
+                "potting.formule", 
+                [['state', '!=', 'cancelled']]
+            );
+            
+            // Montants des formules
+            const allFormules = await this.orm.searchRead(
+                "potting.formule",
+                [['state', 'in', ['validated', 'partial_paid', 'paid']]],
+                ["montant_net", "total_paye", "state"]
+            );
+            this.state.formuleStats.total_montant = allFormules.reduce(
+                (sum, f) => sum + (f.montant_net || 0), 0
+            );
+            this.state.formuleStats.total_paye = allFormules.reduce(
+                (sum, f) => sum + (f.total_paye || 0), 0
+            );
+            this.state.formuleStats.awaiting_payment = allFormules.filter(
+                f => f.state === 'validated' || f.state === 'partial_paid'
+            ).length;
+        } catch (e) {
+            console.log("Could not load Formule statistics:", e);
+        }
     }
 
     // Navigation methods
@@ -273,6 +385,78 @@ export class PottingCommercialDashboard extends Component {
             views: [[false, 'list'], [false, 'kanban'], [false, 'form']],
             domain: [],
             context: {},
+        });
+    }
+
+    // CV Navigation methods (NEW)
+    openCVs(state) {
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            name: 'Confirmations de Vente',
+            res_model: 'potting.confirmation.vente',
+            views: [[false, 'list'], [false, 'kanban'], [false, 'form']],
+            domain: state ? [['state', '=', state]] : [],
+            context: {},
+        });
+    }
+
+    openCVsExpiringSoon() {
+        const today = new Date();
+        const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            name: 'CV expirant bientôt',
+            res_model: 'potting.confirmation.vente',
+            views: [[false, 'list'], [false, 'kanban'], [false, 'form']],
+            domain: [
+                ['state', '=', 'active'],
+                ['date_end', '<=', in30Days.toISOString().split('T')[0]],
+                ['date_end', '>=', today.toISOString().split('T')[0]]
+            ],
+            context: {},
+        });
+    }
+
+    createCV() {
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            name: 'Nouvelle Confirmation de Vente',
+            res_model: 'potting.confirmation.vente',
+            views: [[false, 'form']],
+            target: 'current',
+        });
+    }
+
+    // Formule Navigation methods (NEW)
+    openFormules(state) {
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            name: 'Formules',
+            res_model: 'potting.formule',
+            views: [[false, 'list'], [false, 'kanban'], [false, 'form']],
+            domain: state ? [['state', '=', state]] : [],
+            context: {},
+        });
+    }
+
+    openFormulesAwaitingPayment() {
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            name: 'Formules en attente de paiement',
+            res_model: 'potting.formule',
+            views: [[false, 'list'], [false, 'kanban'], [false, 'form']],
+            domain: [['state', 'in', ['validated', 'partial_paid']]],
+            context: {},
+        });
+    }
+
+    createFormule() {
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            name: 'Nouvelle Formule',
+            res_model: 'potting.formule',
+            views: [[false, 'form']],
+            target: 'current',
         });
     }
 

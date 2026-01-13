@@ -26,6 +26,12 @@ class PottingCustomerOrder(models.Model):
          'La référence du contrat doit être unique par société!'),
         ('contract_number_uniq', 'unique(contract_number)', 
          'Le numéro de contrat doit être unique!'),
+        ('contract_tonnage_positive', 'CHECK(contract_tonnage >= 0)',
+         'Le tonnage du contrat doit être positif ou nul!'),
+        ('unit_price_positive', 'CHECK(unit_price >= 0)',
+         'Le prix unitaire doit être positif ou nul!'),
+        ('export_duty_rate_valid', 'CHECK(export_duty_rate >= 0 AND export_duty_rate <= 100)',
+         'Le taux des droits d\'export doit être entre 0 et 100%!'),
     ]
 
     name = fields.Char(
@@ -43,6 +49,34 @@ class PottingCustomerOrder(models.Model):
         tracking=True,
         index=True,
         help="Numéro unique du contrat d'exportation"
+    )
+    
+    # =========================================================================
+    # CHAMP - CONFIRMATION DE VENTE (CV)
+    # =========================================================================
+    
+    confirmation_vente_id = fields.Many2one(
+        'potting.confirmation.vente',
+        string="Confirmation de Vente",
+        required=True,
+        ondelete='restrict',
+        tracking=True,
+        index=True,
+        domain="[('state', '=', 'active'), ('tonnage_restant', '>', 0)]",
+        help="Confirmation de Vente (CV) du Conseil Café-Cacao autorisant ce contrat"
+    )
+    
+    cv_reference = fields.Char(
+        string="Réf. CCC",
+        related='confirmation_vente_id.reference_ccc',
+        store=True,
+        help="Référence CCC de la Confirmation de Vente"
+    )
+    
+    cv_tonnage_restant = fields.Float(
+        string="Tonnage CV restant",
+        related='confirmation_vente_id.tonnage_restant',
+        help="Tonnage encore disponible sur la CV"
     )
     
     customer_id = fields.Many2one(
@@ -365,6 +399,53 @@ class PottingCustomerOrder(models.Model):
             if order.date_expected and order.date_order and order.date_expected < order.date_order:
                 raise ValidationError(_(
                     "La date de livraison prévue ne peut pas être antérieure à la date de commande."
+                ))
+    
+    @api.constrains('contract_tonnage', 'confirmation_vente_id')
+    def _check_cv_tonnage(self):
+        """Vérifie que le tonnage du contrat n'excède pas la CV"""
+        for order in self:
+            if order.confirmation_vente_id and order.contract_tonnage:
+                # Calcule le tonnage utilisé par les autres contrats de cette CV
+                other_orders = self.search([
+                    ('confirmation_vente_id', '=', order.confirmation_vente_id.id),
+                    ('id', '!=', order.id),
+                    ('state', 'not in', ('cancelled',))
+                ])
+                other_tonnage = sum(o.contract_tonnage or 0 for o in other_orders)
+                max_available = order.confirmation_vente_id.tonnage_autorise - other_tonnage
+                
+                if order.contract_tonnage > max_available:
+                    raise ValidationError(_(
+                        "Le tonnage du contrat (%.2f T) dépasse le tonnage disponible "
+                        "sur la CV %s (%.2f T disponible).",
+                        order.contract_tonnage,
+                        order.confirmation_vente_id.name,
+                        max_available
+                    ))
+    
+    @api.constrains('product_type', 'confirmation_vente_id')
+    def _check_product_type_cv(self):
+        """Vérifie la cohérence du type de produit avec la CV"""
+        for order in self:
+            if order.confirmation_vente_id and order.product_type:
+                cv = order.confirmation_vente_id
+                if cv.product_type != 'all' and cv.product_type != order.product_type:
+                    raise ValidationError(_(
+                        "Le type de produit '%s' ne correspond pas au type "
+                        "autorisé par la CV %s ('%s').",
+                        dict(order._fields['product_type'].selection).get(order.product_type),
+                        cv.name,
+                        dict(cv._fields['product_type'].selection).get(cv.product_type)
+                    ))
+    
+    @api.constrains('unit_price')
+    def _check_unit_price(self):
+        """Vérifie que le prix unitaire est raisonnable"""
+        for order in self:
+            if order.unit_price and order.unit_price <= 0:
+                raise ValidationError(_(
+                    "Le prix unitaire doit être supérieur à 0."
                 ))
 
     # -------------------------------------------------------------------------

@@ -177,7 +177,7 @@
     </template>
 
     <!-- ========================================================================
-         OT DAILY REPORT - Rapport quotidien OT pour le DG
+         OT DAILY REPORT - Rapport quotidien OT pour le DG (Version professionnelle)
          ======================================================================== -->
     
     <template id="report_ot_daily_document">
@@ -186,158 +186,303 @@
             <t t-if="doc">
                 <t t-set="ot_data_list" t-value="doc.get_ot_data_for_report()"/>
                 <t t-set="ot_range" t-value="doc.get_ot_number_range()"/>
+                <t t-set="report_stats" t-value="doc.get_report_statistics()"/>
                 
-                <div class="page" style="font-size: 9px;">
-                    <!-- En-tête du rapport -->
-                    <div class="row mb-3">
-                        <div class="col-3">
-                            <div style="color: #8B4513; font-weight: bold; font-size: 11px;">
-                                <span style="color: green;">IVORY</span><br/>
-                                <span style="color: #8B4513;">COCOA</span><br/>
-                                <span style="color: #8B4513;">PRODUCTS</span><br/>
-                                <span style="font-size: 9px;">Côte d'Ivoire</span>
-                            </div>
-                        </div>
-                        <div class="col-6 text-center">
-                            <h2 style="font-size: 22px; font-weight: bold; margin-bottom: 5px;">
-                                OT DAILY REPORT
-                            </h2>
-                            <div style="font-size: 12px;">
-                                <t t-esc="doc.report_date" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
-                            </div>
-                        </div>
-                        <div class="col-3 text-end">
-                            <div style="font-size: 11px;">
-                                <strong>From OT :</strong> <t t-esc="ot_range.get('from', '')"/><br/>
-                                <strong>to :</strong> <t t-esc="ot_range.get('to', '')"/>
-                            </div>
-                            <div class="mt-2" style="font-size: 9px;">
-                                <span style="color: green;">●</span> 100% In TC<br/>
-                                <span style="color: #DAA520;">●</span> 100% Production<br/>
-                                <span style="color: red;">●</span> In Production
-                            </div>
-                        </div>
-                    </div>
+                <div class="page" style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 9px;">
                     
-                    <div style="font-size: 8px; margin-bottom: 10px;">
-                        <span style="color: blue;">P &lt;=&gt; intermediate price</span>
-                    </div>
-                    
-                    <!-- Contenu du rapport - Boucle sur chaque OT -->
-                    <t t-set="lot_counter" t-value="0"/>
-                    <t t-foreach="ot_data_list" t-as="ot">
-                        <t t-set="border_color" t-value="'green' if ot['color_status'] == 'green' else ('#DAA520' if ot['color_status'] == 'yellow' else 'red')"/>
-                        
-                        <!-- En-tête OT -->
-                        <div t-attf-style="border: 2px solid #{border_color}; margin-bottom: 3px; padding: 2px;">
-                            <!-- Ligne titre OT -->
-                            <table style="width: 100%; font-size: 9px; margin-bottom: 2px;">
-                                <tr style="background-color: #f5f5f5;">
-                                    <td style="width: 15%; font-weight: bold;">
-                                        OT N° <t t-esc="ot['ot_number']"/>
-                                    </td>
-                                    <td style="width: 25%; font-weight: bold;">
-                                        <t t-esc="ot['customer_name']"/> / <t t-esc="ot['consignee_name']"/>
-                                    </td>
-                                    <td style="width: 20%;">
-                                        <strong><t t-esc="'{:,.0f}'.format(ot['total_kg'])"/> Kg</strong>
-                                        <span style="margin-left: 10px;">
-                                            <t t-esc="'{:,}'.format(ot['total_units'])"/> <t t-esc="ot['unit_name']"/>
-                                            <t t-if="ot['certification']"> <t t-esc="ot['certification']"/></t>
+                    <!-- ============ EN-TÊTE PROFESSIONNEL ============ -->
+                    <div style="margin-bottom: 15px; border-bottom: 3px solid #1a5f2a; padding-bottom: 10px;">
+                        <table style="width: 100%;">
+                            <tr>
+                                <!-- Logo/Identité ICP -->
+                                <td style="width: 25%; vertical-align: top;">
+                                    <div style="line-height: 1.2;">
+                                        <span style="color: #27ae60; font-size: 18px; font-weight: bold; letter-spacing: 1px;">IVORY</span><br/>
+                                        <span style="color: #8B4513; font-size: 18px; font-weight: bold; letter-spacing: 1px;">COCOA</span><br/>
+                                        <span style="color: #333; font-size: 18px; font-weight: bold; letter-spacing: 1px;">PRODUCTS</span><br/>
+                                        <span style="font-size: 10px; color: #666;">République de Côte d'Ivoire</span>
+                                    </div>
+                                </td>
+                                
+                                <!-- Titre central -->
+                                <td style="width: 50%; text-align: center; vertical-align: middle;">
+                                    <div style="background: linear-gradient(135deg, #1a5f2a, #27ae60); padding: 12px 20px; border-radius: 8px;">
+                                        <span style="color: #fff; font-size: 20px; font-weight: bold; letter-spacing: 2px;">
+                                            📊 OT DAILY REPORT
+                                        </span><br/>
+                                        <span style="color: #e8f5e9; font-size: 14px;">
+                                            <t t-esc="doc.report_date" t-options='{"widget": "date", "format": "EEEE dd MMMM yyyy"}'/>
                                         </span>
-                                    </td>
-                                    <td style="width: 40%; text-align: right;">
-                                        <strong>Production = <t t-esc="'{:.2f}'.format(ot['progress'])"/>%</strong>
-                                    soit quantité (Kg) de: <strong><t t-esc="'{:,.0f}'.format(ot['current_kg'])"/></strong>
+                                    </div>
+                                </td>
+                                
+                                <!-- Informations plage OT -->
+                                <td style="width: 25%; text-align: right; vertical-align: top;">
+                                    <div style="background-color: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 4px solid #1a5f2a;">
+                                        <span style="font-size: 11px; color: #666;">Plage des OT</span><br/>
+                                        <span style="font-size: 14px; font-weight: bold; color: #1a5f2a;">
+                                            N° <t t-esc="ot_range.get('from', '-')"/> → <t t-esc="ot_range.get('to', '-')"/>
+                                        </span>
+                                    </div>
                                 </td>
                             </tr>
                         </table>
-                        
-                        <!-- En-têtes colonnes lots -->
-                        <table style="width: 100%; font-size: 8px; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background-color: #e8e8e8; font-weight: bold;">
-                                    <th style="width: 3%; padding: 2px; border: 1px solid #ccc;">N°</th>
-                                    <th style="width: 4%; padding: 2px; border: 1px solid #ccc;">N°</th>
-                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc;">N° de lot</th>
-                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc;">N° contrat</th>
-                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">N° BL</th>
-                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">Date BL</th>
-                                    <th style="width: 9%; padding: 2px; border: 1px solid #ccc;">N° TC</th>
-                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc;">Nom navire</th>
-                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc;">N° Booking</th>
-                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">ETA Navire</th>
-                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">ETD Navire</th>
-                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">Compagnie</th>
-                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc;">Destination</th>
-                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">Date Empotage</th>
-                                    <th style="width: 6%; padding: 2px; border: 1px solid #ccc;">Fin Production</th>
-                                    <th style="width: 7%; padding: 2px; border: 1px solid #ccc; text-align: right;">Quantité</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-foreach="ot['lots']" t-as="lot">
-                                    <t t-set="lot_counter" t-value="lot_counter + 1"/>
-                                    <tr>
-                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot_counter"/></td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot_index + 1"/></td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['name']"/></td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['contract_number']"/></td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['bl_number']"/></td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;">
-                                            <t t-if="lot['bl_date']">
-                                                <t t-esc="lot['bl_date']" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
-                                            </t>
-                                        </td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['container_number']"/></td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['vessel_name']"/></td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['booking_number']"/></td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;">
-                                            <t t-if="lot['eta']">
-                                                <t t-esc="lot['eta']" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
-                                            </t>
-                                        </td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;">
-                                            <t t-if="lot['etd']">
-                                                <t t-esc="lot['etd']" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
-                                            </t>
-                                        </td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['shipping_line']"/></td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;"><t t-esc="lot['destination']"/></td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;">
-                                            <t t-if="lot['date_potted']">
-                                                <t t-esc="lot['date_potted']" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
-                                            </t>
-                                        </td>
-                                        <td style="padding: 2px; border: 1px solid #ccc;">
-                                            <t t-if="lot['date_production_end']">
-                                                <t t-esc="lot['date_production_end']" t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
-                                            </t>
-                                        </td>
-                                        <td style="padding: 2px; border: 1px solid #ccc; text-align: right;">
-                                            <t t-esc="'{:,.0f}'.format(lot['quantity_kg'])"/>
-                                        </td>
-                                    </tr>
-                                </t>
-                            </tbody>
+                    </div>
+                    
+                    <!-- ============ TABLEAU DE BORD STATISTIQUES ============ -->
+                    <div style="margin-bottom: 15px;">
+                        <table style="width: 100%; border-collapse: separate; border-spacing: 8px 0;">
+                            <tr>
+                                <!-- Total OT -->
+                                <td style="width: 16%; text-align: center; background: linear-gradient(180deg, #1a5f2a, #27ae60); padding: 10px 5px; border-radius: 8px;">
+                                    <span style="color: #fff; font-size: 22px; font-weight: bold;">
+                                        <t t-esc="report_stats.get('total_ot', 0)"/>
+                                    </span><br/>
+                                    <span style="color: #e8f5e9; font-size: 9px; text-transform: uppercase;">Total OT</span>
+                                </td>
+                                
+                                <!-- Tonnage Total -->
+                                <td style="width: 18%; text-align: center; background: linear-gradient(180deg, #8B4513, #D2691E); padding: 10px 5px; border-radius: 8px;">
+                                    <span style="color: #fff; font-size: 18px; font-weight: bold;">
+                                        <t t-esc="'{:,.0f}'.format(report_stats.get('total_tonnage_kg', 0))"/>
+                                    </span><br/>
+                                    <span style="color: #ffe4c4; font-size: 9px; text-transform: uppercase;">Tonnage (Kg)</span>
+                                </td>
+                                
+                                <!-- Production moyenne -->
+                                <td style="width: 16%; text-align: center; background: linear-gradient(180deg, #2980b9, #3498db); padding: 10px 5px; border-radius: 8px;">
+                                    <span style="color: #fff; font-size: 18px; font-weight: bold;">
+                                        <t t-esc="'{:.1f}%'.format(report_stats.get('avg_progress', 0))"/>
+                                    </span><br/>
+                                    <span style="color: #e3f2fd; font-size: 9px; text-transform: uppercase;">Progression Moy.</span>
+                                </td>
+                                
+                                <!-- 100% TC (Vert) -->
+                                <td style="width: 16%; text-align: center; background-color: #e8f5e9; padding: 10px 5px; border-radius: 8px; border: 2px solid #27ae60;">
+                                    <span style="color: #27ae60; font-size: 18px; font-weight: bold;">
+                                        <t t-esc="report_stats.get('in_tc_count', 0)"/>
+                                    </span><br/>
+                                    <span style="color: #27ae60; font-size: 9px;">● 100% In TC</span>
+                                </td>
+                                
+                                <!-- 100% Prod (Jaune) -->
+                                <td style="width: 16%; text-align: center; background-color: #fff8e1; padding: 10px 5px; border-radius: 8px; border: 2px solid #f9a825;">
+                                    <span style="color: #f9a825; font-size: 18px; font-weight: bold;">
+                                        <t t-esc="report_stats.get('prod_100_count', 0)"/>
+                                    </span><br/>
+                                    <span style="color: #f9a825; font-size: 9px;">● 100% Production</span>
+                                </td>
+                                
+                                <!-- In Production (Rouge) -->
+                                <td style="width: 16%; text-align: center; background-color: #ffebee; padding: 10px 5px; border-radius: 8px; border: 2px solid #e53935;">
+                                    <span style="color: #e53935; font-size: 18px; font-weight: bold;">
+                                        <t t-esc="report_stats.get('in_prod_count', 0)"/>
+                                    </span><br/>
+                                    <span style="color: #e53935; font-size: 9px;">● En Production</span>
+                                </td>
+                            </tr>
                         </table>
                     </div>
-                </t>
-                
-                <!-- Pied de page avec date et numéro de page -->
-                <div class="row mt-4" style="font-size: 9px;">
-                    <div class="col-4">
-                        <t t-esc="doc.report_date" t-options='{"widget": "date", "format": "EEEE dd MMMM yyyy"}'/>
+                    
+                    <!-- ============ LÉGENDE ============ -->
+                    <div style="margin-bottom: 10px; padding: 6px 10px; background-color: #fafafa; border-radius: 5px; border: 1px solid #e0e0e0;">
+                        <table style="width: 100%; font-size: 8px;">
+                            <tr>
+                                <td style="width: 25%;">
+                                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #27ae60; border-radius: 50%; vertical-align: middle;"></span>
+                                    <span style="vertical-align: middle; margin-left: 4px;"><strong>100% In TC</strong> - Chargé en conteneur</span>
+                                </td>
+                                <td style="width: 25%;">
+                                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #f9a825; border-radius: 50%; vertical-align: middle;"></span>
+                                    <span style="vertical-align: middle; margin-left: 4px;"><strong>100% Production</strong> - Production terminée</span>
+                                </td>
+                                <td style="width: 25%;">
+                                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #e53935; border-radius: 50%; vertical-align: middle;"></span>
+                                    <span style="vertical-align: middle; margin-left: 4px;"><strong>En Production</strong> - Fabrication en cours</span>
+                                </td>
+                                <td style="width: 25%; text-align: right;">
+                                    <span style="color: #2980b9; font-weight: bold;">P</span> = Prix intermédiaire
+                                </td>
+                            </tr>
+                        </table>
                     </div>
-                    <div class="col-4 text-center">
-                        <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%H:%M')"/>
-                    </div>
-                    <div class="col-4 text-end">
-                        Page <span class="page"/> sur <span class="topage"/>
+                    
+                    <!-- ============ CONTENU DU RAPPORT - BOUCLE SUR CHAQUE OT ============ -->
+                    <t t-set="lot_counter" t-value="0"/>
+                    <t t-foreach="ot_data_list" t-as="ot">
+                        <t t-set="border_color" t-value="'#27ae60' if ot['color_status'] == 'green' else ('#f9a825' if ot['color_status'] == 'yellow' else '#e53935')"/>
+                        <t t-set="bg_color" t-value="'#e8f5e9' if ot['color_status'] == 'green' else ('#fff8e1' if ot['color_status'] == 'yellow' else '#ffebee')"/>
+                        
+                        <!-- Bloc OT -->
+                        <div t-attf-style="border: 2px solid #{border_color}; border-radius: 6px; margin-bottom: 8px; overflow: hidden;">
+                            
+                            <!-- En-tête OT avec gradient -->
+                            <div t-attf-style="background: linear-gradient(90deg, #{border_color}, #{border_color}dd); padding: 6px 10px;">
+                                <table style="width: 100%; color: #fff;">
+                                    <tr>
+                                        <td style="width: 12%;">
+                                            <span style="font-size: 12px; font-weight: bold;">
+                                                OT N° <t t-esc="ot['ot_number']"/>
+                                            </span>
+                                        </td>
+                                        <td style="width: 28%;">
+                                            <span style="font-size: 10px; font-weight: bold;">
+                                                <t t-esc="ot['customer_name']"/>
+                                            </span>
+                                            <t t-if="ot['consignee_name']">
+                                                <span style="font-size: 9px;"> / <t t-esc="ot['consignee_name']"/></span>
+                                            </t>
+                                        </td>
+                                        <td style="width: 25%;">
+                                            <span style="font-size: 11px; font-weight: bold;">
+                                                <t t-esc="'{:,.0f}'.format(ot['total_kg'])"/> Kg
+                                            </span>
+                                            <span style="font-size: 9px; margin-left: 8px;">
+                                                (<t t-esc="'{:,}'.format(ot['total_units'])"/> <t t-esc="ot['unit_name']"/>
+                                                <t t-if="ot['certification']"> - <t t-esc="ot['certification']"/></t>)
+                                            </span>
+                                        </td>
+                                        <td style="width: 35%; text-align: right;">
+                                            <span style="font-size: 9px;">Production:</span>
+                                            <span style="font-size: 12px; font-weight: bold; margin-left: 5px;">
+                                                <t t-esc="'{:.1f}%'.format(ot['progress'])"/>
+                                            </span>
+                                            <span style="font-size: 9px; margin-left: 8px;">
+                                                soit <strong><t t-esc="'{:,.0f}'.format(ot['current_kg'])"/> Kg</strong>
+                                            </span>
+                                            <!-- Indicateur livraison partielle -->
+                                            <t t-if="ot['is_partial_delivery']">
+                                                <span style="background-color: #ff9800; color: #fff; padding: 1px 6px; border-radius: 3px; font-size: 8px; margin-left: 8px;">
+                                                    🚚 Livraison partielle
+                                                </span>
+                                            </t>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <!-- Mini barre de progression -->
+                            <div style="height: 4px; background-color: #e0e0e0;">
+                                <div t-attf-style="height: 100%; width: #{min(ot['progress'], 100)}%; background-color: #{border_color};"></div>
+                            </div>
+                            
+                            <!-- Tableau des lots -->
+                            <table style="width: 100%; font-size: 8px; border-collapse: collapse;">
+                                <thead>
+                                    <tr t-attf-style="background-color: #{bg_color}; font-weight: bold;">
+                                        <th style="width: 2.5%; padding: 4px 2px; border: 1px solid #ddd; text-align: center;">N°</th>
+                                        <th style="width: 3%; padding: 4px 2px; border: 1px solid #ddd; text-align: center;">Lot</th>
+                                        <th style="width: 6%; padding: 4px 2px; border: 1px solid #ddd;">N° Lot</th>
+                                        <th style="width: 7%; padding: 4px 2px; border: 1px solid #ddd;">Contrat</th>
+                                        <th style="width: 6%; padding: 4px 2px; border: 1px solid #ddd;">N° BL</th>
+                                        <th style="width: 6%; padding: 4px 2px; border: 1px solid #ddd;">Date BL</th>
+                                        <th style="width: 9%; padding: 4px 2px; border: 1px solid #ddd;">N° Conteneur</th>
+                                        <th style="width: 8%; padding: 4px 2px; border: 1px solid #ddd;">Navire</th>
+                                        <th style="width: 7%; padding: 4px 2px; border: 1px solid #ddd;">Booking</th>
+                                        <th style="width: 6%; padding: 4px 2px; border: 1px solid #ddd;">ETA</th>
+                                        <th style="width: 6%; padding: 4px 2px; border: 1px solid #ddd;">ETD</th>
+                                        <th style="width: 6%; padding: 4px 2px; border: 1px solid #ddd;">Compagnie</th>
+                                        <th style="width: 7%; padding: 4px 2px; border: 1px solid #ddd;">Destination</th>
+                                        <th style="width: 6%; padding: 4px 2px; border: 1px solid #ddd;">Empotage</th>
+                                        <th style="width: 6%; padding: 4px 2px; border: 1px solid #ddd;">Fin Prod.</th>
+                                        <th style="width: 7%; padding: 4px 2px; border: 1px solid #ddd; text-align: right;">Qté (Kg)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="ot['lots']" t-as="lot">
+                                        <t t-set="lot_counter" t-value="lot_counter + 1"/>
+                                        <tr t-attf-style="background-color: #{lot_index % 2 == 0 and '#fff' or '#fafafa'};">
+                                            <td style="padding: 3px 2px; border: 1px solid #eee; text-align: center; color: #666;">
+                                                <t t-esc="lot_counter"/>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee; text-align: center; font-weight: bold;">
+                                                <t t-esc="lot_index + 1"/>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-esc="lot['name']"/>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-esc="lot['contract_number']"/>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-esc="lot['bl_number']"/>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-if="lot['bl_date']">
+                                                    <t t-esc="lot['bl_date']" t-options='{"widget": "date", "format": "dd/MM/yy"}'/>
+                                                </t>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee; font-weight: 500;">
+                                                <t t-esc="lot['container_number']"/>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-esc="lot['vessel_name']"/>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-esc="lot['booking_number']"/>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-if="lot['eta']">
+                                                    <t t-esc="lot['eta']" t-options='{"widget": "date", "format": "dd/MM/yy"}'/>
+                                                </t>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-if="lot['etd']">
+                                                    <t t-esc="lot['etd']" t-options='{"widget": "date", "format": "dd/MM/yy"}'/>
+                                                </t>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-esc="lot['shipping_line']"/>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-esc="lot['destination']"/>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-if="lot['date_potted']">
+                                                    <t t-esc="lot['date_potted']" t-options='{"widget": "date", "format": "dd/MM/yy"}'/>
+                                                </t>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee;">
+                                                <t t-if="lot['date_production_end']">
+                                                    <t t-esc="lot['date_production_end']" t-options='{"widget": "date", "format": "dd/MM/yy"}'/>
+                                                </t>
+                                            </td>
+                                            <td style="padding: 3px 2px; border: 1px solid #eee; text-align: right; font-weight: bold;">
+                                                <t t-esc="'{:,.0f}'.format(lot['quantity_kg'])"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+                    
+                    <!-- ============ PIED DE PAGE ============ -->
+                    <div style="margin-top: 15px; padding-top: 10px; border-top: 2px solid #1a5f2a;">
+                        <table style="width: 100%; font-size: 9px; color: #666;">
+                            <tr>
+                                <td style="width: 40%;">
+                                    <strong style="color: #1a5f2a;">IVORY COCOA PRODUCTS</strong><br/>
+                                    <span style="font-size: 8px;">
+                                        Rapport généré le <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y à %H:%M')"/>
+                                    </span>
+                                </td>
+                                <td style="width: 30%; text-align: center;">
+                                    <span style="font-size: 8px;">
+                                        Total: <strong><t t-esc="report_stats.get('total_ot', 0)"/></strong> OT |
+                                        <strong><t t-esc="'{:,.0f}'.format(report_stats.get('total_tonnage_kg', 0))"/></strong> Kg
+                                    </span>
+                                </td>
+                                <td style="width: 30%; text-align: right;">
+                                    <span style="font-size: 10px;">
+                                        Page <span class="page"/> / <span class="topage"/>
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
-            </div>
-        </t>
+            </t>
         </t><!-- Ferme web.external_layout -->
     </template>
 

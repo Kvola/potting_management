@@ -103,6 +103,13 @@
                             <field name="company_id" invisible="1"/>
                             <field name="is_created_from_order" invisible="1"/>
                             <field name="customer_order_id" options="{'no_create': True}" readonly="is_created_from_order or state != 'draft'"/>
+                            <field name="formule_id" 
+                                   options="{'no_create': True}"
+                                   readonly="state != 'draft'"
+                                   required="1"
+                                   context="{'default_confirmation_vente_id': confirmation_vente_id}"/>
+                            <field name="formule_reference" readonly="1" invisible="not formule_id"/>
+                            <field name="confirmation_vente_id" readonly="1" invisible="not formule_id"/>
                             <field name="campaign_id" 
                                    options="{'no_create': True}"
                                    domain="[('state', 'in', ['draft', 'active'])]"
@@ -118,6 +125,9 @@
                             <field name="product_type" widget="radio" options="{'horizontal': True}"/>
                             <field name="product_id" domain="[('potting_product_type', '=', product_type)]" options="{'no_create': True}"/>
                             <field name="tonnage" widget="float" class="fw-bold text-primary"/>
+                            <field name="formule_prix_tonnage" readonly="1" invisible="not formule_id"
+                                   string="Prix FO (FCFA/T)"/>
+                            <field name="formule_currency_id" invisible="1"/>
                         </group>
                     </group>
                     <group>

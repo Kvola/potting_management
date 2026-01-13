@@ -37,5 +37,27 @@
             <field name="padding">5</field>
             <field name="company_id" eval="False"/>
         </record>
+        
+        <!-- ================================================================
+             CONFIRMATION DE VENTE (CV) - SÉQUENCE
+             ================================================================ -->
+        <record id="seq_potting_confirmation_vente" model="ir.sequence">
+            <field name="name">Confirmation de Vente</field>
+            <field name="code">potting.confirmation.vente</field>
+            <field name="prefix">CV/%(year)s/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+        
+        <!-- ================================================================
+             FORMULE (FO) - SÉQUENCE
+             ================================================================ -->
+        <record id="seq_potting_formule" model="ir.sequence">
+            <field name="name">Formule</field>
+            <field name="code">potting.formule</field>
+            <field name="prefix">FO/%(year)s/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
     </data>
 </odoo>
