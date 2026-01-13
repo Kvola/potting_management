@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-        <!-- Demo Partners/Customers -->
+        
+        <!-- ================================================================
+             PARTENAIRES DE DÉMONSTRATION
+             ================================================================ -->
+        
+        <!-- Clients internationaux -->
         <record id="partner_barry_brasil" model="res.partner">
             <field name="name">Barry Brasil</field>
             <field name="is_company">True</field>
             <field name="country_id" ref="base.br"/>
             <field name="city">Salvador</field>
+            <field name="is_potting_consignee">True</field>
+            <field name="potting_consignee_code">BR-SAL</field>
         </record>
 
         <record id="partner_barry_usa" model="res.partner">
@@ -14,6 +21,8 @@
             <field name="is_company">True</field>
             <field name="country_id" ref="base.us"/>
             <field name="city">Philadelphia</field>
+            <field name="is_potting_consignee">True</field>
+            <field name="potting_consignee_code">US-PHI</field>
         </record>
 
         <record id="partner_barry_asia" model="res.partner">
@@ -21,116 +30,524 @@
             <field name="is_company">True</field>
             <field name="country_id" ref="base.my"/>
             <field name="city">Pasir Gudang</field>
+            <field name="is_potting_consignee">True</field>
+            <field name="potting_consignee_code">MY-PGU</field>
+        </record>
+
+        <record id="partner_barry_europe" model="res.partner">
+            <field name="name">Barry Europe</field>
+            <field name="is_company">True</field>
+            <field name="country_id" ref="base.nl"/>
+            <field name="city">Rotterdam</field>
+            <field name="is_potting_consignee">True</field>
+            <field name="potting_consignee_code">NL-RTM</field>
         </record>
 
         <record id="partner_main_customer" model="res.partner">
             <field name="name">Barry Callebaut</field>
             <field name="is_company">True</field>
             <field name="country_id" ref="base.ch"/>
+            <field name="city">Zurich</field>
+            <field name="street">Pfingstweidstrasse 60</field>
+            <field name="phone">+41 43 204 04 04</field>
+            <field name="email">info@barry-callebaut.com</field>
+            <field name="website">https://www.barry-callebaut.com</field>
         </record>
 
-        <!-- Demo Vessels -->
+        <!-- Transitaires partenaires -->
+        <record id="partner_transitaire_1" model="res.partner">
+            <field name="name">GETMA Côte d'Ivoire</field>
+            <field name="is_company">True</field>
+            <field name="country_id" ref="base.ci"/>
+            <field name="city">Abidjan</field>
+            <field name="street">Zone Portuaire, Vridi</field>
+            <field name="phone">+225 27 21 21 50 00</field>
+            <field name="email">contact@getma.ci</field>
+        </record>
+
+        <record id="partner_transitaire_2" model="res.partner">
+            <field name="name">SDV Côte d'Ivoire (Bolloré)</field>
+            <field name="is_company">True</field>
+            <field name="country_id" ref="base.ci"/>
+            <field name="city">Abidjan</field>
+            <field name="street">Boulevard de Vridi</field>
+            <field name="phone">+225 27 21 23 80 00</field>
+            <field name="email">sdv@bollore.ci</field>
+        </record>
+
+        <record id="partner_transitaire_3" model="res.partner">
+            <field name="name">SAGA Côte d'Ivoire</field>
+            <field name="is_company">True</field>
+            <field name="country_id" ref="base.ci"/>
+            <field name="city">Abidjan</field>
+            <field name="street">Zone Portuaire</field>
+            <field name="phone">+225 27 21 21 60 00</field>
+        </record>
+
+        <!-- ================================================================
+             TRANSITAIRES (FORWARDING AGENTS)
+             ================================================================ -->
+        
+        <record id="forwarding_agent_getma" model="potting.forwarding.agent">
+            <field name="partner_id" ref="partner_transitaire_1"/>
+            <field name="code">GETMA</field>
+        </record>
+
+        <record id="forwarding_agent_sdv" model="potting.forwarding.agent">
+            <field name="partner_id" ref="partner_transitaire_2"/>
+            <field name="code">SDV</field>
+        </record>
+
+        <record id="forwarding_agent_saga" model="potting.forwarding.agent">
+            <field name="partner_id" ref="partner_transitaire_3"/>
+            <field name="code">SAGA</field>
+        </record>
+
+        <!-- ================================================================
+             CAMPAGNES CAFÉ-CACAO
+             ================================================================ -->
+        
+        <!-- Campagne 2024-2025 (en cours) -->
+        <record id="campaign_2024_2025" model="potting.campaign">
+            <field name="date_start">2024-10-01</field>
+            <field name="date_end">2025-09-30</field>
+            <field name="prix_indicatif">1200000</field>
+            <field name="state">active</field>
+        </record>
+
+        <!-- Campagne 2025-2026 (future) -->
+        <record id="campaign_2025_2026" model="potting.campaign">
+            <field name="date_start">2025-10-01</field>
+            <field name="date_end">2026-09-30</field>
+            <field name="prix_indicatif">1250000</field>
+            <field name="state">active</field>
+        </record>
+
+        <!-- ================================================================
+             CONFIRMATIONS DE VENTE (CV)
+             ================================================================ -->
+        
+        <!-- CV 1 - Cake de cacao vers Brésil - Active -->
+        <record id="cv_demo_1" model="potting.confirmation.vente">
+            <field name="name">CV/2025/00001</field>
+            <field name="reference_ccc">327-21553</field>
+            <field name="campaign_id" ref="campaign_2025_2026"/>
+            <field name="date_emission">2025-01-15</field>
+            <field name="date_start">2025-01-15</field>
+            <field name="date_end">2025-06-30</field>
+            <field name="product_type">cocoa_cake</field>
+            <field name="tonnage_autorise">500</field>
+            <field name="prix_tonnage">1200000</field>
+            <field name="destination_country_id" ref="base.br"/>
+            <field name="destination_port">Salvador</field>
+            <field name="state">active</field>
+        </record>
+
+        <!-- CV 2 - Beurre de cacao vers USA - Active -->
+        <record id="cv_demo_2" model="potting.confirmation.vente">
+            <field name="name">CV/2025/00002</field>
+            <field name="reference_ccc">327-21554</field>
+            <field name="campaign_id" ref="campaign_2025_2026"/>
+            <field name="date_emission">2025-01-20</field>
+            <field name="date_start">2025-01-20</field>
+            <field name="date_end">2025-07-31</field>
+            <field name="product_type">cocoa_butter</field>
+            <field name="tonnage_autorise">300</field>
+            <field name="prix_tonnage">5500000</field>
+            <field name="destination_country_id" ref="base.us"/>
+            <field name="destination_port">Philadelphia</field>
+            <field name="state">active</field>
+        </record>
+
+        <!-- CV 3 - Masse de cacao vers Europe - Active -->
+        <record id="cv_demo_3" model="potting.confirmation.vente">
+            <field name="name">CV/2025/00003</field>
+            <field name="reference_ccc">327-21555</field>
+            <field name="campaign_id" ref="campaign_2025_2026"/>
+            <field name="date_emission">2025-02-01</field>
+            <field name="date_start">2025-02-01</field>
+            <field name="date_end">2025-08-31</field>
+            <field name="product_type">cocoa_mass</field>
+            <field name="tonnage_autorise">400</field>
+            <field name="prix_tonnage">3200000</field>
+            <field name="destination_country_id" ref="base.nl"/>
+            <field name="destination_port">Rotterdam</field>
+            <field name="state">active</field>
+        </record>
+
+        <!-- CV 4 - Poudre de cacao vers Asie - Active -->
+        <record id="cv_demo_4" model="potting.confirmation.vente">
+            <field name="name">CV/2025/00004</field>
+            <field name="reference_ccc">327-21556</field>
+            <field name="campaign_id" ref="campaign_2025_2026"/>
+            <field name="date_emission">2025-02-15</field>
+            <field name="date_start">2025-02-15</field>
+            <field name="date_end">2025-09-30</field>
+            <field name="product_type">cocoa_powder</field>
+            <field name="tonnage_autorise">250</field>
+            <field name="prix_tonnage">2800000</field>
+            <field name="destination_country_id" ref="base.my"/>
+            <field name="destination_port">Pasir Gudang</field>
+            <field name="state">active</field>
+        </record>
+
+        <!-- CV 5 - Cake de cacao (presque expirée - pour test alert) -->
+        <record id="cv_demo_5" model="potting.confirmation.vente">
+            <field name="name">CV/2025/00005</field>
+            <field name="reference_ccc">327-21557</field>
+            <field name="campaign_id" ref="campaign_2025_2026"/>
+            <field name="date_emission">2025-01-01</field>
+            <field name="date_start">2025-01-01</field>
+            <field name="date_end" eval="(datetime.now() + relativedelta(days=15)).strftime('%Y-%m-%d')"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="tonnage_autorise">100</field>
+            <field name="prix_tonnage">1180000</field>
+            <field name="destination_country_id" ref="base.us"/>
+            <field name="destination_port">New York</field>
+            <field name="state">active</field>
+        </record>
+
+        <!-- ================================================================
+             FORMULES (FO)
+             ================================================================ -->
+        
+        <!-- FO 1 - Liée à CV1 - Validée, paiement partiel -->
+        <record id="formule_demo_1" model="potting.formule">
+            <field name="name">FO/2025/00001</field>
+            <field name="reference_ccc">FO1/F025/327/0020/0084/0084</field>
+            <field name="numero_fo1">25-3276</field>
+            <field name="date_fo1">2025-01-20</field>
+            <field name="confirmation_vente_id" ref="cv_demo_1"/>
+            <field name="date_emission">2025-01-20</field>
+            <field name="product_type">cocoa_cake</field>
+            <field name="grade">GF</field>
+            <field name="nomenclature_douaniere">1802 00 00 00</field>
+            <field name="tonnage">60</field>
+            <field name="prix_tonnage">1200000</field>
+            <field name="prix_reference">1180000</field>
+            <field name="coefficient_conversion">1.0</field>
+            <field name="pourcentage_avant_vente">60</field>
+            <field name="forwarding_agent_id" ref="forwarding_agent_getma"/>
+            <field name="navire">MAERSK SEALAND</field>
+            <field name="port_embarquement">Abidjan</field>
+            <field name="port_destination">Salvador</field>
+            <field name="numero_contrat">EIFC-TC012/25</field>
+            <field name="date_contrat">2025-01-18</field>
+            <field name="state">partial_paid</field>
+        </record>
+
+        <!-- FO 2 - Liée à CV1 - Validée, en attente de paiement -->
+        <record id="formule_demo_2" model="potting.formule">
+            <field name="name">FO/2025/00002</field>
+            <field name="reference_ccc">FO1/F025/327/0021/0085/0085</field>
+            <field name="numero_fo1">25-3277</field>
+            <field name="date_fo1">2025-01-22</field>
+            <field name="confirmation_vente_id" ref="cv_demo_1"/>
+            <field name="date_emission">2025-01-22</field>
+            <field name="product_type">cocoa_cake</field>
+            <field name="grade">GF</field>
+            <field name="nomenclature_douaniere">1802 00 00 00</field>
+            <field name="tonnage">80</field>
+            <field name="prix_tonnage">1200000</field>
+            <field name="prix_reference">1180000</field>
+            <field name="coefficient_conversion">1.0</field>
+            <field name="pourcentage_avant_vente">60</field>
+            <field name="forwarding_agent_id" ref="forwarding_agent_sdv"/>
+            <field name="navire">CMA CGM ANTOINE</field>
+            <field name="port_embarquement">Abidjan</field>
+            <field name="port_destination">Salvador</field>
+            <field name="numero_contrat">EIFC-TC013/25</field>
+            <field name="date_contrat">2025-01-20</field>
+            <field name="state">validated</field>
+        </record>
+
+        <!-- FO 3 - Liée à CV2 (Beurre) - Validée -->
+        <record id="formule_demo_3" model="potting.formule">
+            <field name="name">FO/2025/00003</field>
+            <field name="reference_ccc">FO1/F025/327/0022/0086/0086</field>
+            <field name="numero_fo1">25-3278</field>
+            <field name="date_fo1">2025-01-25</field>
+            <field name="confirmation_vente_id" ref="cv_demo_2"/>
+            <field name="date_emission">2025-01-25</field>
+            <field name="product_type">cocoa_butter</field>
+            <field name="grade">GF</field>
+            <field name="nomenclature_douaniere">1804 00 00 00</field>
+            <field name="tonnage">100</field>
+            <field name="prix_tonnage">5500000</field>
+            <field name="prix_reference">5450000</field>
+            <field name="coefficient_conversion">1.0</field>
+            <field name="pourcentage_avant_vente">60</field>
+            <field name="forwarding_agent_id" ref="forwarding_agent_getma"/>
+            <field name="navire">MSC GENEVA</field>
+            <field name="port_embarquement">Abidjan</field>
+            <field name="port_destination">Philadelphia</field>
+            <field name="numero_contrat">EIFC-BU001/25</field>
+            <field name="date_contrat">2025-01-23</field>
+            <field name="state">validated</field>
+        </record>
+
+        <!-- FO 4 - Liée à CV3 (Masse) - Brouillon -->
+        <record id="formule_demo_4" model="potting.formule">
+            <field name="name">FO/2025/00004</field>
+            <field name="confirmation_vente_id" ref="cv_demo_3"/>
+            <field name="date_emission">2025-02-05</field>
+            <field name="product_type">cocoa_mass</field>
+            <field name="grade">GF</field>
+            <field name="nomenclature_douaniere">1803 10 00 00</field>
+            <field name="tonnage">150</field>
+            <field name="prix_tonnage">3200000</field>
+            <field name="prix_reference">3150000</field>
+            <field name="coefficient_conversion">1.0</field>
+            <field name="pourcentage_avant_vente">60</field>
+            <field name="forwarding_agent_id" ref="forwarding_agent_saga"/>
+            <field name="navire">HAPAG LLOYD EXPRESS</field>
+            <field name="port_embarquement">Abidjan</field>
+            <field name="port_destination">Rotterdam</field>
+            <field name="state">draft</field>
+        </record>
+
+        <!-- FO 5 - Liée à CV4 (Poudre) - Validée -->
+        <record id="formule_demo_5" model="potting.formule">
+            <field name="name">FO/2025/00005</field>
+            <field name="reference_ccc">FO1/F025/327/0025/0089/0089</field>
+            <field name="numero_fo1">25-3281</field>
+            <field name="date_fo1">2025-02-18</field>
+            <field name="confirmation_vente_id" ref="cv_demo_4"/>
+            <field name="date_emission">2025-02-18</field>
+            <field name="product_type">cocoa_powder</field>
+            <field name="grade">F</field>
+            <field name="nomenclature_douaniere">1805 00 00 00</field>
+            <field name="tonnage">50</field>
+            <field name="prix_tonnage">2800000</field>
+            <field name="prix_reference">2750000</field>
+            <field name="coefficient_conversion">1.0</field>
+            <field name="pourcentage_avant_vente">60</field>
+            <field name="forwarding_agent_id" ref="forwarding_agent_sdv"/>
+            <field name="navire">EVERGREEN MARINE</field>
+            <field name="port_embarquement">Abidjan</field>
+            <field name="port_destination">Pasir Gudang</field>
+            <field name="numero_contrat">EIFC-PW001/25</field>
+            <field name="date_contrat">2025-02-16</field>
+            <field name="state">validated</field>
+        </record>
+
+        <!-- FO 6 - Entièrement payée -->
+        <record id="formule_demo_6" model="potting.formule">
+            <field name="name">FO/2025/00006</field>
+            <field name="reference_ccc">FO1/F025/327/0026/0090/0090</field>
+            <field name="numero_fo1">25-3282</field>
+            <field name="date_fo1">2025-01-10</field>
+            <field name="confirmation_vente_id" ref="cv_demo_1"/>
+            <field name="date_emission">2025-01-10</field>
+            <field name="product_type">cocoa_cake</field>
+            <field name="grade">GF</field>
+            <field name="nomenclature_douaniere">1802 00 00 00</field>
+            <field name="tonnage">40</field>
+            <field name="prix_tonnage">1200000</field>
+            <field name="prix_reference">1180000</field>
+            <field name="coefficient_conversion">1.0</field>
+            <field name="pourcentage_avant_vente">60</field>
+            <field name="forwarding_agent_id" ref="forwarding_agent_getma"/>
+            <field name="navire">MAERSK TOKYO</field>
+            <field name="port_embarquement">Abidjan</field>
+            <field name="port_destination">Salvador</field>
+            <field name="numero_contrat">EIFC-TC010/25</field>
+            <field name="date_contrat">2025-01-08</field>
+            <field name="state">paid</field>
+        </record>
+
+        <!-- ================================================================
+             NAVIRES DE DÉMONSTRATION
+             ================================================================ -->
+        
         <record id="vessel_maersk" model="potting.vessel">
-            <field name="name">MAERSK</field>
+            <field name="name">MAERSK SEALAND</field>
             <field name="code">MSK</field>
             <field name="shipping_company">Maersk Line</field>
         </record>
 
         <record id="vessel_cma" model="potting.vessel">
-            <field name="name">CMA CGM</field>
+            <field name="name">CMA CGM ANTOINE</field>
             <field name="code">CMA</field>
             <field name="shipping_company">CMA CGM</field>
         </record>
 
-        <!-- Demo Customer Order -->
+        <record id="vessel_msc" model="potting.vessel">
+            <field name="name">MSC GENEVA</field>
+            <field name="code">MSC</field>
+            <field name="shipping_company">Mediterranean Shipping Company</field>
+        </record>
+
+        <record id="vessel_hapag" model="potting.vessel">
+            <field name="name">HAPAG LLOYD EXPRESS</field>
+            <field name="code">HPL</field>
+            <field name="shipping_company">Hapag-Lloyd</field>
+        </record>
+
+        <!-- ================================================================
+             CONTRATS CLIENTS (CUSTOMER ORDERS)
+             ================================================================ -->
+        
+        <!-- Contrat 1 - Cake vers Brésil -->
         <record id="customer_order_demo_1" model="potting.customer.order">
-            <field name="name">CMD/2024/00001</field>
+            <field name="name">CMD/2025/00001</field>
+            <field name="contract_number">CTR-2025-001</field>
             <field name="customer_id" ref="partner_main_customer"/>
-            <field name="date_order" eval="time.strftime('%Y-%m-01')"/>
-            <field name="date_expected" eval="(datetime.now() + relativedelta(months=1)).strftime('%Y-%m-%d')"/>
+            <field name="confirmation_vente_id" ref="cv_demo_1"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="contract_tonnage">200</field>
+            <field name="unit_price">1250000</field>
+            <field name="date_order">2025-01-20</field>
+            <field name="date_expected">2025-03-15</field>
             <field name="state">in_progress</field>
         </record>
 
-        <!-- Demo Transit Orders based on the provided table -->
+        <!-- Contrat 2 - Beurre vers USA -->
+        <record id="customer_order_demo_2" model="potting.customer.order">
+            <field name="name">CMD/2025/00002</field>
+            <field name="contract_number">CTR-2025-002</field>
+            <field name="customer_id" ref="partner_main_customer"/>
+            <field name="confirmation_vente_id" ref="cv_demo_2"/>
+            <field name="product_type">cocoa_butter</field>
+            <field name="contract_tonnage">100</field>
+            <field name="unit_price">5600000</field>
+            <field name="date_order">2025-01-25</field>
+            <field name="date_expected">2025-04-01</field>
+            <field name="state">in_progress</field>
+        </record>
+
+        <!-- Contrat 3 - Masse vers Europe -->
+        <record id="customer_order_demo_3" model="potting.customer.order">
+            <field name="name">CMD/2025/00003</field>
+            <field name="contract_number">CTR-2025-003</field>
+            <field name="customer_id" ref="partner_main_customer"/>
+            <field name="confirmation_vente_id" ref="cv_demo_3"/>
+            <field name="product_type">cocoa_mass</field>
+            <field name="contract_tonnage">150</field>
+            <field name="unit_price">3300000</field>
+            <field name="date_order">2025-02-05</field>
+            <field name="date_expected">2025-04-15</field>
+            <field name="state">draft</field>
+        </record>
+
+        <!-- Contrat 4 - Poudre vers Asie -->
+        <record id="customer_order_demo_4" model="potting.customer.order">
+            <field name="name">CMD/2025/00004</field>
+            <field name="contract_number">CTR-2025-004</field>
+            <field name="customer_id" ref="partner_main_customer"/>
+            <field name="confirmation_vente_id" ref="cv_demo_4"/>
+            <field name="product_type">cocoa_powder</field>
+            <field name="contract_tonnage">50</field>
+            <field name="unit_price">2900000</field>
+            <field name="date_order">2025-02-18</field>
+            <field name="date_expected">2025-05-01</field>
+            <field name="state">in_progress</field>
+        </record>
+
+        <!-- ================================================================
+             ORDRES DE TRANSIT (OT)
+             ================================================================ -->
+        
+        <!-- OT 1 - Cake vers Brésil - En production -->
         <record id="transit_order_ot3708" model="potting.transit.order">
-            <field name="name">OT3708</field>
+            <field name="name">OT/2025/00001</field>
+            <field name="ot_reference">OT3708</field>
             <field name="customer_order_id" ref="customer_order_demo_1"/>
+            <field name="formule_id" ref="formule_demo_1"/>
             <field name="consignee_id" ref="partner_barry_brasil"/>
+            <field name="forwarding_agent_id" ref="forwarding_agent_getma"/>
             <field name="product_type">cocoa_cake</field>
             <field name="product_id" ref="product_cocoa_cake_fine"/>
             <field name="tonnage">60</field>
-            <field name="vessel_name">MAERSK</field>
+            <field name="vessel_name">MAERSK SEALAND</field>
+            <field name="booking_number">BK2025001</field>
             <field name="pod">Salvador</field>
+            <field name="pol">Abidjan</field>
             <field name="container_size">20</field>
             <field name="state">in_progress</field>
         </record>
 
+        <!-- OT 2 - Cake vers USA - Lots générés -->
         <record id="transit_order_ot3709" model="potting.transit.order">
-            <field name="name">OT3709</field>
+            <field name="name">OT/2025/00002</field>
+            <field name="ot_reference">OT3709</field>
             <field name="customer_order_id" ref="customer_order_demo_1"/>
+            <field name="formule_id" ref="formule_demo_2"/>
             <field name="consignee_id" ref="partner_barry_usa"/>
+            <field name="forwarding_agent_id" ref="forwarding_agent_sdv"/>
             <field name="product_type">cocoa_cake</field>
             <field name="product_id" ref="product_cocoa_cake_fine"/>
-            <field name="tonnage">200</field>
-            <field name="vessel_name">CMA CGM</field>
+            <field name="tonnage">80</field>
+            <field name="vessel_name">CMA CGM ANTOINE</field>
+            <field name="booking_number">BK2025002</field>
             <field name="pod">Philadelphia</field>
+            <field name="pol">Abidjan</field>
             <field name="container_size">20</field>
             <field name="state">lots_generated</field>
         </record>
 
+        <!-- OT 3 - Beurre vers USA -->
         <record id="transit_order_ot3710" model="potting.transit.order">
-            <field name="name">OT3710</field>
-            <field name="customer_order_id" ref="customer_order_demo_1"/>
-            <field name="consignee_id" ref="partner_barry_brasil"/>
-            <field name="product_type">cocoa_cake</field>
-            <field name="product_id" ref="product_cocoa_cake_fine"/>
-            <field name="tonnage">60</field>
-            <field name="vessel_name">CMA CGM</field>
-            <field name="pod">Salvador</field>
+            <field name="name">OT/2025/00003</field>
+            <field name="ot_reference">OT3710</field>
+            <field name="customer_order_id" ref="customer_order_demo_2"/>
+            <field name="formule_id" ref="formule_demo_3"/>
+            <field name="consignee_id" ref="partner_barry_usa"/>
+            <field name="forwarding_agent_id" ref="forwarding_agent_getma"/>
+            <field name="product_type">cocoa_butter</field>
+            <field name="product_id" ref="product_cocoa_butter"/>
+            <field name="tonnage">100</field>
+            <field name="vessel_name">MSC GENEVA</field>
+            <field name="booking_number">BK2025003</field>
+            <field name="pod">Philadelphia</field>
+            <field name="pol">Abidjan</field>
             <field name="container_size">20</field>
             <field name="state">lots_generated</field>
         </record>
 
+        <!-- OT 4 - Poudre vers Asie -->
         <record id="transit_order_ot3711" model="potting.transit.order">
-            <field name="name">OT3711</field>
-            <field name="customer_order_id" ref="customer_order_demo_1"/>
-            <field name="consignee_id" ref="partner_barry_brasil"/>
-            <field name="product_type">cocoa_cake</field>
-            <field name="product_id" ref="product_cocoa_cake_fine"/>
-            <field name="tonnage">60</field>
-            <field name="vessel_name">MAERSK</field>
-            <field name="pod">Salvador</field>
-            <field name="container_size">20</field>
-            <field name="state">draft</field>
-        </record>
-
-        <record id="transit_order_ot3712" model="potting.transit.order">
-            <field name="name">OT3712</field>
-            <field name="customer_order_id" ref="customer_order_demo_1"/>
-            <field name="consignee_id" ref="partner_barry_usa"/>
-            <field name="product_type">cocoa_cake</field>
-            <field name="product_id" ref="product_cocoa_cake_fine"/>
-            <field name="tonnage">200</field>
-            <field name="vessel_name">CMA CGM</field>
-            <field name="pod">Philadelphia</field>
-            <field name="container_size">20</field>
-            <field name="state">draft</field>
-        </record>
-
-        <record id="transit_order_ot3714" model="potting.transit.order">
-            <field name="name">OT3714</field>
-            <field name="customer_order_id" ref="customer_order_demo_1"/>
+            <field name="name">OT/2025/00004</field>
+            <field name="ot_reference">OT3711</field>
+            <field name="customer_order_id" ref="customer_order_demo_4"/>
+            <field name="formule_id" ref="formule_demo_5"/>
             <field name="consignee_id" ref="partner_barry_asia"/>
-            <field name="product_type">cocoa_cake</field>
-            <field name="product_id" ref="product_cocoa_cake"/>
-            <field name="tonnage">200</field>
-            <field name="vessel_name">MAERSK</field>
+            <field name="forwarding_agent_id" ref="forwarding_agent_sdv"/>
+            <field name="product_type">cocoa_powder</field>
+            <field name="product_id" ref="product_cocoa_powder"/>
+            <field name="tonnage">50</field>
+            <field name="vessel_name">EVERGREEN MARINE</field>
+            <field name="booking_number">BK2025004</field>
             <field name="pod">Pasir Gudang</field>
+            <field name="pol">Abidjan</field>
             <field name="container_size">20</field>
             <field name="state">draft</field>
         </record>
 
-        <!-- Demo Lots for OT3708 -->
+        <!-- OT 5 - Cake terminé -->
+        <record id="transit_order_ot3712" model="potting.transit.order">
+            <field name="name">OT/2025/00005</field>
+            <field name="ot_reference">OT3712</field>
+            <field name="customer_order_id" ref="customer_order_demo_1"/>
+            <field name="formule_id" ref="formule_demo_6"/>
+            <field name="consignee_id" ref="partner_barry_brasil"/>
+            <field name="forwarding_agent_id" ref="forwarding_agent_getma"/>
+            <field name="product_type">cocoa_cake</field>
+            <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="tonnage">40</field>
+            <field name="vessel_name">MAERSK TOKYO</field>
+            <field name="booking_number">BK2025005</field>
+            <field name="pod">Salvador</field>
+            <field name="pol">Abidjan</field>
+            <field name="container_size">20</field>
+            <field name="state">done</field>
+        </record>
+
+        <!-- ================================================================
+             LOTS DE PRODUCTION
+             ================================================================ -->
+        
+        <!-- Lots pour OT3708 (60T) -->
         <record id="lot_t10582ra" model="potting.lot">
             <field name="name">T10582RA</field>
             <field name="transit_order_id" ref="transit_order_ot3708"/>
@@ -158,7 +575,7 @@
             <field name="state">draft</field>
         </record>
 
-        <!-- Demo Lots for OT3709 -->
+        <!-- Lots pour OT3709 (80T) -->
         <record id="lot_t10585ra" model="potting.lot">
             <field name="name">T10585RA</field>
             <field name="transit_order_id" ref="transit_order_ot3709"/>
@@ -182,21 +599,85 @@
             <field name="transit_order_id" ref="transit_order_ot3709"/>
             <field name="product_type">cocoa_cake</field>
             <field name="product_id" ref="product_cocoa_cake_fine"/>
+            <field name="target_tonnage">30</field>
+            <field name="state">draft</field>
+        </record>
+
+        <!-- Lots pour OT3710 (Beurre 100T) -->
+        <record id="lot_b10588ra" model="potting.lot">
+            <field name="name">B10588RA</field>
+            <field name="transit_order_id" ref="transit_order_ot3710"/>
+            <field name="product_type">cocoa_butter</field>
+            <field name="product_id" ref="product_cocoa_butter"/>
             <field name="target_tonnage">25</field>
             <field name="state">draft</field>
         </record>
 
-        <!-- Demo Container -->
+        <record id="lot_b10589ra" model="potting.lot">
+            <field name="name">B10589RA</field>
+            <field name="transit_order_id" ref="transit_order_ot3710"/>
+            <field name="product_type">cocoa_butter</field>
+            <field name="product_id" ref="product_cocoa_butter"/>
+            <field name="target_tonnage">25</field>
+            <field name="state">draft</field>
+        </record>
+
+        <record id="lot_b10590ra" model="potting.lot">
+            <field name="name">B10590RA</field>
+            <field name="transit_order_id" ref="transit_order_ot3710"/>
+            <field name="product_type">cocoa_butter</field>
+            <field name="product_id" ref="product_cocoa_butter"/>
+            <field name="target_tonnage">25</field>
+            <field name="state">draft</field>
+        </record>
+
+        <record id="lot_b10591ra" model="potting.lot">
+            <field name="name">B10591RA</field>
+            <field name="transit_order_id" ref="transit_order_ot3710"/>
+            <field name="product_type">cocoa_butter</field>
+            <field name="product_id" ref="product_cocoa_butter"/>
+            <field name="target_tonnage">25</field>
+            <field name="state">draft</field>
+        </record>
+
+        <!-- ================================================================
+             CONTENEURS DE DÉMONSTRATION
+             ================================================================ -->
+        
         <record id="container_demo_1" model="potting.container">
             <field name="name">MSKU1234567</field>
             <field name="container_type">20</field>
             <field name="seal_number">SEAL001</field>
             <field name="tare_weight">2200</field>
             <field name="max_payload">28000</field>
-            <field name="vessel_name">MAERSK</field>
+            <field name="vessel_name">MAERSK SEALAND</field>
             <field name="port_loading">Abidjan</field>
             <field name="port_discharge">Salvador</field>
             <field name="state">loading</field>
+        </record>
+
+        <record id="container_demo_2" model="potting.container">
+            <field name="name">CMAU9876543</field>
+            <field name="container_type">20</field>
+            <field name="seal_number">SEAL002</field>
+            <field name="tare_weight">2180</field>
+            <field name="max_payload">28000</field>
+            <field name="vessel_name">CMA CGM ANTOINE</field>
+            <field name="port_loading">Abidjan</field>
+            <field name="port_discharge">Philadelphia</field>
+            <field name="state">draft</field>
+        </record>
+
+        <record id="container_demo_3" model="potting.container">
+            <field name="name">MSCU5551234</field>
+            <field name="container_type">40</field>
+            <field name="seal_number">SEAL003</field>
+            <field name="tare_weight">3800</field>
+            <field name="max_payload">26700</field>
+            <field name="vessel_name">MSC GENEVA</field>
+            <field name="port_loading">Abidjan</field>
+            <field name="port_discharge">Philadelphia</field>
+            <field name="state">draft</field>
         </record>
 
         <!-- Link lot to container -->
@@ -205,7 +686,10 @@
             <field name="date_potted" eval="time.strftime('%Y-%m-%d %H:%M:%S')"/>
         </record>
 
-        <!-- Demo Production Lines -->
+        <!-- ================================================================
+             LIGNES DE PRODUCTION
+             ================================================================ -->
+        
         <record id="production_line_1" model="potting.production.line">
             <field name="lot_id" ref="lot_t10582ra"/>
             <field name="date" eval="time.strftime('%Y-%m-%d')"/>
@@ -230,7 +714,66 @@
             <field name="shift">morning</field>
         </record>
 
-        <!-- Set default customer in settings -->
+        <record id="production_line_4" model="potting.production.line">
+            <field name="lot_id" ref="lot_t10583ra"/>
+            <field name="date" eval="time.strftime('%Y-%m-%d')"/>
+            <field name="tonnage">10</field>
+            <field name="batch_number">BATCH004</field>
+            <field name="shift">afternoon</field>
+        </record>
+
+        <!-- ================================================================
+             TAXES DE FORMULES (LIGNES DE DÉMONSTRATION)
+             ================================================================ -->
+        
+        <!-- Taxes pour FO1 -->
+        <record id="formule_taxe_1_ccc" model="potting.formule.taxe">
+            <field name="formule_id" ref="formule_demo_1"/>
+            <field name="taxe_type_id" ref="potting_cv_fo_data.taxe_type_ccc"/>
+            <field name="montant">74700</field>
+            <field name="is_preleve">True</field>
+        </record>
+
+        <record id="formule_taxe_1_invest" model="potting.formule.taxe">
+            <field name="formule_id" ref="formule_demo_1"/>
+            <field name="taxe_type_id" ref="potting_cv_fo_data.taxe_type_invest_agricole"/>
+            <field name="montant">43200</field>
+            <field name="is_preleve">True</field>
+        </record>
+
+        <record id="formule_taxe_1_fimr" model="potting.formule.taxe">
+            <field name="formule_id" ref="formule_demo_1"/>
+            <field name="taxe_type_id" ref="potting_cv_fo_data.taxe_type_fimr"/>
+            <field name="montant">25800</field>
+            <field name="is_preleve">True</field>
+        </record>
+
+        <record id="formule_taxe_1_dius" model="potting.formule.taxe">
+            <field name="formule_id" ref="formule_demo_1"/>
+            <field name="taxe_type_id" ref="potting_cv_fo_data.taxe_type_dius"/>
+            <field name="montant">10512000</field>
+            <field name="is_preleve">False</field>
+        </record>
+
+        <!-- Taxes pour FO2 -->
+        <record id="formule_taxe_2_ccc" model="potting.formule.taxe">
+            <field name="formule_id" ref="formule_demo_2"/>
+            <field name="taxe_type_id" ref="potting_cv_fo_data.taxe_type_ccc"/>
+            <field name="montant">99600</field>
+            <field name="is_preleve">True</field>
+        </record>
+
+        <record id="formule_taxe_2_enregistrement" model="potting.formule.taxe">
+            <field name="formule_id" ref="formule_demo_2"/>
+            <field name="taxe_type_id" ref="potting_cv_fo_data.taxe_type_enregistrement"/>
+            <field name="montant">4800000</field>
+            <field name="is_preleve">False</field>
+        </record>
+
+        <!-- ================================================================
+             CONFIGURATION PAR DÉFAUT
+             ================================================================ -->
+        
         <record id="set_default_customer" model="ir.config_parameter">
             <field name="key">potting_management.default_customer_id</field>
             <field name="value" eval="ref('partner_main_customer')"/>
