@@ -2,7 +2,7 @@
 """
 API REST Mobile pour le PDG - Potting Management
 Module: potting_management
-Version: 1.0.0
+Version: 1.1.0
 
 Cette API permet au PDG de:
 - Consulter le tableau de bord des activités d'exportation
@@ -17,6 +17,15 @@ Endpoints:
 - GET /api/v1/potting/dashboard/transit-orders - Liste des OT
 - GET /api/v1/potting/reports/daily - Télécharger rapport quotidien PDF
 - GET /api/v1/potting/reports/summary - Résumé du rapport (JSON)
+- GET /api/v1/potting/health - Vérification de santé
+
+Améliorations v1.1.0:
+- Exception handler global
+- Validation robuste des entrées
+- Rate limiting amélioré
+- Circuit breaker pour les rapports
+- Correlation ID pour le tracing
+- Headers de sécurité
 """
 
 import base64
@@ -32,13 +41,16 @@ import json
 
 from .api_utils import (
     APIErrorCodes,
-    rate_limiter, rate_limit,
+    rate_limiter, rate_limit, rate_limit_user,
     InputValidator,
     api_response, api_error, api_validation_error,
     API_VERSION,
-    require_ceo_auth,
+    require_auth, require_ceo_auth,
+    api_exception_handler,
+    with_circuit_breaker, report_circuit_breaker,
     get_client_ip, log_api_call,
-    format_currency
+    format_currency,
+    RequestContext
 )
 
 _logger = logging.getLogger(__name__)
@@ -391,7 +403,9 @@ class PottingMobileAPIController(http.Controller):
     # ==================== ENDPOINTS DASHBOARD ====================
 
     @http.route('/api/v1/potting/dashboard', type='http', auth='none', methods=['GET'], csrf=False, cors='*')
+    @api_exception_handler
     @rate_limit(max_requests=60, window_seconds=60)
+    @require_auth
     def api_dashboard(self, **kwargs):
         """
         Tableau de bord principal du PDG.
@@ -412,59 +426,49 @@ class PottingMobileAPIController(http.Controller):
             }
         }
         """
-        try:
-            # Vérifier l'authentification
-            auth_header = request.httprequest.headers.get('Authorization', '')
-            if not auth_header.startswith('Bearer '):
-                return api_error(APIErrorCodes.AUTH_TOKEN_MISSING, status=401)
-            
-            token = auth_header[7:]
-            user = self._verify_api_token(token)
-            if not user:
-                return api_error(APIErrorCodes.AUTH_TOKEN_INVALID, status=401)
-            
-            # Parser les paramètres de date
-            date_from = kwargs.get('date_from')
-            date_to = kwargs.get('date_to')
-            
-            parsed_from = None
-            parsed_to = None
-            
-            if date_from:
-                valid, parsed_from, error = InputValidator.validate_date(date_from, 'date_from', required=False)
-                if not valid:
-                    return api_validation_error(error)
-            
-            if date_to:
-                valid, parsed_to, error = InputValidator.validate_date(date_to, 'date_to', required=False)
-                if not valid:
-                    return api_validation_error(error)
-            
-            if parsed_from and parsed_to:
-                valid, error = InputValidator.validate_date_range(parsed_from, parsed_to)
-                if not valid:
-                    return api_validation_error(error)
-            
-            # Calculer les statistiques
-            stats = self._get_dashboard_stats(parsed_from, parsed_to)
-            
-            log_api_call('/dashboard', user_id=user.id, success=True)
-            
-            return api_response(
-                data=stats,
-                meta={
-                    'date_from': date_from,
-                    'date_to': date_to,
-                    'generated_at': datetime.now().isoformat()
-                }
-            )
-            
-        except Exception as e:
-            _logger.exception(f"Erreur dashboard API potting: {e}")
-            return api_error(APIErrorCodes.SERVER_ERROR, status=500)
+        # L'utilisateur est déjà authentifié par @require_auth (stocké dans request.api_user)
+        user = request.api_user
+        
+        # Parser les paramètres de date
+        date_from = kwargs.get('date_from')
+        date_to = kwargs.get('date_to')
+        
+        parsed_from = None
+        parsed_to = None
+        
+        if date_from:
+            valid, parsed_from, error = InputValidator.validate_date(date_from, 'date_from', required=False)
+            if not valid:
+                return api_validation_error(error)
+        
+        if date_to:
+            valid, parsed_to, error = InputValidator.validate_date(date_to, 'date_to', required=False)
+            if not valid:
+                return api_validation_error(error)
+        
+        if parsed_from and parsed_to:
+            valid, error = InputValidator.validate_date_range(parsed_from, parsed_to)
+            if not valid:
+                return api_validation_error(error)
+        
+        # Calculer les statistiques
+        stats = self._get_dashboard_stats(parsed_from, parsed_to)
+        
+        log_api_call('/dashboard', user_id=user.id, success=True)
+        
+        return api_response(
+            data=stats,
+            meta={
+                'date_from': date_from,
+                'date_to': date_to,
+                'generated_at': datetime.now().isoformat()
+            }
+        )
 
     @http.route('/api/v1/potting/dashboard/transit-orders', type='http', auth='none', methods=['GET'], csrf=False, cors='*')
+    @api_exception_handler
     @rate_limit(max_requests=60, window_seconds=60)
+    @require_auth
     def api_transit_orders_list(self, **kwargs):
         """
         Liste des ordres de transit.
@@ -479,166 +483,157 @@ class PottingMobileAPIController(http.Controller):
         - limit: Nombre par page (défaut: 20, max: 100)
         - include_details: Inclure les détails (0 ou 1)
         """
-        try:
-            # Vérifier l'authentification
-            auth_header = request.httprequest.headers.get('Authorization', '')
-            if not auth_header.startswith('Bearer '):
-                return api_error(APIErrorCodes.AUTH_TOKEN_MISSING, status=401)
-            
-            token = auth_header[7:]
-            user = self._verify_api_token(token)
-            if not user:
-                return api_error(APIErrorCodes.AUTH_TOKEN_INVALID, status=401)
-            
-            # Construire le domaine de recherche
-            domain = [('state', '!=', 'cancelled')]
-            
-            # Filtres de date
-            date_from = kwargs.get('date_from')
-            date_to = kwargs.get('date_to')
-            
-            if date_from:
-                valid, parsed, error = InputValidator.validate_date(date_from, 'date_from', required=False)
-                if valid and parsed:
-                    domain.append(('date_created', '>=', parsed))
-            
-            if date_to:
-                valid, parsed, error = InputValidator.validate_date(date_to, 'date_to', required=False)
-                if valid and parsed:
-                    domain.append(('date_created', '<=', parsed))
-            
-            # Autres filtres
-            state = kwargs.get('state')
-            if state:
-                domain.append(('state', '=', state))
-            
-            product_type = kwargs.get('product_type')
-            if product_type:
-                domain.append(('product_type', '=', product_type))
-            
-            customer_id = kwargs.get('customer_id')
-            if customer_id:
-                try:
-                    domain.append(('customer_id', '=', int(customer_id)))
-                except ValueError:
-                    pass
-            
-            # Pagination
-            try:
-                page = max(1, int(kwargs.get('page', 1)))
-                limit = min(100, max(1, int(kwargs.get('limit', 20))))
-            except ValueError:
-                page = 1
-                limit = 20
-            
-            offset = (page - 1) * limit
-            include_details = kwargs.get('include_details', '0') == '1'
-            
-            # Rechercher les OT
-            TransitOrder = request.env['potting.transit.order'].sudo()
-            total_count = TransitOrder.search_count(domain)
-            transit_orders = TransitOrder.search(domain, order='name desc', limit=limit, offset=offset)
-            
-            # Formater les données
-            items = [self._format_transit_order(ot, include_details) for ot in transit_orders]
-            
-            log_api_call('/dashboard/transit-orders', user_id=user.id, success=True)
-            
-            return api_response(
-                data={'items': items},
-                meta={
-                    'total': total_count,
-                    'page': page,
-                    'limit': limit,
-                    'pages': (total_count + limit - 1) // limit
-                }
+        user = request.api_user
+        
+        # Construire le domaine de recherche
+        domain = [('state', '!=', 'cancelled')]
+        
+        # Filtres de date
+        date_from = kwargs.get('date_from')
+        date_to = kwargs.get('date_to')
+        
+        if date_from:
+            valid, parsed, error = InputValidator.validate_date(date_from, 'date_from', required=False)
+            if valid and parsed:
+                domain.append(('date_created', '>=', parsed))
+        
+        if date_to:
+            valid, parsed, error = InputValidator.validate_date(date_to, 'date_to', required=False)
+            if valid and parsed:
+                domain.append(('date_created', '<=', parsed))
+        
+        # Autres filtres avec validation
+        state = kwargs.get('state')
+        if state:
+            valid, state, error = InputValidator.validate_enum(
+                state, 'state', 
+                ['draft', 'in_progress', 'lots_generated', 'ready_validation', 'done', 'cancelled'],
+                required=False
             )
-            
-        except Exception as e:
-            _logger.exception(f"Erreur liste OT API potting: {e}")
-            return api_error(APIErrorCodes.SERVER_ERROR, status=500)
+            if valid and state:
+                domain.append(('state', '=', state))
+        
+        product_type = kwargs.get('product_type')
+        if product_type:
+            valid, product_type, error = InputValidator.validate_enum(
+                product_type, 'product_type',
+                ['cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder'],
+                required=False
+            )
+            if valid and product_type:
+                domain.append(('product_type', '=', product_type))
+        
+        customer_id = kwargs.get('customer_id')
+        if customer_id:
+            valid, customer_id, error = InputValidator.validate_id(customer_id, 'customer_id', required=False)
+            if valid and customer_id:
+                domain.append(('customer_id', '=', customer_id))
+        
+        # Pagination avec validation
+        page, limit, offset = InputValidator.validate_pagination(
+            kwargs.get('page'), kwargs.get('limit')
+        )
+        include_details = kwargs.get('include_details', '0') == '1'
+        
+        # Rechercher les OT
+        TransitOrder = request.env['potting.transit.order'].sudo()
+        total_count = TransitOrder.search_count(domain)
+        transit_orders = TransitOrder.search(domain, order='name desc', limit=limit, offset=offset)
+        
+        # Formater les données
+        items = [self._format_transit_order(ot, include_details) for ot in transit_orders]
+        
+        log_api_call('/dashboard/transit-orders', user_id=user.id, success=True)
+        
+        return api_response(
+            data={'items': items},
+            meta={
+                'total': total_count,
+                'page': page,
+                'limit': limit,
+                'pages': (total_count + limit - 1) // limit
+            }
+        )
 
     @http.route('/api/v1/potting/dashboard/orders', type='http', auth='none', methods=['GET'], csrf=False, cors='*')
+    @api_exception_handler
     @rate_limit(max_requests=60, window_seconds=60)
+    @require_auth
     def api_customer_orders_list(self, **kwargs):
         """
         Liste des commandes clients (contrats).
         
         Query params identiques à transit-orders.
         """
-        try:
-            # Vérifier l'authentification
-            auth_header = request.httprequest.headers.get('Authorization', '')
-            if not auth_header.startswith('Bearer '):
-                return api_error(APIErrorCodes.AUTH_TOKEN_MISSING, status=401)
-            
-            token = auth_header[7:]
-            user = self._verify_api_token(token)
-            if not user:
-                return api_error(APIErrorCodes.AUTH_TOKEN_INVALID, status=401)
-            
-            # Construire le domaine
-            domain = [('state', '!=', 'cancelled')]
-            
-            date_from = kwargs.get('date_from')
-            date_to = kwargs.get('date_to')
-            
-            if date_from:
-                valid, parsed, error = InputValidator.validate_date(date_from, 'date_from', required=False)
-                if valid and parsed:
-                    domain.append(('date_order', '>=', parsed))
-            
-            if date_to:
-                valid, parsed, error = InputValidator.validate_date(date_to, 'date_to', required=False)
-                if valid and parsed:
-                    domain.append(('date_order', '<=', parsed))
-            
-            state = kwargs.get('state')
-            if state:
-                domain.append(('state', '=', state))
-            
-            product_type = kwargs.get('product_type')
-            if product_type:
-                domain.append(('product_type', '=', product_type))
-            
-            # Pagination
-            try:
-                page = max(1, int(kwargs.get('page', 1)))
-                limit = min(100, max(1, int(kwargs.get('limit', 20))))
-            except ValueError:
-                page = 1
-                limit = 20
-            
-            offset = (page - 1) * limit
-            include_details = kwargs.get('include_details', '0') == '1'
-            
-            # Rechercher
-            CustomerOrder = request.env['potting.customer.order'].sudo()
-            total_count = CustomerOrder.search_count(domain)
-            orders = CustomerOrder.search(domain, order='create_date desc', limit=limit, offset=offset)
-            
-            items = [self._format_customer_order(order, include_details) for order in orders]
-            
-            log_api_call('/dashboard/orders', user_id=user.id, success=True)
-            
-            return api_response(
-                data={'items': items},
-                meta={
-                    'total': total_count,
-                    'page': page,
-                    'limit': limit,
-                    'pages': (total_count + limit - 1) // limit
-                }
+        user = request.api_user
+        
+        # Construire le domaine
+        domain = [('state', '!=', 'cancelled')]
+        
+        date_from = kwargs.get('date_from')
+        date_to = kwargs.get('date_to')
+        
+        if date_from:
+            valid, parsed, error = InputValidator.validate_date(date_from, 'date_from', required=False)
+            if valid and parsed:
+                domain.append(('date_order', '>=', parsed))
+        
+        if date_to:
+            valid, parsed, error = InputValidator.validate_date(date_to, 'date_to', required=False)
+            if valid and parsed:
+                domain.append(('date_order', '<=', parsed))
+        
+        state = kwargs.get('state')
+        if state:
+            valid, state, error = InputValidator.validate_enum(
+                state, 'state',
+                ['draft', 'confirmed', 'in_progress', 'done', 'cancelled'],
+                required=False
             )
-            
-        except Exception as e:
-            _logger.exception(f"Erreur liste commandes API potting: {e}")
-            return api_error(APIErrorCodes.SERVER_ERROR, status=500)
+            if valid and state:
+                domain.append(('state', '=', state))
+        
+        product_type = kwargs.get('product_type')
+        if product_type:
+            valid, product_type, error = InputValidator.validate_enum(
+                product_type, 'product_type',
+                ['cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder'],
+                required=False
+            )
+            if valid and product_type:
+                domain.append(('product_type', '=', product_type))
+        
+        # Pagination avec validation
+        page, limit, offset = InputValidator.validate_pagination(
+            kwargs.get('page'), kwargs.get('limit')
+        )
+        include_details = kwargs.get('include_details', '0') == '1'
+        
+        # Rechercher
+        CustomerOrder = request.env['potting.customer.order'].sudo()
+        total_count = CustomerOrder.search_count(domain)
+        orders = CustomerOrder.search(domain, order='create_date desc', limit=limit, offset=offset)
+        
+        items = [self._format_customer_order(order, include_details) for order in orders]
+        
+        log_api_call('/dashboard/orders', user_id=user.id, success=True)
+        
+        return api_response(
+            data={'items': items},
+            meta={
+                'total': total_count,
+                'page': page,
+                'limit': limit,
+                'pages': (total_count + limit - 1) // limit
+            }
+        )
 
     # ==================== ENDPOINTS RAPPORTS ====================
 
     @http.route('/api/v1/potting/reports/summary', type='http', auth='none', methods=['GET'], csrf=False, cors='*')
+    @api_exception_handler
     @rate_limit(max_requests=30, window_seconds=60)
+    @require_auth
     def api_report_summary(self, **kwargs):
         """
         Résumé du rapport quotidien en JSON.
@@ -649,142 +644,132 @@ class PottingMobileAPIController(http.Controller):
         - date_to: Date fin pour les OT
         - exclude_fully_delivered: Exclure les OT livrés (0 ou 1, défaut: 1)
         """
-        try:
-            # Vérifier l'authentification
-            auth_header = request.httprequest.headers.get('Authorization', '')
-            if not auth_header.startswith('Bearer '):
-                return api_error(APIErrorCodes.AUTH_TOKEN_MISSING, status=401)
-            
-            token = auth_header[7:]
-            user = self._verify_api_token(token)
-            if not user:
-                return api_error(APIErrorCodes.AUTH_TOKEN_INVALID, status=401)
-            
-            # Paramètres
-            report_date = kwargs.get('date')
-            if report_date:
-                valid, parsed_date, error = InputValidator.validate_date(report_date, 'date')
-                if not valid:
-                    return api_validation_error(error)
-                report_date = parsed_date
-            else:
-                report_date = date.today()
-            
-            date_from = kwargs.get('date_from')
-            date_to = kwargs.get('date_to')
-            exclude_fully_delivered = kwargs.get('exclude_fully_delivered', '1') == '1'
-            
-            # Construire le domaine
-            domain = [('state', 'not in', ['draft', 'cancelled'])]
-            
-            if date_from:
-                valid, parsed, _ = InputValidator.validate_date(date_from, 'date_from', required=False)
-                if valid and parsed:
-                    domain.append(('date_created', '>=', parsed))
-            else:
-                # Par défaut, les 30 derniers jours
-                domain.append(('date_created', '>=', date.today() - timedelta(days=30)))
-            
-            if date_to:
-                valid, parsed, _ = InputValidator.validate_date(date_to, 'date_to', required=False)
-                if valid and parsed:
-                    domain.append(('date_created', '<=', parsed))
-            
-            if exclude_fully_delivered:
-                domain.append(('delivery_status', '!=', 'fully_delivered'))
-            
-            # Récupérer les OT
-            TransitOrder = request.env['potting.transit.order'].sudo()
-            transit_orders = TransitOrder.search(domain, order='name asc')
-            
-            if not transit_orders:
-                return api_response(
-                    data={
-                        'report_date': report_date.isoformat(),
-                        'message': 'Aucun OT trouvé pour les critères spécifiés',
-                        'ot_count': 0
-                    }
-                )
-            
-            # Calculer les statistiques
-            total_tonnage_kg = sum(transit_orders.mapped('tonnage')) * 1000
-            current_tonnage_kg = sum(transit_orders.mapped('current_tonnage')) * 1000
-            avg_progress = sum(transit_orders.mapped('progress_percentage')) / len(transit_orders)
-            
-            # Par état
-            in_tc = len(transit_orders.filtered(lambda o: o.state == 'done'))
-            prod_100 = len(transit_orders.filtered(lambda o: o.progress_percentage >= 100 and o.state != 'done'))
-            in_prod = len(transit_orders.filtered(lambda o: o.progress_percentage < 100 and o.state not in ['done', 'cancelled']))
-            
-            # Par livraison
-            partial_delivery = len(transit_orders.filtered(lambda o: o.delivery_status == 'partial'))
-            fully_delivered = len(transit_orders.filtered(lambda o: o.delivery_status == 'fully_delivered'))
-            not_delivered = len(transit_orders.filtered(lambda o: o.delivery_status == 'not_delivered'))
-            
-            # Extraire la plage de numéros OT
-            ot_numbers = []
-            for ot in transit_orders:
-                match = re.search(r'(\d+)/', ot.name)
-                if match:
-                    ot_numbers.append(int(match.group(1)))
-            
-            ot_range = {}
-            if ot_numbers:
-                ot_range = {'from': min(ot_numbers), 'to': max(ot_numbers)}
-            
-            # Grouper par client
-            customers = {}
-            for ot in transit_orders:
-                customer_name = ot.customer_id.name if ot.customer_id else 'Non défini'
-                consignee_name = ot.consignee_id.name if ot.consignee_id else ''
-                key = f"{customer_name} / {consignee_name}" if consignee_name else customer_name
-                
-                if key not in customers:
-                    customers[key] = {'count': 0, 'tonnage': 0}
-                customers[key]['count'] += 1
-                customers[key]['tonnage'] += ot.tonnage * 1000
-            
-            log_api_call('/reports/summary', user_id=user.id, success=True)
-            
+        user = request.api_user
+        
+        # Paramètres
+        report_date = kwargs.get('date')
+        if report_date:
+            valid, parsed_date, error = InputValidator.validate_date(report_date, 'date')
+            if not valid:
+                return api_validation_error(error)
+            report_date = parsed_date
+        else:
+            report_date = date.today()
+        
+        date_from = kwargs.get('date_from')
+        date_to = kwargs.get('date_to')
+        exclude_fully_delivered = kwargs.get('exclude_fully_delivered', '1') == '1'
+        
+        # Construire le domaine
+        domain = [('state', 'not in', ['draft', 'cancelled'])]
+        
+        if date_from:
+            valid, parsed, _ = InputValidator.validate_date(date_from, 'date_from', required=False)
+            if valid and parsed:
+                domain.append(('date_created', '>=', parsed))
+        else:
+            # Par défaut, les 30 derniers jours
+            domain.append(('date_created', '>=', date.today() - timedelta(days=30)))
+        
+        if date_to:
+            valid, parsed, _ = InputValidator.validate_date(date_to, 'date_to', required=False)
+            if valid and parsed:
+                domain.append(('date_created', '<=', parsed))
+        
+        if exclude_fully_delivered:
+            domain.append(('delivery_status', '!=', 'fully_delivered'))
+        
+        # Récupérer les OT
+        TransitOrder = request.env['potting.transit.order'].sudo()
+        transit_orders = TransitOrder.search(domain, order='name asc')
+        
+        if not transit_orders:
             return api_response(
                 data={
                     'report_date': report_date.isoformat(),
-                    'generated_at': datetime.now().isoformat(),
-                    'ot_count': len(transit_orders),
-                    'ot_range': ot_range,
-                    'tonnage': {
-                        'total_kg': round(total_tonnage_kg, 0),
-                        'current_kg': round(current_tonnage_kg, 0),
-                        'total_formatted': format_currency(total_tonnage_kg, 'Kg'),
-                        'current_formatted': format_currency(current_tonnage_kg, 'Kg'),
-                    },
-                    'average_progress': round(avg_progress, 1),
-                    'by_production_state': {
-                        'in_tc': in_tc,
-                        'production_100': prod_100,
-                        'in_production': in_prod,
-                    },
-                    'by_delivery_status': {
-                        'fully_delivered': fully_delivered,
-                        'partial': partial_delivery,
-                        'not_delivered': not_delivered,
-                    },
-                    'by_customer': [
-                        {'name': k, **v} for k, v in sorted(
-                            customers.items(),
-                            key=lambda x: x[1]['tonnage'],
-                            reverse=True
-                        )
-                    ]
+                    'message': 'Aucun OT trouvé pour les critères spécifiés',
+                    'ot_count': 0
                 }
             )
+        
+        # Calculer les statistiques
+        total_tonnage_kg = sum(transit_orders.mapped('tonnage')) * 1000
+        current_tonnage_kg = sum(transit_orders.mapped('current_tonnage')) * 1000
+        avg_progress = sum(transit_orders.mapped('progress_percentage')) / len(transit_orders)
+        
+        # Par état
+        in_tc = len(transit_orders.filtered(lambda o: o.state == 'done'))
+        prod_100 = len(transit_orders.filtered(lambda o: o.progress_percentage >= 100 and o.state != 'done'))
+        in_prod = len(transit_orders.filtered(lambda o: o.progress_percentage < 100 and o.state not in ['done', 'cancelled']))
+        
+        # Par livraison
+        partial_delivery = len(transit_orders.filtered(lambda o: o.delivery_status == 'partial'))
+        fully_delivered = len(transit_orders.filtered(lambda o: o.delivery_status == 'fully_delivered'))
+        not_delivered = len(transit_orders.filtered(lambda o: o.delivery_status == 'not_delivered'))
+        
+        # Extraire la plage de numéros OT
+        ot_numbers = []
+        for ot in transit_orders:
+            match = re.search(r'(\d+)/', ot.name)
+            if match:
+                ot_numbers.append(int(match.group(1)))
+        
+        ot_range = {}
+        if ot_numbers:
+            ot_range = {'from': min(ot_numbers), 'to': max(ot_numbers)}
+        
+        # Grouper par client
+        customers = {}
+        for ot in transit_orders:
+            customer_name = ot.customer_id.name if ot.customer_id else 'Non défini'
+            consignee_name = ot.consignee_id.name if ot.consignee_id else ''
+            key = f"{customer_name} / {consignee_name}" if consignee_name else customer_name
             
-        except Exception as e:
-            _logger.exception(f"Erreur résumé rapport API potting: {e}")
-            return api_error(APIErrorCodes.SERVER_ERROR, status=500)
+            if key not in customers:
+                customers[key] = {'count': 0, 'tonnage': 0}
+            customers[key]['count'] += 1
+            customers[key]['tonnage'] += ot.tonnage * 1000
+        
+        log_api_call('/reports/summary', user_id=user.id, success=True)
+        
+        return api_response(
+            data={
+                'report_date': report_date.isoformat(),
+                'generated_at': datetime.now().isoformat(),
+                'ot_count': len(transit_orders),
+                'ot_range': ot_range,
+                'tonnage': {
+                    'total_kg': round(total_tonnage_kg, 0),
+                    'current_kg': round(current_tonnage_kg, 0),
+                    'total_formatted': format_currency(total_tonnage_kg, 'Kg'),
+                    'current_formatted': format_currency(current_tonnage_kg, 'Kg'),
+                },
+                'average_progress': round(avg_progress, 1),
+                'by_production_state': {
+                    'in_tc': in_tc,
+                    'production_100': prod_100,
+                    'in_production': in_prod,
+                },
+                'by_delivery_status': {
+                    'fully_delivered': fully_delivered,
+                    'partial': partial_delivery,
+                    'not_delivered': not_delivered,
+                },
+                'by_customer': [
+                    {'name': k, **v} for k, v in sorted(
+                        customers.items(),
+                        key=lambda x: x[1]['tonnage'],
+                        reverse=True
+                    )
+                ]
+            }
+        )
 
     @http.route('/api/v1/potting/reports/daily', type='http', auth='none', methods=['GET'], csrf=False, cors='*')
+    @api_exception_handler
     @rate_limit(max_requests=10, window_seconds=60)
+    @require_auth
+    @with_circuit_breaker(report_circuit_breaker)
     def api_download_daily_report(self, **kwargs):
         """
         Télécharger le rapport quotidien en PDF.
@@ -798,139 +783,124 @@ class PottingMobileAPIController(http.Controller):
         Returns:
         - Application/pdf - Le fichier PDF du rapport
         """
-        try:
-            # Vérifier l'authentification
-            auth_header = request.httprequest.headers.get('Authorization', '')
-            if not auth_header.startswith('Bearer '):
-                return api_error(APIErrorCodes.AUTH_TOKEN_MISSING, status=401)
-            
-            token = auth_header[7:]
-            user = self._verify_api_token(token)
-            if not user:
-                return api_error(APIErrorCodes.AUTH_TOKEN_INVALID, status=401)
-            
-            # Paramètres
-            report_date = kwargs.get('date')
-            if report_date:
-                valid, parsed_date, error = InputValidator.validate_date(report_date, 'date')
-                if not valid:
-                    return api_validation_error(error)
-                report_date = parsed_date
-            else:
-                report_date = date.today()
-            
-            date_from_str = kwargs.get('date_from')
-            date_to_str = kwargs.get('date_to')
-            exclude_fully_delivered = kwargs.get('exclude_fully_delivered', '1') == '1'
-            
-            # Créer un wizard temporaire pour générer le rapport
-            Wizard = request.env['potting.daily.report.wizard'].sudo()
-            
-            wizard_vals = {
-                'report_date': report_date,
-                'exclude_fully_delivered': exclude_fully_delivered,
-            }
-            
-            if date_from_str:
-                valid, parsed, _ = InputValidator.validate_date(date_from_str, 'date_from', required=False)
-                if valid and parsed:
-                    wizard_vals['date_from'] = parsed
-            
-            if date_to_str:
-                valid, parsed, _ = InputValidator.validate_date(date_to_str, 'date_to', required=False)
-                if valid and parsed:
-                    wizard_vals['date_to'] = parsed
-            
-            wizard = Wizard.create(wizard_vals)
-            
-            # Vérifier qu'il y a des OT
-            if not wizard.transit_order_ids:
-                return api_error(
-                    APIErrorCodes.BUSINESS_NO_TRANSIT_ORDERS,
-                    "Aucun OT trouvé pour les critères spécifiés",
-                    status=404
-                )
-            
-            # Générer le PDF
-            report = request.env.ref('potting_management.action_report_ot_daily').sudo()
-            pdf_content, _ = report._render_qweb_pdf(report.id, [wizard.id])
-            
-            if not pdf_content:
-                return api_error(
-                    APIErrorCodes.BUSINESS_REPORT_GENERATION_FAILED,
-                    status=500
-                )
-            
-            log_api_call('/reports/daily', user_id=user.id, success=True, 
-                        details=f"date={report_date}, ot_count={len(wizard.transit_order_ids)}")
-            
-            # Nettoyer le wizard
+        user = request.api_user
+        
+        # Paramètres
+        report_date = kwargs.get('date')
+        if report_date:
+            valid, parsed_date, error = InputValidator.validate_date(report_date, 'date')
+            if not valid:
+                return api_validation_error(error)
+            report_date = parsed_date
+        else:
+            report_date = date.today()
+        
+        date_from_str = kwargs.get('date_from')
+        date_to_str = kwargs.get('date_to')
+        exclude_fully_delivered = kwargs.get('exclude_fully_delivered', '1') == '1'
+        
+        # Créer un wizard temporaire pour générer le rapport
+        Wizard = request.env['potting.daily.report.wizard'].sudo()
+        
+        wizard_vals = {
+            'report_date': report_date,
+            'exclude_fully_delivered': exclude_fully_delivered,
+        }
+        
+        if date_from_str:
+            valid, parsed, _ = InputValidator.validate_date(date_from_str, 'date_from', required=False)
+            if valid and parsed:
+                wizard_vals['date_from'] = parsed
+        
+        if date_to_str:
+            valid, parsed, _ = InputValidator.validate_date(date_to_str, 'date_to', required=False)
+            if valid and parsed:
+                wizard_vals['date_to'] = parsed
+        
+        wizard = Wizard.create(wizard_vals)
+        
+        # Vérifier qu'il y a des OT
+        if not wizard.transit_order_ids:
             wizard.unlink()
-            
-            # Retourner le PDF
-            filename = f"OT_Daily_Report_{report_date.strftime('%Y-%m-%d')}.pdf"
-            
-            return Response(
-                pdf_content,
-                headers={
-                    'Content-Type': 'application/pdf',
-                    'Content-Disposition': f'attachment; filename="{filename}"',
-                    'Content-Length': len(pdf_content),
-                },
-                status=200
+            return api_error(
+                APIErrorCodes.BUSINESS_NO_TRANSIT_ORDERS,
+                "Aucun OT trouvé pour les critères spécifiés",
+                status=404
             )
-            
-        except Exception as e:
-            _logger.exception(f"Erreur téléchargement rapport API potting: {e}")
-            return api_error(APIErrorCodes.SERVER_ERROR, status=500)
+        
+        # Générer le PDF
+        report = request.env.ref('potting_management.action_report_ot_daily').sudo()
+        pdf_content, _ = report._render_qweb_pdf(report.id, [wizard.id])
+        
+        if not pdf_content:
+            wizard.unlink()
+            return api_error(
+                APIErrorCodes.BUSINESS_REPORT_GENERATION_FAILED,
+                status=500
+            )
+        
+        ot_count = len(wizard.transit_order_ids)
+        log_api_call('/reports/daily', user_id=user.id, success=True, 
+                    details=f"date={report_date}, ot_count={ot_count}")
+        
+        # Nettoyer le wizard
+        wizard.unlink()
+        
+        # Retourner le PDF
+        filename = f"OT_Daily_Report_{report_date.strftime('%Y-%m-%d')}.pdf"
+        
+        return Response(
+            pdf_content,
+            headers={
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': f'attachment; filename="{filename}"',
+                'Content-Length': len(pdf_content),
+                'X-Content-Type-Options': 'nosniff',
+            },
+            status=200
+        )
 
     @http.route('/api/v1/potting/transit-orders/<int:ot_id>', type='http', auth='none', methods=['GET'], csrf=False, cors='*')
+    @api_exception_handler
     @rate_limit(max_requests=60, window_seconds=60)
+    @require_auth
     def api_transit_order_detail(self, ot_id, **kwargs):
         """
         Détails d'un ordre de transit spécifique.
         """
-        try:
-            # Vérifier l'authentification
-            auth_header = request.httprequest.headers.get('Authorization', '')
-            if not auth_header.startswith('Bearer '):
-                return api_error(APIErrorCodes.AUTH_TOKEN_MISSING, status=401)
-            
-            token = auth_header[7:]
-            user = self._verify_api_token(token)
-            if not user:
-                return api_error(APIErrorCodes.AUTH_TOKEN_INVALID, status=401)
-            
-            # Récupérer l'OT
-            TransitOrder = request.env['potting.transit.order'].sudo()
-            ot = TransitOrder.browse(ot_id)
-            
-            if not ot.exists():
-                return api_error(APIErrorCodes.RESOURCE_NOT_FOUND, status=404)
-            
-            # Formater avec tous les détails
-            data = self._format_transit_order(ot, include_details=True)
-            
-            # Ajouter les lots
-            data['lots'] = [{
-                'id': lot.id,
-                'name': lot.name,
-                'product_type': lot.product_type,
-                'target_tonnage': lot.target_tonnage,
-                'current_tonnage': lot.current_tonnage,
-                'fill_percentage': round(lot.fill_percentage, 1),
-                'state': lot.state,
-                'state_label': dict(lot._fields['state'].selection).get(lot.state, ''),
-                'container': lot.container_id.name if lot.container_id else None,
-            } for lot in ot.lot_ids]
-            
-            log_api_call(f'/transit-orders/{ot_id}', user_id=user.id, success=True)
-            
-            return api_response(data=data)
-            
-        except Exception as e:
-            _logger.exception(f"Erreur détail OT API potting: {e}")
-            return api_error(APIErrorCodes.SERVER_ERROR, status=500)
+        user = request.api_user
+        
+        # Validation de l'ID
+        valid, ot_id, error = InputValidator.validate_id(ot_id, 'ot_id')
+        if not valid:
+            return api_validation_error(error)
+        
+        # Récupérer l'OT
+        TransitOrder = request.env['potting.transit.order'].sudo()
+        ot = TransitOrder.browse(ot_id)
+        
+        if not ot.exists():
+            return api_error(APIErrorCodes.RESOURCE_NOT_FOUND, status=404)
+        
+        # Formater avec tous les détails
+        data = self._format_transit_order(ot, include_details=True)
+        
+        # Ajouter les lots
+        data['lots'] = [{
+            'id': lot.id,
+            'name': lot.name,
+            'product_type': lot.product_type,
+            'target_tonnage': lot.target_tonnage,
+            'current_tonnage': lot.current_tonnage,
+            'fill_percentage': round(lot.fill_percentage, 1),
+            'state': lot.state,
+            'state_label': dict(lot._fields['state'].selection).get(lot.state, ''),
+            'container': lot.container_id.name if lot.container_id else None,
+        } for lot in ot.lot_ids]
+        
+        log_api_call(f'/transit-orders/{ot_id}', user_id=user.id, success=True)
+        
+        return api_response(data=data)
 
     # ==================== ENDPOINT SANTÉ ====================
 
@@ -939,12 +909,31 @@ class PottingMobileAPIController(http.Controller):
         """
         Vérification de santé de l'API.
         Endpoint public sans authentification.
+        
+        Retourne le statut de l'API et des services dépendants.
         """
+        from .api_utils import db_circuit_breaker, report_circuit_breaker
+        
+        # Vérifier la connexion à la base de données
+        db_status = 'healthy'
+        try:
+            request.env['res.users'].sudo().search_count([])
+        except Exception:
+            db_status = 'unhealthy'
+        
         return api_response(
             data={
-                'status': 'healthy',
+                'status': 'healthy' if db_status == 'healthy' else 'degraded',
                 'api_version': API_VERSION,
                 'module': 'potting_management',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat(),
+                'services': {
+                    'database': db_status,
+                    'report_generation': report_circuit_breaker.state.value,
+                },
+                'circuit_breakers': {
+                    'database': db_circuit_breaker.get_status(),
+                    'report': report_circuit_breaker.get_status(),
+                }
             }
         )

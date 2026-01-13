@@ -6,3 +6,4 @@ from . import test_potting_confirmation_vente
 from . import test_potting_customer_order
 from . import test_potting_transit_order
 from . import test_potting_workflow
+from . import test_api_utils
