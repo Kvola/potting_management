@@ -270,10 +270,9 @@ class PottingMobileAPIController(http.Controller):
         }
         """
         try:
-            # Récupérer les données JSON
-            data = request.jsonrequest
-            login = data.get('login', '').strip()
-            password = data.get('password', '')
+            # Récupérer les données JSON depuis kwargs (Odoo 17 passe les données JSON dans kwargs)
+            login = kwargs.get('login', '').strip() if kwargs.get('login') else ''
+            password = kwargs.get('password', '')
             
             # Validation
             if not login:
