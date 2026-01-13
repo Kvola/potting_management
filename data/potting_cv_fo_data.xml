@@ -23,7 +23,7 @@
             <field name="street">Immeuble Caistab - Plateau</field>
             <field name="city">Abidjan</field>
             <field name="country_id" ref="base.ci"/>
-            <field name="phone">+225 20 21 25 40</field>
+            <field name="phone">+225 27 20 21 25 40</field>
             <field name="website">https://www.conseilcafecacao.ci</field>
             <field name="comment">Conseil du Café-Cacao - Organisme de régulation de la filière café-cacao en Côte d'Ivoire</field>
         </record>
