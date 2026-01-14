@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Couleurs principales ICP Export -->
+    <color name="icp_primary">#5D4037</color>
+    <color name="icp_primary_dark">#321911</color>
+    <color name="icp_primary_light">#8B6B61</color>
+    <color name="icp_secondary">#D4A574</color>
+    <color name="icp_accent">#FF9800</color>
+    
+    <!-- Couleurs de statut -->
+    <color name="icp_success">#4CAF50</color>
+    <color name="icp_warning">#FFC107</color>
+    <color name="icp_error">#E53935</color>
+    <color name="icp_info">#2196F3</color>
+    
+    <!-- Fond -->
+    <color name="icp_background">#F5F5F5</color>
+    <color name="icp_surface">#FFFFFF</color>
+</resources>

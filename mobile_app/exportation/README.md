@@ -1,6 +1,25 @@
-# ICP Exportation Mobile App
+# ICP Export
 
-Application mobile Flutter pour le suivi des activités d'exportation de cacao d'ICP (Industrial Cocoa Processing).
+Application mobile Flutter pour le suivi des activités d'exportation de cacao d'ICP (Industries de Cacao et de Chocolat de Côte d'Ivoire).
+
+## 🔧 Configuration des Environnements
+
+| Environnement | IP | Base de données | Port |
+|--------------|-----|-----------------|------|
+| Développement | 192.168.5.159 | icp_dev_db | 8069 |
+| **Préproduction** | **192.168.5.85** | **icp_test_db** | **8069** |
+| Production | 192.168.5.86 | icp_db | 8069 |
+
+> ⚠️ **Actuellement configuré pour : Préproduction**
+
+### Changer d'environnement
+
+Modifier le fichier `lib/core/config/app_config.dart` (ligne ~40) :
+
+```dart
+static const AppEnvironment currentEnvironment = AppEnvironment.preproduction;
+// Options : development, preproduction, production
+```
 
 ## 📱 Fonctionnalités
 

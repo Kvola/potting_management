@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/theme/app_colors.dart';
 import '../data/models/models.dart';
 
-/// Indicateur de chargement
+/// Indicateur de chargement amélioré
 class LoadingIndicator extends StatelessWidget {
   final String? message;
   final double size;
+  final bool fullScreen;
 
   const LoadingIndicator({
     super.key,
     this.message,
     this.size = 36,
+    this.fullScreen = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final content = Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -35,62 +38,92 @@ class LoadingIndicator extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                 ),
+            textAlign: TextAlign.center,
           ),
         ],
       ],
     );
+
+    if (fullScreen) {
+      return Container(
+        color: Colors.white.withOpacity(0.9),
+        child: Center(child: content),
+      );
+    }
+    return content;
   }
 }
 
-/// Vue d'erreur
+/// Vue d'erreur améliorée
 class ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
   final IconData icon;
+  final String? title;
+  final bool showDetails;
 
   const ErrorView({
     super.key,
     required this.message,
     this.onRetry,
     this.icon = Icons.error_outline_rounded,
+    this.title,
+    this.showDetails = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 64,
-              color: AppColors.error,
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.errorLight,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 48,
+                color: AppColors.error,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Text(
-              'Une erreur est survenue',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+              title ?? 'Une erreur est survenue',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-              textAlign: TextAlign.center,
-            ),
+            if (showDetails) ...[
+              const SizedBox(height: 12),
+              Text(
+                message,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
             if (onRetry != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               ElevatedButton.icon(
-                onPressed: onRetry,
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  onRetry!();
+                },
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Réessayer'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                ),
               ),
             ],
           ],

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ICP Export - Launch splash screen -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Fond marron chocolat (couleur primaire ICP) -->
+    <item android:drawable="@color/icp_primary" />
+
+    <!-- Icône de lancement centrée -->
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@mipmap/ic_launcher" />
+    </item>
+</layer-list>

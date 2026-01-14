@@ -1,7 +1,7 @@
-name: icp_exportation
-description: Application mobile ICP pour le suivi des activités d'exportation de cacao - PDG
+name: icp_export
+description: ICP Export - Application mobile de suivi des activités d'exportation de cacao pour le PDG
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: '>=3.2.0 <4.0.0'

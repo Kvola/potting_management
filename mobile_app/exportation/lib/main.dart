@@ -22,8 +22,10 @@ void main() async {
 
   // Configuration de la barre de statut
   SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle.dark.copyWith(
+    const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
     ),
   );
 
@@ -39,15 +41,25 @@ void main() async {
   // Initialisation du cache
   await CacheManager.init();
 
+  // Log de l'environnement actuel (seulement en debug)
+  if (AppConfig.isDebugMode) {
+    debugPrint('═══════════════════════════════════════════════');
+    debugPrint('🚀 ${AppConfig.appName} v${AppConfig.appVersion}');
+    debugPrint('📍 Environnement: ${AppConfig.environment.displayName}');
+    debugPrint('🌐 Serveur: ${AppConfig.baseUrl}');
+    debugPrint('💾 Base de données: ${AppConfig.database}');
+    debugPrint('═══════════════════════════════════════════════');
+  }
+
   runApp(
     const ProviderScope(
-      child: ICPExportationApp(),
+      child: ICPExportApp(),
     ),
   );
 }
 
-class ICPExportationApp extends ConsumerWidget {
-  const ICPExportationApp({super.key});
+class ICPExportApp extends ConsumerWidget {
+  const ICPExportApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,7 +67,7 @@ class ICPExportationApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: AppConfig.appName,
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: AppConfig.showDebugBanner,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
@@ -71,9 +83,29 @@ class ICPExportationApp extends ConsumerWidget {
       ],
       locale: const Locale('fr', 'FR'),
       builder: (context, child) {
+        // Désactiver le scaling du texte pour une UI cohérente
         return MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-          child: child!,
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.noScaling,
+          ),
+          child: Banner(
+            message: AppConfig.isDevelopment 
+                ? 'DEV' 
+                : AppConfig.isPreproduction 
+                    ? 'TEST' 
+                    : '',
+            location: BannerLocation.topEnd,
+            color: AppConfig.isDevelopment 
+                ? Colors.red 
+                : Colors.orange,
+            textStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 10,
+            ),
+            child: !AppConfig.isProduction && !AppConfig.showDebugBanner
+                ? child!
+                : child!,
+          ),
         );
       },
     );

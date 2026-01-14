@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Configuration pour permettre les connexions HTTP aux serveurs ICP -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Serveur de développement -->
+        <domain includeSubdomains="true">192.168.5.159</domain>
+        <!-- Serveur de préproduction -->
+        <domain includeSubdomains="true">192.168.5.85</domain>
+        <!-- Serveur de production -->
+        <domain includeSubdomains="true">192.168.5.86</domain>
+        <!-- Localhost pour les tests -->
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+    
+    <!-- Configuration par défaut : HTTPS uniquement pour les autres domaines -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

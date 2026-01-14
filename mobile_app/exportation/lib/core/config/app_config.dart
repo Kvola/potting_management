@@ -1,30 +1,96 @@
-/// Configuration globale de l'application ICP Exportation
+/// Environnements disponibles pour l'application
+enum AppEnvironment {
+  development,
+  preproduction,
+  production,
+}
+
+/// Configuration d'un environnement
+class EnvironmentConfig {
+  final String name;
+  final String displayName;
+  final String baseUrl;
+  final String database;
+  final bool enableLogging;
+  final bool showDebugBanner;
+
+  const EnvironmentConfig({
+    required this.name,
+    required this.displayName,
+    required this.baseUrl,
+    required this.database,
+    this.enableLogging = false,
+    this.showDebugBanner = false,
+  });
+}
+
+/// Configuration globale de l'application ICP Export
 class AppConfig {
   AppConfig._();
 
   // Informations de l'application
-  static const String appName = 'ICP Exportation';
-  static const String appVersion = '1.0.0';
+  static const String appName = 'ICP Export';
+  static const String appVersion = '1.1.0';
+  static const String appBuildNumber = '2';
   static const String apiVersion = '1.0.0';
 
   // ============================================================
-  // URL de base de l'API - MODIFIEZ CETTE VALEUR SELON VOTRE ENVIRONNEMENT
+  // ENVIRONNEMENT ACTUEL - MODIFIER ICI POUR CHANGER D'ENVIRONNEMENT
   // ============================================================
-  // Production:
-  // static const String baseUrl = 'https://odoo.icp.ci';
-  
-  // Développement local (IP de votre serveur Odoo):
-  // static const String baseUrl = 'http://192.168.1.100:8069';
-  
-  // Localhost (pour tests avec Odoo local):
-  static const String baseUrl = 'http://localhost:8069';
+  static const AppEnvironment currentEnvironment = AppEnvironment.preproduction;
   // ============================================================
 
-  // ============================================================
-  // NOM DE LA BASE DE DONNÉES ODOO
-  // ============================================================
-  static const String database = 'icp_dev_db';
-  // ============================================================
+  // Configuration des environnements
+  static const Map<AppEnvironment, EnvironmentConfig> _environments = {
+    AppEnvironment.development: EnvironmentConfig(
+      name: 'development',
+      displayName: 'Développement',
+      baseUrl: 'http://192.168.5.159:8069',
+      database: 'icp_dev_db',
+      enableLogging: true,
+      showDebugBanner: true,
+    ),
+    AppEnvironment.preproduction: EnvironmentConfig(
+      name: 'preproduction',
+      displayName: 'Pré-production',
+      baseUrl: 'http://192.168.5.85:8069',
+      database: 'icp_test_db',
+      enableLogging: true,
+      showDebugBanner: false,
+    ),
+    AppEnvironment.production: EnvironmentConfig(
+      name: 'production',
+      displayName: 'Production',
+      baseUrl: 'http://192.168.5.86:8069',
+      database: 'icp_db',
+      enableLogging: false,
+      showDebugBanner: false,
+    ),
+  };
+
+  /// Obtenir la configuration de l'environnement actuel
+  static EnvironmentConfig get environment => _environments[currentEnvironment]!;
+
+  /// URL de base de l'API
+  static String get baseUrl => environment.baseUrl;
+
+  /// Nom de la base de données
+  static String get database => environment.database;
+
+  /// Mode debug activé
+  static bool get isDebugMode => environment.enableLogging;
+
+  /// Afficher la bannière de debug
+  static bool get showDebugBanner => environment.showDebugBanner;
+
+  /// Vérifier si on est en production
+  static bool get isProduction => currentEnvironment == AppEnvironment.production;
+
+  /// Vérifier si on est en préproduction
+  static bool get isPreproduction => currentEnvironment == AppEnvironment.preproduction;
+
+  /// Vérifier si on est en développement
+  static bool get isDevelopment => currentEnvironment == AppEnvironment.development;
 
   // Endpoints API
   static const String apiPrefix = '/api/v1/potting';

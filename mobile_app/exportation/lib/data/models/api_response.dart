@@ -135,7 +135,7 @@ class ApiException implements Exception {
   factory ApiException.fromApiError(ApiError error, {int? statusCode}) {
     return ApiException(
       code: error.code,
-      message: error.message,
+      message: _getLocalizedMessage(error.code, error.message),
       statusCode: statusCode,
     );
   }
@@ -143,21 +143,21 @@ class ApiException implements Exception {
   factory ApiException.networkError([String? message]) {
     return ApiException(
       code: 'NETWORK_ERROR',
-      message: message ?? 'Erreur de connexion réseau',
+      message: message ?? 'Impossible de se connecter au serveur.\nVérifiez votre connexion internet.',
     );
   }
 
   factory ApiException.timeout() {
     return ApiException(
       code: 'TIMEOUT',
-      message: 'La requête a expiré, veuillez réessayer',
+      message: 'Le serveur met trop de temps à répondre.\nVeuillez réessayer.',
     );
   }
 
   factory ApiException.serverError([String? message]) {
     return ApiException(
       code: 'SRV_001',
-      message: message ?? 'Erreur serveur, veuillez réessayer',
+      message: message ?? 'Le serveur a rencontré une erreur.\nVeuillez réessayer plus tard.',
       statusCode: 500,
     );
   }
@@ -165,14 +165,64 @@ class ApiException implements Exception {
   factory ApiException.unauthorized() {
     return ApiException(
       code: 'AUTH_001',
-      message: 'Session expirée, veuillez vous reconnecter',
+      message: 'Votre session a expiré.\nVeuillez vous reconnecter.',
       statusCode: 401,
     );
   }
 
+  factory ApiException.noInternet() {
+    return ApiException(
+      code: 'NO_INTERNET',
+      message: 'Aucune connexion internet détectée.\nVérifiez votre connexion et réessayez.',
+    );
+  }
+
+  factory ApiException.maintenance() {
+    return ApiException(
+      code: 'MAINTENANCE',
+      message: 'Le serveur est en maintenance.\nVeuillez réessayer dans quelques minutes.',
+      statusCode: 503,
+    );
+  }
+
+  /// Obtenir un message localisé pour les codes d'erreur courants
+  static String _getLocalizedMessage(String code, String defaultMessage) {
+    switch (code) {
+      case 'AUTH_001':
+        return 'Identifiants invalides.\nVérifiez votre email et mot de passe.';
+      case 'AUTH_002':
+        return 'Votre session a expiré.\nVeuillez vous reconnecter.';
+      case 'AUTH_003':
+        return 'Token invalide ou expiré.\nVeuillez vous reconnecter.';
+      case 'AUTH_004':
+        return 'Accès non autorisé.\nVous n\'avez pas les permissions nécessaires.';
+      case 'AUTH_010':
+        return 'Trop de tentatives.\nVeuillez patienter quelques minutes.';
+      case 'VAL_001':
+        return 'Données invalides.\nVeuillez vérifier les informations saisies.';
+      case 'SRV_001':
+        return 'Erreur serveur.\nVeuillez réessayer plus tard.';
+      case 'DB_001':
+        return 'Base de données non disponible.\nVeuillez contacter le support.';
+      default:
+        return defaultMessage;
+    }
+  }
+
   bool get isAuthError => code.startsWith('AUTH_');
-  bool get isNetworkError => code == 'NETWORK_ERROR';
+  bool get isNetworkError => code == 'NETWORK_ERROR' || code == 'NO_INTERNET';
   bool get isTimeout => code == 'TIMEOUT';
+  bool get isMaintenance => code == 'MAINTENANCE';
+  bool get isRateLimited => code == 'AUTH_010';
+
+  /// Obtenir une action suggérée basée sur le type d'erreur
+  String get suggestedAction {
+    if (isAuthError) return 'Se reconnecter';
+    if (isNetworkError) return 'Vérifier la connexion';
+    if (isTimeout) return 'Réessayer';
+    if (isMaintenance) return 'Patienter';
+    return 'Réessayer';
+  }
 
   @override
   String toString() => message;
