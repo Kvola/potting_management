@@ -16,4 +16,5 @@
     <!-- Fond -->
     <color name="icp_background">#F5F5F5</color>
     <color name="icp_surface">#FFFFFF</color>
+	<color name="ic_launcher_background">#5D4037</color>
 </resources>

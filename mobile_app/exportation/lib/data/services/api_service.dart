@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -247,15 +248,30 @@ class ApiService {
         );
       }
 
-      // Sauvegarder le fichier
-      final directory = await getApplicationDocumentsDirectory();
-      final reportDate = date ?? DateTime.now().toIso8601String().split('T')[0];
-      final filename = 'OT_Daily_Report_$reportDate.pdf';
-      final file = File('${directory.path}/$filename');
-      
-      await file.writeAsBytes(bytes);
-      
-      return file;
+      // Sauvegarder le fichier (non supporté sur web)
+      if (kIsWeb) {
+        throw ApiException(
+          code: 'PLATFORM_001',
+          message: 'Le téléchargement de PDF n\'est pas supporté sur le web.\nUtilisez l\'application mobile.',
+        );
+      }
+
+      try {
+        final directory = await getApplicationDocumentsDirectory();
+        final reportDate = date ?? DateTime.now().toIso8601String().split('T')[0];
+        final filename = 'OT_Daily_Report_$reportDate.pdf';
+        final file = File('${directory.path}/$filename');
+        
+        await file.writeAsBytes(bytes);
+        
+        return file;
+      } catch (e) {
+        _logger.e('Erreur sauvegarde fichier: $e');
+        throw ApiException(
+          code: 'FILE_001',
+          message: 'Impossible de sauvegarder le fichier.\nVérifiez les permissions de l\'application.',
+        );
+      }
     } on ApiException {
       rethrow;
     } catch (e) {
