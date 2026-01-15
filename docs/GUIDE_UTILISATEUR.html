@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Utilisateur - Module Potting Management</title>
+    <style>
+        @media print {
+            body { margin: 0; padding: 20px; }
+            .no-print { display: none; }
+            h1 { page-break-before: always; }
+            h1:first-of-type { page-break-before: avoid; }
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f9f9f9;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px 60px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Couverture */
+        .cover {
+            text-align: center;
+            padding: 80px 20px;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #6c4f3d;
+        }
+        
+        .cover-logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #8b5e3c, #6c4f3d);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .cover h1 {
+            color: #6c4f3d;
+            font-size: 2.5em;
+            margin: 0 0 10px;
+        }
+        
+        .cover h2 {
+            color: #8b5e3c;
+            font-size: 1.5em;
+            font-weight: normal;
+            margin: 0 0 30px;
+        }
+        
+        .cover .meta {
+            color: #888;
+            font-size: 0.95em;
+        }
+        
+        /* Titres */
+        h1 {
+            color: #6c4f3d;
+            border-bottom: 2px solid #6c4f3d;
+            padding-bottom: 10px;
+            margin-top: 50px;
+        }
+        
+        h2 {
+            color: #8b5e3c;
+            margin-top: 35px;
+        }
+        
+        h3 {
+            color: #5a4231;
+            margin-top: 25px;
+        }
+        
+        h4 {
+            color: #666;
+            margin-top: 20px;
+        }
+        
+        /* Tableaux */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        th {
+            background: #f5f2f0;
+            color: #5a4231;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #fafafa;
+        }
+        
+        tr:hover {
+            background: #f5f2f0;
+        }
+        
+        /* Listes */
+        ul, ol {
+            padding-left: 25px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        /* Code */
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #6c4f3d;
+        }
+        
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+        
+        /* Citations */
+        blockquote {
+            border-left: 4px solid #8b5e3c;
+            margin: 20px 0;
+            padding: 15px 20px;
+            background: #faf7f5;
+            font-style: italic;
+            color: #666;
+        }
+        
+        /* Liens */
+        a {
+            color: #6c4f3d;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Info boxes */
+        .info-box {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .info-box.warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .info-box.info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .info-box.success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        
+        /* Bouton impression */
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #6c4f3d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(108, 79, 61, 0.3);
+            z-index: 1000;
+        }
+        
+        .print-btn:hover {
+            background: #5a4231;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #888;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">📄 Imprimer / PDF</button>
+    
+    <div class="container">
+        <div class="cover">
+            <div class="cover-logo">☕</div>
+            <h1>Module Potting Management</h1>
+            <h2>Guide Utilisateur</h2>
+            <p>Gestion des Exportations de Cacao<br>Réglementation CCC - Côte d'Ivoire</p>
+            <div class="meta">
+                <p>Version 17.0.1.3.0 | Janvier 2026</p>
+                <p>Odoo 17 Community/Enterprise</p>
+            </div>
+        </div>
+        
+        <h1 id="guide-utilisateur-module-gestion-des-exportations-potting-management">📋 Guide Utilisateur - Module Gestion des Exportations (Potting Management)</h1>
+<blockquote>
+<p><strong>Version</strong> : 17.0.1.3.0<br />
+<strong>Dernière mise à jour</strong> : Janvier 2026<br />
+<strong>Auteur</strong> : ICP - Ivory Cocoa Products</p>
+</blockquote>
+<hr />
+<h2 id="table-des-matieres">📑 Table des matières</h2>
+<ol>
+<li><a href="#1-introduction">Introduction</a></li>
+<li><a href="#2-concepts-clés-et-réglementation-ccc">Concepts clés et Réglementation CCC</a></li>
+<li><a href="#3-rôles-et-permissions">Rôles et Permissions</a></li>
+<li><a href="#4-confirmations-de-vente-cv">Confirmations de Vente (CV)</a></li>
+<li><a href="#5-contrats-clients">Contrats Clients</a></li>
+<li><a href="#6-formules-fo">Formules (FO)</a></li>
+<li><a href="#7-ordres-de-transit-ot">Ordres de Transit (OT)</a></li>
+<li><a href="#8-gestion-des-lots">Gestion des Lots</a></li>
+<li><a href="#9-bons-de-livraison-bl">Bons de Livraison (BL)</a></li>
+<li><a href="#10-facturation">Facturation</a></li>
+<li><a href="#11-transitaires-et-paiements">Transitaires et Paiements</a></li>
+<li><a href="#12-campagnes-café-cacao">Campagnes Café-Cacao</a></li>
+<li><a href="#13-certifications">Certifications</a></li>
+<li><a href="#14-tableaux-de-bord">Tableaux de Bord</a></li>
+<li><a href="#15-api-mobile-pdg">API Mobile (PDG)</a></li>
+<li><a href="#16-rapports-et-envoi-par-email">Rapports et Envoi par Email</a></li>
+<li><a href="#17-configuration">Configuration</a></li>
+<li><a href="#18-faq-et-support">FAQ et Support</a></li>
+</ol>
+<hr />
+<h2 id="1-introduction">1. Introduction</h2>
+<p>Le module <strong>Gestion des Exportations (Potting Management)</strong> est un système complet de gestion des opérations d'exportation de <strong>produits semi-finis du cacao</strong> pour les entreprises de transformation en Côte d'Ivoire. Il gère l'ensemble du processus depuis les autorisations réglementaires du <strong>Conseil Café-Cacao (CCC)</strong> jusqu'à la facturation des exportations.</p>
+<h3 id="fonctionnalites-principales">🎯 Fonctionnalités principales</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>📜 Confirmations de Vente (CV)</strong></td>
+<td>Autorisations d'exportation du CCC</td>
+</tr>
+<tr>
+<td><strong>📝 Contrats Clients</strong></td>
+<td>Accords commerciaux avec les acheteurs</td>
+</tr>
+<tr>
+<td><strong>🧮 Formules (FO)</strong></td>
+<td>Fixation des prix et taxes CCC</td>
+</tr>
+<tr>
+<td><strong>🚚 Ordres de Transit (OT)</strong></td>
+<td>Expéditions physiques des marchandises</td>
+</tr>
+<tr>
+<td><strong>📦 Lots</strong></td>
+<td>Suivi des productions et conditionnements</td>
+</tr>
+<tr>
+<td><strong>📋 Bons de Livraison</strong></td>
+<td>Documents d'expédition</td>
+</tr>
+<tr>
+<td><strong>💰 Facturation</strong></td>
+<td>Génération des factures clients</td>
+</tr>
+<tr>
+<td><strong>👷 Transitaires</strong></td>
+<td>Gestion des agents et leurs paiements</td>
+</tr>
+<tr>
+<td><strong>📊 Tableaux de bord</strong></td>
+<td>Vue d'ensemble des opérations</td>
+</tr>
+<tr>
+<td><strong>📱 API Mobile</strong></td>
+<td>Application PDG pour suivi en temps réel</td>
+</tr>
+</tbody>
+</table>
+<h3 id="produits-geres">🏭 Produits gérés</h3>
+<table>
+<thead>
+<tr>
+<th>Produit</th>
+<th>Code</th>
+<th>Conditionnement</th>
+<th>Poids unitaire</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Masse de cacao</strong></td>
+<td><code>cocoa_mass</code></td>
+<td>Carton</td>
+<td>25 kg</td>
+</tr>
+<tr>
+<td><strong>Beurre de cacao</strong></td>
+<td><code>cocoa_butter</code></td>
+<td>Carton</td>
+<td>25 kg</td>
+</tr>
+<tr>
+<td><strong>Cake (Tourteau)</strong></td>
+<td><code>cocoa_cake</code></td>
+<td>Big bag</td>
+<td>1 000 kg</td>
+</tr>
+<tr>
+<td><strong>Poudre de cacao</strong></td>
+<td><code>cocoa_powder</code></td>
+<td>Sac</td>
+<td>25 kg</td>
+</tr>
+</tbody>
+</table>
+<h3 id="flux-de-travail-global">📊 Flux de travail global</h3>
+<pre><code>┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│ Confirmation de │ ──► │    Contrat      │ ──► │    Formule      │
+│   Vente (CV)    │     │    Client       │     │     (FO)        │
+│   [CCC]         │     │  [Commercial]   │     │    [CCC]        │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                                                        │
+                                                        ▼
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│    Facture      │ ◄── │  Bon de         │ ◄── │  Ordre de       │
+│   [Finance]     │     │  Livraison (BL) │     │  Transit (OT)   │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                                                        │
+                                                        ▼
+                                                ┌─────────────────┐
+                                                │     Lots        │
+                                                │  [Production]   │
+                                                └─────────────────┘
+</code></pre>
+<hr />
+<h2 id="2-concepts-cles-et-reglementation-ccc">2. Concepts clés et Réglementation CCC</h2>
+<h3 id="le-conseil-cafe-cacao-ccc">🏛️ Le Conseil Café-Cacao (CCC)</h3>
+<p>Le <strong>Conseil du Café-Cacao</strong> est l'organe de régulation de la filière cacao en Côte d'Ivoire. Toute exportation de produits cacao nécessite des autorisations officielles du CCC.</p>
+<h3 id="documents-reglementaires">📄 Documents réglementaires</h3>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Sigle</th>
+<th>Émetteur</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Confirmation de Vente</strong></td>
+<td>CV</td>
+<td>CCC</td>
+<td>Autorisation d'exportation avec tonnage et prix</td>
+</tr>
+<tr>
+<td><strong>Formule</strong></td>
+<td>FO / FO1</td>
+<td>CCC</td>
+<td>Fixation du prix et détail des taxes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="systeme-de-taxes-ccc">💰 Système de taxes CCC</h3>
+<p>Les exportations sont soumises à différentes taxes et redevances prélevées par le CCC :</p>
+<h4 id="redevances-montant-par-kg">Redevances (montant par kg)</h4>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CCC</strong></td>
+<td>Redevance Conseil Café-Cacao</td>
+<td>FCFA/kg</td>
+<td>Contribution au fonctionnement du CCC</td>
+</tr>
+<tr>
+<td><strong>FIMR</strong></td>
+<td>Fonds d'Investissement en Milieu Rural</td>
+<td>FCFA/kg</td>
+<td>Développement agricole</td>
+</tr>
+<tr>
+<td><strong>SACHERIE</strong></td>
+<td>Redevance sacherie</td>
+<td>FCFA/kg</td>
+<td>Financement des emballages</td>
+</tr>
+<tr>
+<td><strong>FDPCC</strong></td>
+<td>Fonds de Développement Café-Cacao</td>
+<td>FCFA/kg</td>
+<td>Développement de la filière</td>
+</tr>
+</tbody>
+</table>
+<h4 id="taxes-pourcentage">Taxes (pourcentage)</h4>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Libellé</th>
+<th>Taux</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DIUS</strong></td>
+<td>Droit Indicatif à l'Usine</td>
+<td>14.6%</td>
+<td>Taxe de transformation</td>
+</tr>
+<tr>
+<td><strong>DUS</strong></td>
+<td>Droit Unique de Sortie</td>
+<td>5%</td>
+<td>Taxe d'exportation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="systeme-de-paiement-en-deux-temps">💳 Système de paiement en deux temps</h3>
+<p>Les formules CCC prévoient un paiement en deux phases :</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Pourcentage</th>
+<th>Moment</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Avant-vente</strong></td>
+<td>60%</td>
+<td>Avant embarquement</td>
+<td>Avance versée aux producteurs</td>
+</tr>
+<tr>
+<td><strong>Après-vente</strong></td>
+<td>40%</td>
+<td>Après embarquement</td>
+<td>Solde après réalisation de la vente</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-roles-et-permissions">3. Rôles et Permissions</h2>
+<h3 id="groupes-dutilisateurs">📊 Groupes d'utilisateurs</h3>
+<p>Le module définit plusieurs niveaux d'accès :</p>
+<table>
+<thead>
+<tr>
+<th>Groupe</th>
+<th>Description</th>
+<th>Accès</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Commercial</strong></td>
+<td>Commercial</td>
+<td>Création des contrats (commandes), saisie du tonnage</td>
+</tr>
+<tr>
+<td><strong>Shipping - Utilisateur</strong></td>
+<td>Agent logistique</td>
+<td>CV, Contrats, OT (création)</td>
+</tr>
+<tr>
+<td><strong>Agent Exportation</strong></td>
+<td>Agent de production</td>
+<td>Lots, Productions, Validations</td>
+</tr>
+<tr>
+<td><strong>Responsable</strong></td>
+<td>Superviseur</td>
+<td>Accès complet, Configuration</td>
+</tr>
+<tr>
+<td><strong>Manager</strong></td>
+<td>Direction</td>
+<td>Administration, Rapports, API Mobile</td>
+</tr>
+</tbody>
+</table>
+<h3 id="matrice-des-permissions">📋 Matrice des permissions</h3>
+<table>
+<thead>
+<tr>
+<th>Fonctionnalité</th>
+<th>Commercial</th>
+<th>Utilisateur</th>
+<th>Agent Export</th>
+<th>Responsable</th>
+<th>Manager</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Voir les CV</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Créer des CV</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Créer des contrats</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Créer des OT</td>
+<td>❌</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Gérer les lots</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Valider les OT</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Générer des factures</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Saisir le tonnage</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Accès API Mobile</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-confirmations-de-vente-cv">4. Confirmations de Vente (CV)</h2>
+<h3 id="presentation">📄 Présentation</h3>
+<p>La <strong>Confirmation de Vente (CV)</strong> est une autorisation délivrée par le Conseil Café-Cacao. Elle définit :
+- Le <strong>tonnage maximum</strong> autorisé pour l'exportation
+- La <strong>période de validité</strong>
+- Le <strong>prix garanti</strong> par le CCC
+- Le <strong>type de produit</strong> autorisé</p>
+<h3 id="creer-une-confirmation-de-vente">📝 Créer une Confirmation de Vente</h3>
+<ol>
+<li><strong>Menu</strong> : <code>Potting &gt; Références CCC &gt; Confirmations de Vente &gt; Créer</code></li>
+<li>Remplir les informations :</li>
+<li><strong>Référence CCC</strong> : Référence officielle attribuée par le CCC</li>
+<li><strong>Campagne</strong> : Saison café-cacao concernée</li>
+<li><strong>Date d'émission</strong> : Date du document CCC</li>
+<li><strong>Début de validité</strong> : Première date utilisable</li>
+<li><strong>Fin de validité</strong> : Date limite d'utilisation</li>
+<li><strong>Tonnage autorisé</strong> : Quantité maximale en tonnes</li>
+<li><strong>Prix au tonnage</strong> : Prix garanti par tonne</li>
+<li><strong>Type de produit</strong> : Masse, Beurre, Cake ou Poudre</li>
+<li>Cliquer sur <strong>Enregistrer</strong></li>
+<li>Cliquer sur <strong>Activer</strong> pour rendre la CV utilisable</li>
+</ol>
+<h3 id="etats-de-la-cv">🔄 États de la CV</h3>
+<table>
+<thead>
+<tr>
+<th>État</th>
+<th>Description</th>
+<th>Actions possibles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Brouillon</strong></td>
+<td>CV en cours de création</td>
+<td>Modifier, Activer</td>
+</tr>
+<tr>
+<td><strong>Active</strong></td>
+<td>CV validée et utilisable</td>
+<td>Créer contrats, Annuler</td>
+</tr>
+<tr>
+<td><strong>Consommée</strong></td>
+<td>Tonnage entièrement utilisé</td>
+<td>Consultation</td>
+</tr>
+<tr>
+<td><strong>Expirée</strong></td>
+<td>Date de validité dépassée</td>
+<td>Consultation</td>
+</tr>
+<tr>
+<td><strong>Annulée</strong></td>
+<td>CV annulée</td>
+<td>Consultation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="suivi-du-tonnage">📊 Suivi du tonnage</h3>
+<p>Le système calcule automatiquement :
+- <strong>Tonnage utilisé</strong> : Somme des contrats liés
+- <strong>Tonnage restant</strong> : Tonnage autorisé - Tonnage utilisé
+- <strong>Progression (%)</strong> : Pourcentage d'utilisation</p>
+<h3 id="alertes-automatiques">⚠️ Alertes automatiques</h3>
+<table>
+<thead>
+<tr>
+<th>Alerte</th>
+<th>Condition</th>
+<th>Action recommandée</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🟡 <strong>Expiration proche</strong></td>
+<td>Moins de 30 jours</td>
+<td>Planifier l'utilisation</td>
+</tr>
+<tr>
+<td>🔴 <strong>Expirée</strong></td>
+<td>Date dépassée</td>
+<td>Demander une nouvelle CV</td>
+</tr>
+<tr>
+<td>🟠 <strong>Tonnage épuisé</strong></td>
+<td>Utilisation &gt; 80%</td>
+<td>Anticiper nouvelle CV</td>
+</tr>
+<tr>
+<td>🔴 <strong>Tonnage atteint</strong></td>
+<td>Restant = 0</td>
+<td>CV devient "Consommée"</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-contrats-clients">5. Contrats Clients</h2>
+<h3 id="presentation_1">📄 Présentation</h3>
+<p>Le <strong>Contrat Client</strong> représente un accord commercial avec un acheteur pour l'exportation de produits cacao. Chaque contrat est <strong>obligatoirement lié à une Confirmation de Vente</strong>.</p>
+<h3 id="creer-un-contrat-client">📝 Créer un contrat client</h3>
+<ol>
+<li><strong>Menu</strong> : <code>Potting &gt; Commercial &gt; Contrats clients &gt; Créer</code></li>
+<li>Remplir les informations :</li>
+<li><strong>Confirmation de Vente</strong> : Sélectionner la CV (obligatoire)</li>
+<li><strong>Client</strong> : Sélectionner l'acheteur</li>
+<li><strong>Numéro de contrat</strong> : Référence commerciale</li>
+<li><strong>Type de produit</strong> : Hérité de la CV ou à définir</li>
+<li><strong>Tonnage</strong> : Quantité contractuelle (≤ tonnage CV restant)</li>
+<li><strong>Prix unitaire</strong> : Prix par tonne négocié</li>
+<li><strong>Date de livraison prévue</strong> : Date cible</li>
+<li>Optionnel : Ajouter des <strong>certifications</strong> (Fair Trade, Rainforest, etc.)</li>
+<li>Cliquer sur <strong>Enregistrer</strong></li>
+<li>Cliquer sur <strong>Confirmer</strong> pour valider le contrat</li>
+</ol>
+<h3 id="etats-du-contrat">🔄 États du contrat</h3>
+<table>
+<thead>
+<tr>
+<th>État</th>
+<th>Description</th>
+<th>Actions possibles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Brouillon</strong></td>
+<td>Contrat en négociation</td>
+<td>Modifier, Confirmer, Annuler</td>
+</tr>
+<tr>
+<td><strong>Confirmé</strong></td>
+<td>Contrat validé</td>
+<td>Créer OT, Créer Formule</td>
+</tr>
+<tr>
+<td><strong>En cours</strong></td>
+<td>Expéditions en cours</td>
+<td>Suivi OT, BL</td>
+</tr>
+<tr>
+<td><strong>Terminé</strong></td>
+<td>Contrat entièrement exécuté</td>
+<td>Consultation, Facturation</td>
+</tr>
+<tr>
+<td><strong>Annulé</strong></td>
+<td>Contrat annulé</td>
+<td>Consultation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="calculs-automatiques">💰 Calculs automatiques</h3>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Formule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Sous-total</strong></td>
+<td>Prix unitaire × Tonnage</td>
+</tr>
+<tr>
+<td><strong>Prime certification</strong></td>
+<td>Somme des primes des certifications</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td>Sous-total + Prime certification</td>
+</tr>
+<tr>
+<td><strong>Droits d'exportation</strong></td>
+<td>Total × Taux (ex: 14.6%)</td>
+</tr>
+<tr>
+<td><strong>Montant net</strong></td>
+<td>Total - Droits d'exportation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="suivi-des-ot">📊 Suivi des OT</h3>
+<p>Depuis le contrat, vous pouvez voir :
+- Nombre d'OT créés
+- Tonnage total des OT
+- Progression globale des expéditions
+- Statut de facturation</p>
+<hr />
+<h2 id="6-formules-fo">6. Formules (FO)</h2>
+<h3 id="presentation_2">📄 Présentation</h3>
+<p>La <strong>Formule (FO ou FO1)</strong> est un document du CCC qui fixe le prix d'achat aux producteurs et détaille les taxes et redevances applicables. Chaque formule est liée à une CV et peut être attachée à un OT.</p>
+<h3 id="creer-une-formule">📝 Créer une formule</h3>
+<ol>
+<li><strong>Menu</strong> : <code>Potting &gt; Références CCC &gt; Formules &gt; Créer</code></li>
+<li>Remplir les informations principales :</li>
+<li><strong>Confirmation de Vente</strong> : CV associée (obligatoire)</li>
+<li><strong>Référence CCC</strong> : Référence complète (ex: FO1/F025/327/0020/0084)</li>
+<li><strong>Numéro FO1</strong> : Numéro court (ex: 22-3276)</li>
+<li><strong>Date FO1</strong> : Date d'émission par le CCC</li>
+<li><strong>Type de produit</strong> : Produit concerné</li>
+<li>Informations qualité :</li>
+<li><strong>Grade</strong> : GF, F, SS ou Limite</li>
+<li><strong>Nomenclature douanière</strong> : Code douanier</li>
+<li>Informations prix :</li>
+<li><strong>Prix au kg</strong> : Prix effectif FCFA/kg</li>
+<li><strong>Tonnage</strong> : Quantité couverte</li>
+<li>Détail des taxes (section dédiée)</li>
+<li>Configuration du paiement :</li>
+<li><strong>Pourcentage avant-vente</strong> : Défaut 60%</li>
+<li>Cliquer sur <strong>Enregistrer</strong></li>
+<li>Cliquer sur <strong>Valider</strong> pour activer la formule</li>
+</ol>
+<h3 id="grades-qualite">🧮 Grades qualité</h3>
+<table>
+<thead>
+<tr>
+<th>Grade</th>
+<th>Signification</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GF</strong></td>
+<td>Good Fermented</td>
+<td>Qualité supérieure, bien fermenté</td>
+</tr>
+<tr>
+<td><strong>F</strong></td>
+<td>Fair Fermented</td>
+<td>Qualité standard</td>
+</tr>
+<tr>
+<td><strong>SS</strong></td>
+<td>Sub-Standard</td>
+<td>Qualité inférieure</td>
+</tr>
+<tr>
+<td><strong>LIMIT</strong></td>
+<td>Limite</td>
+<td>Qualité limite acceptable</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detail-des-taxes">💰 Détail des taxes</h3>
+<p>La formule inclut le détail de toutes les taxes prélevées :</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Type de taxe</strong></td>
+<td>Sélection parmi les taxes CCC prédéfinies</td>
+</tr>
+<tr>
+<td><strong>Montant/Taux</strong></td>
+<td>Valeur de la taxe</td>
+</tr>
+<tr>
+<td><strong>Base de calcul</strong></td>
+<td>Par kg ou pourcentage</td>
+</tr>
+<tr>
+<td><strong>Montant calculé</strong></td>
+<td>Taxe × Tonnage</td>
+</tr>
+</tbody>
+</table>
+<h3 id="etats-de-la-formule">🔄 États de la formule</h3>
+<table>
+<thead>
+<tr>
+<th>État</th>
+<th>Description</th>
+<th>Actions possibles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Brouillon</strong></td>
+<td>Formule en saisie</td>
+<td>Modifier, Valider</td>
+</tr>
+<tr>
+<td><strong>Validée</strong></td>
+<td>Formule active</td>
+<td>Lier à un OT</td>
+</tr>
+<tr>
+<td><strong>Paiement partiel</strong></td>
+<td>Avant-vente payé</td>
+<td>Enregistrer après-vente</td>
+</tr>
+<tr>
+<td><strong>Payée</strong></td>
+<td>Tous paiements effectués</td>
+<td>Consultation</td>
+</tr>
+<tr>
+<td><strong>Annulée</strong></td>
+<td>Formule annulée</td>
+<td>Consultation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="gestion-des-paiements">💳 Gestion des paiements</h3>
+<h4 id="paiement-avant-vente-60">Paiement avant-vente (60%)</h4>
+<ol>
+<li>Ouvrir la formule validée</li>
+<li>Cliquer sur <strong>Enregistrer paiement avant-vente</strong></li>
+<li>Sélectionner le mode de paiement (chèque, virement)</li>
+<li>Renseigner les informations bancaires</li>
+<li>Valider</li>
+</ol>
+<h4 id="paiement-apres-vente-40">Paiement après-vente (40%)</h4>
+<ol>
+<li>Ouvrir la formule en "Paiement partiel"</li>
+<li>Cliquer sur <strong>Enregistrer paiement après-vente</strong></li>
+<li>Compléter les informations</li>
+<li>Valider</li>
+</ol>
+<hr />
+<h2 id="7-ordres-de-transit-ot">7. Ordres de Transit (OT)</h2>
+<h3 id="presentation_3">📄 Présentation</h3>
+<p>L'<strong>Ordre de Transit (OT)</strong> gère l'expédition physique des marchandises. Chaque OT est obligatoirement lié à :
+- Un <strong>Contrat client</strong>
+- Une <strong>Formule (FO)</strong> validée</p>
+<p>L'OT génère automatiquement les <strong>lots</strong> d'empotage en fonction du tonnage.</p>
+<h3 id="creer-un-ot">📝 Créer un OT</h3>
+<h4 id="methode-1-depuis-le-contrat">Méthode 1 : Depuis le contrat</h4>
+<ol>
+<li>Ouvrir le contrat confirmé</li>
+<li>Cliquer sur <strong>Créer OT</strong></li>
+<li>Suivre l'assistant de création</li>
+</ol>
+<h4 id="methode-2-creation-directe">Méthode 2 : Création directe</h4>
+<ol>
+<li><strong>Menu</strong> : <code>Potting &gt; Logistique &gt; Ordres de Transit &gt; Créer</code></li>
+<li>Remplir les informations :</li>
+<li><strong>Commande client</strong> : Sélectionner le contrat</li>
+<li><strong>Formule (FO)</strong> : Sélectionner une formule validée non utilisée</li>
+<li><strong>Campagne</strong> : Saison café-cacao</li>
+<li><strong>Destinataire (Consignee)</strong> : Destinataire final</li>
+<li><strong>Tonnage</strong> : Quantité à expédier</li>
+<li><strong>Type de produit</strong> : Produit à exporter</li>
+<li>Informations logistiques :</li>
+<li><strong>Transitaire</strong> : Agent d'exportation</li>
+<li><strong>Navire</strong> : Nom du navire</li>
+<li><strong>Port de déchargement (POD)</strong> : Port de destination</li>
+<li><strong>Numéro de booking</strong> : Référence de réservation</li>
+<li><strong>Taille conteneur</strong> : 20' ou 40'</li>
+<li>Cliquer sur <strong>Enregistrer</strong></li>
+</ol>
+<h3 id="generation-des-lots">📦 Génération des lots</h3>
+<p>Après création de l'OT :</p>
+<ol>
+<li>Cliquer sur <strong>Générer les lots</strong></li>
+<li>Le système calcule automatiquement :</li>
+<li>Nombre de lots selon le tonnage maximum par lot</li>
+<li>Tonnage cible par lot</li>
+<li>Numéros de lot séquentiels</li>
+<li>Les lots sont créés et liés à l'OT</li>
+</ol>
+<h4 id="tonnages-maximum-par-defaut">Tonnages maximum par défaut</h4>
+<table>
+<thead>
+<tr>
+<th>Produit</th>
+<th>Tonnage max/lot</th>
+<th>Alternatif</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Masse de cacao</td>
+<td>25 T</td>
+<td>20 T</td>
+</tr>
+<tr>
+<td>Beurre de cacao</td>
+<td>22 T</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Cake de cacao</td>
+<td>25 T</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Poudre de cacao</td>
+<td>22.5 T</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="etats-de-lot">🔄 États de l'OT</h3>
+<table>
+<thead>
+<tr>
+<th>État</th>
+<th>Description</th>
+<th>Actions possibles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Brouillon</strong></td>
+<td>OT en création</td>
+<td>Modifier, Générer lots</td>
+</tr>
+<tr>
+<td><strong>Lots générés</strong></td>
+<td>Lots créés</td>
+<td>Démarrer production</td>
+</tr>
+<tr>
+<td><strong>En cours</strong></td>
+<td>Production en cours</td>
+<td>Ajouter productions, Créer BL</td>
+</tr>
+<tr>
+<td><strong>Prêt validation</strong></td>
+<td>Production terminée</td>
+<td>Valider</td>
+</tr>
+<tr>
+<td><strong>Validé (Done)</strong></td>
+<td>OT terminé</td>
+<td>Facturer</td>
+</tr>
+<tr>
+<td><strong>Annulé</strong></td>
+<td>OT annulé</td>
+<td>Consultation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="suivi-de-progression">📊 Suivi de progression</h3>
+<p>Le tableau de bord de l'OT affiche :
+- <strong>Tonnage cible</strong> vs <strong>Tonnage actuel</strong>
+- <strong>Progression (%)</strong> de remplissage
+- <strong>Lots empotés</strong> / <strong>Total lots</strong>
+- <strong>Statut de livraison</strong> : Non livré / Partiel / Complet
+- <strong>Statut de facturation</strong> : Non facturé / Partiel / Complet</p>
+<hr />
+<h2 id="8-gestion-des-lots">8. Gestion des Lots</h2>
+<h3 id="presentation_4">📄 Présentation</h3>
+<p>Un <strong>Lot</strong> représente une unité de production à empoter. Chaque lot est lié à un OT et a un tonnage cible défini.</p>
+<h3 id="structure-dun-lot">📊 Structure d'un lot</h3>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Numéro de lot</strong></td>
+<td>Référence unique (ex: T10582RA)</td>
+</tr>
+<tr>
+<td><strong>Référence de base</strong></td>
+<td>Sans suffixe certification (ex: T10582)</td>
+</tr>
+<tr>
+<td><strong>OT</strong></td>
+<td>Ordre de Transit parent</td>
+</tr>
+<tr>
+<td><strong>Type de produit</strong></td>
+<td>Masse, Beurre, Cake ou Poudre</td>
+</tr>
+<tr>
+<td><strong>Tonnage cible</strong></td>
+<td>Capacité maximale</td>
+</tr>
+<tr>
+<td><strong>Tonnage actuel</strong></td>
+<td>Productions enregistrées</td>
+</tr>
+<tr>
+<td><strong>Tonnage restant</strong></td>
+<td>Cible - Actuel</td>
+</tr>
+<tr>
+<td><strong>Certification</strong></td>
+<td>Fair Trade, Rainforest, etc.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="conditionnement-automatique">📦 Conditionnement automatique</h3>
+<p>Le système calcule automatiquement le conditionnement selon le produit :</p>
+<table>
+<thead>
+<tr>
+<th>Produit</th>
+<th>Unité</th>
+<th>Poids unitaire</th>
+<th>Exemple</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Masse de cacao</td>
+<td>Carton</td>
+<td>25 kg</td>
+<td>10T = 400 cartons</td>
+</tr>
+<tr>
+<td>Beurre de cacao</td>
+<td>Carton</td>
+<td>25 kg</td>
+<td>10T = 400 cartons</td>
+</tr>
+<tr>
+<td>Cake de cacao</td>
+<td>Big bag</td>
+<td>1 000 kg</td>
+<td>10T = 10 big bags</td>
+</tr>
+<tr>
+<td>Poudre de cacao</td>
+<td>Sac</td>
+<td>25 kg</td>
+<td>5T = 200 sacs</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ajouter-une-production">📝 Ajouter une production</h3>
+<ol>
+<li>Ouvrir le lot concerné</li>
+<li>Cliquer sur <strong>Ajouter production</strong></li>
+<li>Remplir :</li>
+<li><strong>Date de production</strong> : Date effective</li>
+<li><strong>Tonnage</strong> : Quantité produite</li>
+<li><strong>Numéro de batch</strong> : Référence production (optionnel)</li>
+<li><strong>Notes</strong> : Observations</li>
+<li>Valider</li>
+</ol>
+<p>Le tonnage actuel du lot est automatiquement mis à jour.</p>
+<h3 id="etats-du-lot">🔄 États du lot</h3>
+<table>
+<thead>
+<tr>
+<th>État</th>
+<th>Description</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>En cours</strong></td>
+<td>Production en cours</td>
+<td>Tonnage actuel &lt; Tonnage cible</td>
+</tr>
+<tr>
+<td><strong>Complet</strong></td>
+<td>Production terminée</td>
+<td>Tonnage actuel ≥ Tonnage cible</td>
+</tr>
+<tr>
+<td><strong>Empoté</strong></td>
+<td>Chargé en conteneur</td>
+<td>Lié à un conteneur</td>
+</tr>
+<tr>
+<td><strong>Expédié</strong></td>
+<td>Lot expédié</td>
+<td>BL validé</td>
+</tr>
+</tbody>
+</table>
+<h3 id="certifications">🏷️ Certifications</h3>
+<p>Les lots peuvent porter des certifications qui ajoutent un suffixe au numéro :</p>
+<table>
+<thead>
+<tr>
+<th>Certification</th>
+<th>Suffixe</th>
+<th>Exemple</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fair Trade</td>
+<td>FT</td>
+<td>T10582FT</td>
+</tr>
+<tr>
+<td>Rainforest Alliance</td>
+<td>RA</td>
+<td>T10582RA</td>
+</tr>
+<tr>
+<td>UTZ</td>
+<td>UTZ</td>
+<td>T10582UTZ</td>
+</tr>
+<tr>
+<td>Bio</td>
+<td>BIO</td>
+<td>T10582BIO</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-bons-de-livraison-bl">9. Bons de Livraison (BL)</h2>
+<h3 id="presentation_5">📄 Présentation</h3>
+<p>Le <strong>Bon de Livraison (BL)</strong> est le document qui formalise l'expédition des lots vers le client. Chaque BL est lié à un OT et contient un ou plusieurs lots.</p>
+<h3 id="creer-un-bon-de-livraison">📝 Créer un bon de livraison</h3>
+<h4 id="methode-1-depuis-lot">Méthode 1 : Depuis l'OT</h4>
+<ol>
+<li>Ouvrir l'OT en cours ou terminé</li>
+<li>Cliquer sur <strong>Créer BL</strong></li>
+<li>Sélectionner les lots à inclure</li>
+<li>Compléter les informations</li>
+<li>Valider</li>
+</ol>
+<h4 id="methode-2-creation-directe_1">Méthode 2 : Création directe</h4>
+<ol>
+<li><strong>Menu</strong> : <code>Potting &gt; Logistique &gt; Bons de Livraison &gt; Créer</code></li>
+<li>Remplir :</li>
+<li><strong>Ordre de Transit</strong> : OT concerné</li>
+<li><strong>Date de livraison</strong> : Date effective</li>
+<li><strong>Lots</strong> : Sélectionner les lots à livrer</li>
+<li>Informations complémentaires :</li>
+<li><strong>Conteneur</strong> : Numéro du conteneur</li>
+<li><strong>Plombs</strong> : Numéros de scellés</li>
+<li><strong>Notes</strong> : Observations</li>
+<li>Valider</li>
+</ol>
+<h3 id="informations-du-bl">📊 Informations du BL</h3>
+<p>Le BL hérite automatiquement des informations de l'OT :
+- Client et destinataire
+- Navire et port de destination
+- Numéro de booking
+- Produit et tonnage</p>
+<h3 id="etats-du-bl">🔄 États du BL</h3>
+<table>
+<thead>
+<tr>
+<th>État</th>
+<th>Description</th>
+<th>Actions possibles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Brouillon</strong></td>
+<td>BL en création</td>
+<td>Modifier, Confirmer</td>
+</tr>
+<tr>
+<td><strong>Confirmé</strong></td>
+<td>BL validé</td>
+<td>Expédier</td>
+</tr>
+<tr>
+<td><strong>Expédié</strong></td>
+<td>Marchandise partie</td>
+<td>Consultation</td>
+</tr>
+<tr>
+<td><strong>Annulé</strong></td>
+<td>BL annulé</td>
+<td>Consultation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="documents-generes">📋 Documents générés</h3>
+<p>Depuis le BL, vous pouvez générer :
+- <strong>Bon de livraison PDF</strong> : Document officiel
+- <strong>Packing list</strong> : Liste de colisage
+- <strong>Documents douaniers</strong> : Formulaires d'export</p>
+<hr />
+<h2 id="10-facturation">10. Facturation</h2>
+<h3 id="presentation_6">📄 Présentation</h3>
+<p>Le module permet de générer des <strong>factures clients</strong> directement depuis les OT. La facturation partielle est supportée.</p>
+<h3 id="generer-une-facture">📝 Générer une facture</h3>
+<ol>
+<li>Ouvrir l'OT validé (état "Done")</li>
+<li>Cliquer sur <strong>Créer Facture</strong></li>
+<li>Vérifier les informations :</li>
+<li>Client et adresse de facturation</li>
+<li>Produit et quantité</li>
+<li>Prix unitaire et montant</li>
+<li>Taxes applicables</li>
+<li>Cliquer sur <strong>Créer</strong></li>
+</ol>
+<p>La facture est créée en brouillon dans le module Comptabilité.</p>
+<h3 id="facturation-partielle">💰 Facturation partielle</h3>
+<p>Il est possible de facturer partiellement un OT :</p>
+<ol>
+<li>Lors de la création de facture, modifier le tonnage</li>
+<li>Le système enregistre le tonnage facturé</li>
+<li>Les factures suivantes porteront sur le reste</li>
+</ol>
+<h3 id="suivi-de-facturation">📊 Suivi de facturation</h3>
+<p>Pour chaque OT, le système affiche :
+- <strong>Tonnage facturé</strong> : Quantité déjà facturée
+- <strong>Reste à facturer</strong> : Quantité non facturée
+- <strong>Progression facturation (%)</strong> : Pourcentage facturé
+- <strong>Nombre de factures</strong> : Total des factures générées</p>
+<h3 id="lien-avec-la-comptabilite">🔗 Lien avec la comptabilité</h3>
+<p>Les factures générées sont intégrées au module comptable Odoo :
+- Numérotation automatique
+- Intégration journal des ventes
+- Suivi des paiements
+- Relances clients</p>
+<hr />
+<h2 id="11-transitaires-et-paiements">11. Transitaires et Paiements</h2>
+<h3 id="presentation_7">📄 Présentation</h3>
+<p>Le module gère les <strong>transitaires</strong> (agents d'exportation) et leurs <strong>frais</strong>.</p>
+<h3 id="creer-un-transitaire">📝 Créer un transitaire</h3>
+<ol>
+<li><strong>Menu</strong> : <code>Potting &gt; Configuration &gt; Transitaires &gt; Créer</code></li>
+<li>Remplir :</li>
+<li><strong>Nom</strong> : Raison sociale</li>
+<li><strong>Contact</strong> : Personne à contacter</li>
+<li><strong>Téléphone</strong> / <strong>Email</strong></li>
+<li><strong>Adresse</strong></li>
+<li><strong>Tarif par tonne</strong> : Frais standard</li>
+<li><strong>Compte bancaire</strong> : Pour les paiements</li>
+<li>Enregistrer</li>
+</ol>
+<h3 id="calcul-des-frais">💰 Calcul des frais</h3>
+<p>Les frais transitaire sont calculés automatiquement sur chaque OT :</p>
+<pre><code>Frais = Tarif par tonne × Tonnage OT
+</code></pre>
+<h3 id="paiements-des-transitaires">💳 Paiements des transitaires</h3>
+<p>Le module permet de suivre les paiements aux transitaires :</p>
+<ol>
+<li>Depuis le transitaire, voir tous les OT associés</li>
+<li>Calculer le montant dû</li>
+<li>Créer un paiement (intégration avec <code>bank_payment_management</code>)</li>
+<li>Suivre le statut du paiement</li>
+</ol>
+<hr />
+<h2 id="12-campagnes-cafe-cacao">12. Campagnes Café-Cacao</h2>
+<h3 id="presentation_8">📄 Présentation</h3>
+<p>Une <strong>Campagne café-cacao</strong> représente une saison d'exportation, généralement d'octobre à septembre de l'année suivante.</p>
+<h3 id="creer-une-campagne">📝 Créer une campagne</h3>
+<ol>
+<li><strong>Menu</strong> : <code>Potting &gt; Configuration &gt; Campagnes &gt; Créer</code></li>
+<li>Remplir :</li>
+<li><strong>Nom</strong> : Ex: "Campagne 2025-2026"</li>
+<li><strong>Date de début</strong> : Début de la saison</li>
+<li><strong>Date de fin</strong> : Fin de la saison</li>
+<li><strong>Description</strong> : Notes</li>
+<li>Enregistrer</li>
+<li><strong>Activer</strong> la campagne pour la rendre utilisable</li>
+</ol>
+<h3 id="etats-de-la-campagne">🔄 États de la campagne</h3>
+<table>
+<thead>
+<tr>
+<th>État</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Brouillon</strong></td>
+<td>En préparation</td>
+</tr>
+<tr>
+<td><strong>Active</strong></td>
+<td>Campagne en cours</td>
+</tr>
+<tr>
+<td><strong>Terminée</strong></td>
+<td>Campagne clôturée</td>
+</tr>
+</tbody>
+</table>
+<h3 id="statistiques-par-campagne">📊 Statistiques par campagne</h3>
+<p>Pour chaque campagne, le système calcule :
+- Total des CV émises
+- Total des contrats
+- Tonnage total exporté
+- Répartition par produit
+- Répartition par client</p>
+<hr />
+<h2 id="13-certifications">13. Certifications</h2>
+<h3 id="presentation_9">📄 Présentation</h3>
+<p>Le module gère les <strong>certifications</strong> de durabilité applicables aux produits cacao.</p>
+<h3 id="certifications-disponibles">🏷️ Certifications disponibles</h3>
+<table>
+<thead>
+<tr>
+<th>Certification</th>
+<th>Code</th>
+<th>Suffixe</th>
+<th>Prime (FCFA/T)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fair Trade</td>
+<td>FAIRTRADE</td>
+<td>FT</td>
+<td>Variable</td>
+</tr>
+<tr>
+<td>Rainforest Alliance</td>
+<td>RA</td>
+<td>RA</td>
+<td>Variable</td>
+</tr>
+<tr>
+<td>UTZ Certified</td>
+<td>UTZ</td>
+<td>UTZ</td>
+<td>Variable</td>
+</tr>
+<tr>
+<td>Biologique</td>
+<td>BIO</td>
+<td>BIO</td>
+<td>Variable</td>
+</tr>
+</tbody>
+</table>
+<h3 id="configurer-les-certifications">📝 Configurer les certifications</h3>
+<ol>
+<li><strong>Menu</strong> : <code>Potting &gt; Configuration &gt; Certifications</code></li>
+<li>Modifier ou créer une certification :</li>
+<li><strong>Nom</strong> : Nom complet</li>
+<li><strong>Code</strong> : Code court</li>
+<li><strong>Suffixe</strong> : Ajouté aux numéros de lot</li>
+<li><strong>Prime</strong> : Montant par tonne</li>
+<li><strong>Description</strong> : Détails</li>
+<li>Enregistrer</li>
+</ol>
+<h3 id="impact-sur-les-prix">💰 Impact sur les prix</h3>
+<p>Les primes de certification sont ajoutées au prix de vente :</p>
+<pre><code>Prix total = (Prix unitaire × Tonnage) + (Prime certification × Tonnage)
+</code></pre>
+<hr />
+<h2 id="14-tableaux-de-bord">14. Tableaux de Bord</h2>
+<p>Le module propose deux tableaux de bord OWL interactifs.</p>
+<h3 id="tableau-de-bord-commercial-shipping">📊 Tableau de bord Commercial (Shipping)</h3>
+<p><strong>Menu</strong> : <code>Potting &gt; Tableaux de bord &gt; Commercial</code></p>
+<h4 id="indicateurs-affiches">Indicateurs affichés</h4>
+<table>
+<thead>
+<tr>
+<th>Indicateur</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Contrats</strong></td>
+<td>Par état (brouillon, confirmé, en cours, terminé)</td>
+</tr>
+<tr>
+<td><strong>CV actives</strong></td>
+<td>Confirmations de Vente utilisables</td>
+</tr>
+<tr>
+<td><strong>CV expirées</strong></td>
+<td>CV ayant dépassé leur validité</td>
+</tr>
+<tr>
+<td><strong>CV expirant bientôt</strong></td>
+<td>CV expirant dans moins de 30 jours</td>
+</tr>
+<tr>
+<td><strong>Formules</strong></td>
+<td>En attente de paiement / Payées</td>
+</tr>
+<tr>
+<td><strong>Tonnage par produit</strong></td>
+<td>Répartition des exportations</td>
+</tr>
+<tr>
+<td><strong>Top clients</strong></td>
+<td>Clients par volume</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tableau-de-bord-expedition-agent">📊 Tableau de bord Expédition (Agent)</h3>
+<p><strong>Menu</strong> : <code>Potting &gt; Tableaux de bord &gt; Expédition</code></p>
+<h4 id="indicateurs-affiches_1">Indicateurs affichés</h4>
+<table>
+<thead>
+<tr>
+<th>Indicateur</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>OT en cours</strong></td>
+<td>Ordres de Transit actifs</td>
+</tr>
+<tr>
+<td><strong>Lots à empoter</strong></td>
+<td>Lots en attente de production</td>
+</tr>
+<tr>
+<td><strong>Progression empotages</strong></td>
+<td>Pourcentage de complétion</td>
+</tr>
+<tr>
+<td><strong>BL en attente</strong></td>
+<td>Bons de livraison à créer</td>
+</tr>
+<tr>
+<td><strong>Productions du jour</strong></td>
+<td>Tonnage produit aujourd'hui</td>
+</tr>
+</tbody>
+</table>
+<h3 id="filtres-disponibles">🔄 Filtres disponibles</h3>
+<p>Les deux tableaux de bord permettent de filtrer par :
+- Période (date de/à)
+- Campagne
+- Type de produit
+- Client
+- État</p>
+<hr />
+<h2 id="15-api-mobile-pdg">15. API Mobile (PDG)</h2>
+<h3 id="presentation_10">📱 Présentation</h3>
+<p>Le module inclut une <strong>API REST</strong> permettant au PDG de consulter les activités d'exportation depuis une application mobile.</p>
+<p><strong>Base URL</strong> : <code>/api/v1/potting</code><br />
+<strong>Authentification</strong> : Bearer Token<br />
+<strong>Format</strong> : JSON</p>
+<h3 id="authentification">🔐 Authentification</h3>
+<pre><code class="language-http">POST /api/v1/potting/auth/login
+Content-Type: application/json
+
+{
+    &quot;login&quot;: &quot;pdg@icp.ci&quot;,
+    &quot;password&quot;: &quot;mot_de_passe&quot;
+}
+</code></pre>
+<p><strong>Réponse</strong> :</p>
+<pre><code class="language-json">{
+    &quot;success&quot;: true,
+    &quot;data&quot;: {
+        &quot;token&quot;: &quot;eyJ...&quot;,
+        &quot;expires_at&quot;: &quot;2026-01-20T12:00:00&quot;,
+        &quot;user&quot;: {
+            &quot;id&quot;: 2,
+            &quot;name&quot;: &quot;PDG ICP&quot;,
+            &quot;roles&quot;: [&quot;manager&quot;]
+        }
+    }
+}
+</code></pre>
+<h3 id="endpoints-principaux">📋 Endpoints principaux</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/auth/login</code></td>
+<td>Connexion</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/auth/logout</code></td>
+<td>Déconnexion</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard</code></td>
+<td>Tableau de bord global</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/dashboard/transit-orders</code></td>
+<td>Liste des OT</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/transit-orders/{id}</code></td>
+<td>Détail d'un OT</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/reports/daily</code></td>
+<td>Rapport quotidien</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/reports/daily/download</code></td>
+<td>Télécharger PDF</td>
+</tr>
+</tbody>
+</table>
+<h3 id="donnees-du-dashboard">📊 Données du dashboard</h3>
+<p>L'endpoint <code>/dashboard</code> retourne :</p>
+<pre><code class="language-json">{
+    &quot;summary&quot;: {
+        &quot;total_transit_orders&quot;: 45,
+        &quot;total_tonnage&quot;: 1250.5,
+        &quot;current_tonnage&quot;: 980.3,
+        &quot;average_progress&quot;: 78.4
+    },
+    &quot;transit_orders_by_state&quot;: {
+        &quot;done&quot;: 20,
+        &quot;in_progress&quot;: 15,
+        &quot;ready_validation&quot;: 10
+    },
+    &quot;by_product_type&quot;: {
+        &quot;cocoa_mass&quot;: { &quot;count&quot;: 15, &quot;tonnage&quot;: 450.0 },
+        &quot;cocoa_butter&quot;: { &quot;count&quot;: 12, &quot;tonnage&quot;: 380.0 }
+    },
+    &quot;top_customers&quot;: [
+        { &quot;name&quot;: &quot;Cargill&quot;, &quot;count&quot;: 10, &quot;tonnage&quot;: 350.0 }
+    ]
+}
+</code></pre>
+<h3 id="documentation-complete">📖 Documentation complète</h3>
+<p>Voir le fichier <a href="./MOBILE_API_DOCUMENTATION.md">MOBILE_API_DOCUMENTATION.md</a> pour la documentation détaillée.</p>
+<hr />
+<h2 id="16-rapports-et-envoi-par-email">16. Rapports et Envoi par Email</h2>
+<h3 id="rapports-disponibles">📊 Rapports disponibles</h3>
+<table>
+<thead>
+<tr>
+<th>Rapport</th>
+<th>Description</th>
+<th>Format</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Rapport OT</strong></td>
+<td>Détail d'un Ordre de Transit</td>
+<td>PDF</td>
+</tr>
+<tr>
+<td><strong>Rapport quotidien</strong></td>
+<td>Synthèse journalière</td>
+<td>PDF</td>
+</tr>
+<tr>
+<td><strong>Rapport par contrat</strong></td>
+<td>Synthèse par commande</td>
+<td>PDF</td>
+</tr>
+<tr>
+<td><strong>État des CV</strong></td>
+<td>Liste des CV avec statuts</td>
+<td>Excel</td>
+</tr>
+<tr>
+<td><strong>État des formules</strong></td>
+<td>Formules et paiements</td>
+<td>Excel</td>
+</tr>
+</tbody>
+</table>
+<h3 id="generer-un-rapport">🖨️ Générer un rapport</h3>
+<ol>
+<li>Ouvrir l'enregistrement concerné (OT, Contrat, etc.)</li>
+<li><strong>Imprimer &gt; [Nom du rapport]</strong></li>
+<li>Le PDF est généré et téléchargé</li>
+</ol>
+<h3 id="envoi-par-email">📧 Envoi par email</h3>
+<p>Le module permet d'envoyer automatiquement les rapports par email :</p>
+<h4 id="configurer-les-destinataires">Configurer les destinataires</h4>
+<ol>
+<li><strong>Menu</strong> : <code>Potting &gt; Configuration &gt; Paramètres</code></li>
+<li>Définir :</li>
+<li><strong>Email PDG</strong> : Destinataire principal</li>
+<li><strong>Emails en copie</strong> : Liste des personnes en CC</li>
+<li>Enregistrer</li>
+</ol>
+<h4 id="envoyer-un-rapport">Envoyer un rapport</h4>
+<ol>
+<li>Ouvrir l'OT ou le rapport</li>
+<li>Cliquer sur <strong>Envoyer par email</strong></li>
+<li>Vérifier les destinataires</li>
+<li>Personnaliser le message (optionnel)</li>
+<li>Envoyer</li>
+</ol>
+<h4 id="envoi-automatique">Envoi automatique</h4>
+<p>Le système peut être configuré pour envoyer automatiquement :
+- Le rapport quotidien chaque soir
+- Les alertes CV expirant</p>
+<hr />
+<h2 id="17-configuration">17. Configuration</h2>
+<h3 id="parametres-generaux">⚙️ Paramètres généraux</h3>
+<p><strong>Menu</strong> : <code>Potting &gt; Configuration &gt; Paramètres</code></p>
+<table>
+<thead>
+<tr>
+<th>Paramètre</th>
+<th>Description</th>
+<th>Défaut</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Client par défaut</strong></td>
+<td>Pré-sélection lors de création</td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>Taux droits export</strong></td>
+<td>Pourcentage standard</td>
+<td>14.6%</td>
+</tr>
+<tr>
+<td><strong>Devise par défaut</strong></td>
+<td>Devise des transactions</td>
+<td>XOF</td>
+</tr>
+<tr>
+<td><strong>Email PDG</strong></td>
+<td>Destinataire rapports</td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>Emails en copie</strong></td>
+<td>CC pour les rapports</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tonnages-maximum-par-lot">📦 Tonnages maximum par lot</h3>
+<table>
+<thead>
+<tr>
+<th>Produit</th>
+<th>Champ</th>
+<th>Défaut</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Masse de cacao</td>
+<td>Tonnage max</td>
+<td>25 T</td>
+</tr>
+<tr>
+<td>Beurre de cacao</td>
+<td>Tonnage max</td>
+<td>22 T</td>
+</tr>
+<tr>
+<td>Cake de cacao</td>
+<td>Tonnage max</td>
+<td>25 T</td>
+</tr>
+<tr>
+<td>Poudre de cacao</td>
+<td>Tonnage max</td>
+<td>22.5 T</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sequences">🔢 Séquences</h3>
+<p>Les séquences sont configurables pour :
+- Numéros de CV
+- Numéros de contrat
+- Numéros d'OT
+- Numéros de lot
+- Numéros de BL
+- Numéros de formule</p>
+<p><strong>Menu</strong> : <code>Paramètres &gt; Technique &gt; Séquences</code></p>
+<hr />
+<h2 id="18-faq-et-support">18. FAQ et Support</h2>
+<h3 id="questions-frequentes">❓ Questions fréquentes</h3>
+<h4 id="cv-et-contrats">CV et Contrats</h4>
+<p><strong>Q : Je ne trouve pas de CV disponible pour mon contrat ?</strong></p>
+<blockquote>
+<p>✅ Vérifiez que la CV est à l'état "Active", n'est pas expirée, et a du tonnage restant.</p>
+</blockquote>
+<p><strong>Q : Le tonnage du contrat dépasse le tonnage CV restant ?</strong></p>
+<blockquote>
+<p>✅ Réduisez le tonnage du contrat ou utilisez une autre CV avec plus de capacité.</p>
+</blockquote>
+<p><strong>Q : Comment annuler un contrat confirmé ?</strong></p>
+<blockquote>
+<p>✅ Seul un Responsable peut annuler un contrat. Les OT liés doivent être annulés d'abord.</p>
+</blockquote>
+<h4 id="formules">Formules</h4>
+<p><strong>Q : Je ne peux pas lier une formule à mon OT ?</strong></p>
+<blockquote>
+<p>✅ La formule doit être à l'état "Validée" et ne pas être déjà liée à un autre OT.</p>
+</blockquote>
+<p><strong>Q : Comment enregistrer un paiement partiel ?</strong></p>
+<blockquote>
+<p>✅ Utilisez les boutons "Paiement avant-vente" puis "Paiement après-vente" dans l'ordre.</p>
+</blockquote>
+<h4 id="ot-et-lots">OT et Lots</h4>
+<p><strong>Q : Les lots ne se génèrent pas ?</strong></p>
+<blockquote>
+<p>✅ Vérifiez que le tonnage de l'OT est &gt; 0 et que le type de produit est défini.</p>
+</blockquote>
+<p><strong>Q : Comment modifier le tonnage d'un lot ?</strong></p>
+<blockquote>
+<p>✅ Les lots générés ne peuvent pas être modifiés. Supprimez-les et régénérez.</p>
+</blockquote>
+<p><strong>Q : Le total des lots ne correspond pas au tonnage OT ?</strong></p>
+<blockquote>
+<p>✅ Normal si le tonnage n'est pas divisible exactement par le tonnage max par lot.</p>
+</blockquote>
+<h4 id="facturation">Facturation</h4>
+<p><strong>Q : Le bouton "Créer Facture" n'apparaît pas ?</strong></p>
+<blockquote>
+<p>✅ L'OT doit être à l'état "Validé" (Done) pour pouvoir facturer.</p>
+</blockquote>
+<p><strong>Q : Comment facturer partiellement ?</strong></p>
+<blockquote>
+<p>✅ Lors de la création de facture, modifiez le tonnage à facturer avant de valider.</p>
+</blockquote>
+<h3 id="support-technique">📞 Support technique</h3>
+<ul>
+<li>📧 <strong>Email</strong> : support@ivorycocoa.ci</li>
+<li>📞 <strong>Téléphone</strong> : +225 XX XX XX XX</li>
+<li>🌐 <strong>Site web</strong> : https://www.ivorycocoa.ci</li>
+<li>📝 <strong>Tickets</strong> : Créer un ticket dans <code>Helpdesk &gt; Nouveau Ticket</code></li>
+</ul>
+<hr />
+<h2 id="annexes">📚 Annexes</h2>
+<h3 id="a-glossaire">A. Glossaire</h3>
+<table>
+<thead>
+<tr>
+<th>Terme</th>
+<th>Définition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CCC</strong></td>
+<td>Conseil du Café-Cacao de Côte d'Ivoire</td>
+</tr>
+<tr>
+<td><strong>CV</strong></td>
+<td>Confirmation de Vente</td>
+</tr>
+<tr>
+<td><strong>FO / FO1</strong></td>
+<td>Formule (document de fixation des prix)</td>
+</tr>
+<tr>
+<td><strong>OT</strong></td>
+<td>Ordre de Transit</td>
+</tr>
+<tr>
+<td><strong>BL</strong></td>
+<td>Bon de Livraison</td>
+</tr>
+<tr>
+<td><strong>POD</strong></td>
+<td>Port of Discharge (Port de déchargement)</td>
+</tr>
+<tr>
+<td><strong>DIUS</strong></td>
+<td>Droit Indicatif à l'Usine</td>
+</tr>
+<tr>
+<td><strong>DUS</strong></td>
+<td>Droit Unique de Sortie</td>
+</tr>
+<tr>
+<td><strong>FIMR</strong></td>
+<td>Fonds d'Investissement en Milieu Rural</td>
+</tr>
+</tbody>
+</table>
+<h3 id="b-codes-produits">B. Codes produits</h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Produit</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cocoa_mass</code></td>
+<td>Masse de cacao</td>
+<td>Semi-fini</td>
+</tr>
+<tr>
+<td><code>cocoa_butter</code></td>
+<td>Beurre de cacao</td>
+<td>Semi-fini</td>
+</tr>
+<tr>
+<td><code>cocoa_cake</code></td>
+<td>Cake/Tourteau de cacao</td>
+<td>Semi-fini</td>
+</tr>
+<tr>
+<td><code>cocoa_powder</code></td>
+<td>Poudre de cacao</td>
+<td>Semi-fini</td>
+</tr>
+</tbody>
+</table>
+<h3 id="c-nomenclatures-douanieres">C. Nomenclatures douanières</h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Produit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1803 10 00 00</td>
+<td>Pâte de cacao non dégraissée</td>
+</tr>
+<tr>
+<td>1803 20 00 00</td>
+<td>Pâte de cacao dégraissée</td>
+</tr>
+<tr>
+<td>1804 00 00 00</td>
+<td>Beurre, graisse et huile de cacao</td>
+</tr>
+<tr>
+<td>1802 00 00 00</td>
+<td>Coques, pellicules et déchets de cacao</td>
+</tr>
+</tbody>
+</table>
+<h3 id="d-raccourcis-clavier">D. Raccourcis clavier</h3>
+<table>
+<thead>
+<tr>
+<th>Raccourci</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Alt + C</code></td>
+<td>Créer un nouvel enregistrement</td>
+</tr>
+<tr>
+<td><code>Alt + E</code></td>
+<td>Modifier l'enregistrement</td>
+</tr>
+<tr>
+<td><code>Alt + S</code></td>
+<td>Sauvegarder</td>
+</tr>
+<tr>
+<td><code>Alt + D</code></td>
+<td>Supprimer</td>
+</tr>
+<tr>
+<td><code>Alt + Q</code></td>
+<td>Annuler</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<blockquote>
+<p><strong>Module Gestion des Exportations (Potting Management)</strong> - Version 17.0.1.3.0<br />
+Développé avec ❤️ par <strong>ICP - Ivory Cocoa Products</strong> pour <strong>Odoo 17</strong><br />
+<em>Dernière mise à jour : Janvier 2026</em></p>
+</blockquote>
+        
+        <div class="footer">
+            <p>© ICP - Module Potting Management pour Odoo 17</p>
+            <p>Documentation générée automatiquement</p>
+        </div>
+    </div>
+</body>
+</html>
