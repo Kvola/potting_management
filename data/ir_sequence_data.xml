@@ -59,5 +59,16 @@
             <field name="padding">5</field>
             <field name="company_id" eval="False"/>
         </record>
+        
+        <!-- ================================================================
+             FACTURE TRANSITAIRE - SÉQUENCE
+             ================================================================ -->
+        <record id="seq_potting_forwarding_agent_invoice" model="ir.sequence">
+            <field name="name">Facture Transitaire</field>
+            <field name="code">potting.forwarding.agent.invoice</field>
+            <field name="prefix">FACT-TRANS/%(year)s/</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
     </data>
 </odoo>

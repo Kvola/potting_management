@@ -24,6 +24,14 @@
             <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
         </record>
 
+        <!-- CV/Formule Manager Group -->
+        <record id="group_potting_cv_formule" model="res.groups">
+            <field name="name">Responsable CV/Formules</field>
+            <field name="comment">Responsable CV/Formules - Peut créer et gérer les Confirmations de Vente (CV) et les Formules (FO)</field>
+            <field name="category_id" ref="module_category_potting"/>
+            <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
+        </record>
+
         <!-- Shipping User Group -->
         <record id="group_potting_shipping" model="res.groups">
             <field name="name">Shipping - Utilisateur</field>
@@ -36,6 +44,14 @@
         <record id="group_potting_ceo_agent" model="res.groups">
             <field name="name">Agent Exportation</field>
             <field name="comment">Agent Exportation - Peut gérer les lots et valider les OT</field>
+            <field name="category_id" ref="module_category_potting"/>
+            <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
+        </record>
+
+        <!-- Accountant Group - For payment validation -->
+        <record id="group_potting_accountant" model="res.groups">
+            <field name="name">Comptable</field>
+            <field name="comment">Comptable - Peut valider les factures transitaires et les paiements (formules et transitaires)</field>
             <field name="category_id" ref="module_category_potting"/>
             <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
         </record>

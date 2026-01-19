@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================================== -->
+    <!-- WIZARD PAIEMENT FORMULE - FORMULAIRE -->
+    <!-- ================================================================== -->
+    
+    <record id="potting_formule_payment_wizard_form" model="ir.ui.view">
+        <field name="name">potting.formule.payment.wizard.form</field>
+        <field name="model">potting.formule.payment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Paiement Formule par Chèque">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="formule_name" readonly="1"/>
+                        </h1>
+                    </div>
+                    
+                    <!-- Informations de la formule -->
+                    <group>
+                        <group string="Informations Formule">
+                            <field name="formule_id" invisible="1"/>
+                            <field name="confirmation_vente_id" readonly="1"/>
+                            <field name="transit_order_id" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="État des Paiements">
+                            <field name="montant_avant_vente" readonly="1"/>
+                            <field name="avant_vente_paye" readonly="1" widget="boolean_toggle"/>
+                            <field name="montant_apres_vente" readonly="1"/>
+                            <field name="apres_vente_paye" readonly="1" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    
+                    <separator string="Détails du Paiement"/>
+                    
+                    <group>
+                        <group string="Type de Paiement">
+                            <field name="payment_type" widget="radio" options="{'horizontal': true}"/>
+                            <field name="amount"/>
+                            <field name="expected_payment_date"/>
+                        </group>
+                        <group string="Bénéficiaire">
+                            <field name="beneficiary_name"/>
+                            <field name="beneficiary_id"/>
+                        </group>
+                    </group>
+                    
+                    <separator string="Informations du Chèque"/>
+                    
+                    <group>
+                        <group string="Banque Émettrice">
+                            <field name="bank_id" options="{'no_create': True}"/>
+                            <field name="bank_account_id" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Chèque">
+                            <field name="check_number" placeholder="Ex: 0012345"/>
+                            <field name="check_date"/>
+                        </group>
+                    </group>
+                    
+                    <separator string="Demande de Paiement"/>
+                    
+                    <group>
+                        <group>
+                            <field name="create_new_request"/>
+                            <field name="existing_payment_request_id" 
+                                   invisible="create_new_request"
+                                   required="not create_new_request"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <field name="notes" placeholder="Notes ou justification..."/>
+                    </group>
+                </sheet>
+                
+                <footer>
+                    <button name="action_create_payment" type="object" string="Créer le Paiement" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    
+    <!-- Action pour ouvrir le wizard -->
+    <record id="action_potting_formule_payment_wizard" model="ir.actions.act_window">
+        <field name="name">Paiement Formule</field>
+        <field name="res_model">potting.formule.payment.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    
+</odoo>

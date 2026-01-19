@@ -1112,8 +1112,35 @@ class PottingFormule(models.Model):
     # ACTIONS DE PAIEMENT PAR CHÈQUE
     # =========================================================================
     
+    def action_open_payment_wizard(self):
+        """Ouvrir le wizard de paiement de formule"""
+        self.ensure_one()
+        
+        if self.state not in ('validated', 'partial_paid'):
+            raise UserError(_("La formule doit être validée pour créer un paiement."))
+        
+        # Déterminer le type de paiement par défaut
+        if not self.avant_vente_paye:
+            default_type = 'avant_vente'
+        elif not self.apres_vente_paye:
+            default_type = 'apres_vente'
+        else:
+            raise UserError(_("Cette formule a déjà été entièrement payée."))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Paiement Formule par Chèque'),
+            'res_model': 'potting.formule.payment.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_formule_id': self.id,
+                'default_payment_type': default_type,
+            },
+        }
+    
     def action_create_payment_request_avant_vente(self):
-        """Créer une demande de paiement pour le versement avant-vente"""
+        """Créer une demande de paiement pour le versement avant-vente via wizard"""
         self.ensure_one()
         if self.state not in ('validated', 'partial_paid'):
             raise UserError(_("La formule doit être validée pour créer un paiement."))
@@ -1124,25 +1151,20 @@ class PottingFormule(models.Model):
                 "Une demande de paiement existe déjà pour le versement avant-vente."
             ))
         
-        # Créer la demande de paiement
-        payment_request = self._create_payment_request(
-            payment_type='avant_vente',
-            amount=self.montant_avant_vente + self.total_taxes_a_payer,
-            subject=_("Reversement FO %s - Avant-vente") % self.name
-        )
-        self.payment_request_avant_vente_id = payment_request.id
-        
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Demande de Paiement'),
-            'res_model': 'payment.request',
-            'res_id': payment_request.id,
+            'name': _('Paiement Avant-Vente'),
+            'res_model': 'potting.formule.payment.wizard',
             'view_mode': 'form',
-            'target': 'current',
+            'target': 'new',
+            'context': {
+                'default_formule_id': self.id,
+                'default_payment_type': 'avant_vente',
+            },
         }
     
     def action_create_payment_request_apres_vente(self):
-        """Créer une demande de paiement pour le versement après-vente"""
+        """Créer une demande de paiement pour le versement après-vente via wizard"""
         self.ensure_one()
         if self.state not in ('validated', 'partial_paid'):
             raise UserError(_("La formule doit être validée pour créer un paiement."))
@@ -1155,23 +1177,18 @@ class PottingFormule(models.Model):
                 "Une demande de paiement existe déjà pour le versement après-vente."
             ))
         
-        # Créer la demande de paiement
-        payment_request = self._create_payment_request(
-            payment_type='apres_vente',
-            amount=self.montant_apres_vente,
-            subject=_("Reversement FO %s - Après-vente") % self.name
-        )
-        self.payment_request_apres_vente_id = payment_request.id
-        
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Demande de Paiement'),
-            'res_model': 'payment.request',
-            'res_id': payment_request.id,
+            'name': _('Paiement Après-Vente'),
+            'res_model': 'potting.formule.payment.wizard',
             'view_mode': 'form',
-            'target': 'current',
+            'target': 'new',
+            'context': {
+                'default_formule_id': self.id,
+                'default_payment_type': 'apres_vente',
+            },
         }
-    
+
     def _create_payment_request(self, payment_type, amount, subject):
         """Créer une demande de paiement par chèque"""
         self.ensure_one()

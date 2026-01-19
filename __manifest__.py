@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Gestion des Exportations',
-    'version': '17.0.1.3.0',
+    'version': '17.0.1.5.0',
     'category': 'Inventory/Logistics',
     'summary': 'Gestion des exportations de produits semi-finis du cacao',
     'description': """
@@ -25,6 +25,9 @@
         
         Réglementation CCC (Conseil Café-Cacao) :
         - Confirmations de Vente (CV) : autorisations d'exportation
+          * Support multi-CV par contrat
+          * Allocation de tonnage flexible entre CV et contrats
+          * Split de CV sur plusieurs contrats
         - Formules (FO1) : fixation des prix et paiements producteurs
           * Référence complète FO1, numéro FO1, grade, nomenclature douanière
           * Transitaire, navire, période d'embarquement, ports
@@ -67,8 +70,11 @@
         'wizards/potting_create_delivery_note_wizard_views.xml',
         'wizards/potting_import_contracts_wizard_views.xml',
         'wizards/potting_add_production_wizard_views.xml',
+        'wizards/potting_formule_payment_wizard_views.xml',
+        'wizards/potting_forwarding_invoice_reject_wizard_views.xml',
         # Views - CV et Formules (avant les contrats qui les référencent)
         'views/potting_confirmation_vente_views.xml',
+        'views/potting_cv_allocation_views.xml',
         'views/potting_formule_views.xml',
         # Views - Autres
         'views/potting_certification_views.xml',
@@ -79,6 +85,7 @@
         'views/potting_delivery_note_views.xml',
         'views/potting_consignee_views.xml',
         'views/potting_forwarding_agent_views.xml',
+        'views/potting_forwarding_agent_invoice_views.xml',
         'views/potting_campaign_views.xml',
         'views/res_config_settings_views.xml',
         # Menu must be last (references actions from other views)

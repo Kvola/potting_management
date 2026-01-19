@@ -16,25 +16,37 @@
                   decoration-danger="state == 'expired'"
                   decoration-muted="state == 'cancelled'"
                   multi_edit="1"
-                  sample="1">
+                  sample="1"
+                  default_order="date_emission desc">
+                <header>
+                    <button name="action_activate" type="object" string="Activer" class="btn-primary"/>
+                </header>
                 <field name="company_id" column_invisible="1"/>
                 <field name="currency_id" column_invisible="1"/>
-                <field name="name" decoration-bf="1"/>
-                <field name="reference_ccc" optional="show"/>
-                <field name="campaign_id"/>
-                <field name="date_emission" widget="date"/>
-                <field name="date_start" widget="date" optional="show"/>
-                <field name="date_end" widget="date"/>
-                <field name="product_type" optional="show"/>
+                <field name="name" decoration-bf="1" string="N° CV"/>
+                <field name="reference_ccc" optional="show" string="Réf. CCC"/>
+                <field name="campaign_id" string="Campagne"/>
+                <field name="product_type" optional="show" widget="badge"
+                       decoration-info="product_type == 'cacao'"
+                       decoration-success="product_type == 'cafe'"/>
+                <field name="date_emission" widget="date" string="Émission"/>
+                <field name="date_end" widget="date" string="Expiration"
+                       decoration-danger="date_end &lt; current_date"
+                       decoration-warning="date_end &lt;= (current_date + 30)"/>
                 <field name="tonnage_autorise" string="Autorisé (T)" sum="Total" decoration-bf="1"/>
-                <field name="tonnage_utilise" string="Utilisé (T)" sum="Total"/>
+                <field name="tonnage_utilise" string="Utilisé (T)" sum="Total"
+                       decoration-info="tonnage_utilise > 0"/>
                 <field name="tonnage_restant" string="Restant (T)" sum="Total" 
                        decoration-danger="tonnage_restant &lt;= 0"
-                       decoration-success="tonnage_restant > 0"/>
-                <field name="tonnage_progress" widget="progressbar" optional="show"/>
-                <field name="prix_tonnage" widget="monetary" string="Prix/T" optional="show"/>
-                <field name="customer_order_count" string="Contrats" optional="show"/>
-                <field name="formule_count" string="Formules" optional="show"/>
+                       decoration-success="tonnage_restant > 0"
+                       decoration-bf="1"/>
+                <field name="tonnage_progress" widget="progressbar" optional="show" string="Progression"/>
+                <field name="prix_tonnage" widget="monetary" string="Prix/T" optional="hide"/>
+                <field name="destination_country_id" optional="show" string="Destination"/>
+                <field name="customer_order_count" string="Contrats" optional="hide"
+                       decoration-info="customer_order_count > 0"/>
+                <field name="formule_count" string="Formules" optional="show"
+                       decoration-success="formule_count > 0"/>
                 <field name="state" widget="badge" 
                        decoration-info="state == 'draft'" 
                        decoration-success="state == 'active'"
@@ -92,16 +104,34 @@
                     
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_customer_orders" type="object" 
-                                class="oe_stat_button" icon="fa-file-text-o">
-                            <field name="customer_order_count" widget="statinfo" string="Contrats"/>
+                                class="oe_stat_button" icon="fa-handshake-o">
+                            <div class="o_stat_info">
+                                <field name="customer_order_count" class="o_stat_value"/>
+                                <span class="o_stat_text">Contrats</span>
+                            </div>
                         </button>
                         <button name="action_view_formules" type="object" 
-                                class="oe_stat_button" icon="fa-calculator">
-                            <field name="formule_count" widget="statinfo" string="Formules"/>
+                                class="oe_stat_button" icon="fa-file-text">
+                            <div class="o_stat_info">
+                                <field name="formule_count" class="o_stat_value"/>
+                                <span class="o_stat_text">Formules</span>
+                            </div>
                         </button>
                         <button name="action_create_formule" type="object"
                                 class="oe_stat_button" icon="fa-plus-circle"
-                                invisible="state != 'active'" string="Nouvelle Formule"/>
+                                invisible="state != 'active'">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Nouvelle</span>
+                                <span class="o_stat_text">Formule</span>
+                            </div>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-line-chart" disabled="1"
+                                invisible="tonnage_utilise == 0">
+                            <div class="o_stat_info">
+                                <field name="tonnage_progress" class="o_stat_value" widget="statinfo"/>
+                                <span class="o_stat_text">% Utilisé</span>
+                            </div>
+                        </button>
                     </div>
                     <widget name="web_ribbon" title="Active" bg_color="bg-success" 
                             invisible="state != 'active'"/>
@@ -119,61 +149,156 @@
                         </h1>
                     </div>
                     
-                    <group>
-                        <group string="📋 Identification">
-                            <field name="company_id" invisible="1"/>
-                            <field name="reference_ccc" placeholder="Référence CCC officielle"/>
-                            <field name="campaign_id" 
-                                   options="{'no_create': True}"
-                                   readonly="state != 'draft'"/>
-                            <field name="product_type" readonly="state != 'draft'"/>
-                        </group>
-                        <group string="📅 Dates et Période">
-                            <field name="date_emission" readonly="state != 'draft'"/>
-                            <field name="date_start" readonly="state != 'draft'"/>
-                            <field name="date_end" readonly="state != 'draft'"/>
-                            <field name="days_remaining" 
-                                   decoration-danger="days_remaining &lt;= 7"
-                                   decoration-warning="days_remaining &lt;= 30"/>
-                        </group>
-                    </group>
+                    <!-- Section principale avec bordure colorée -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-body p-3">
+                                    <group col="4">
+                                        <group string="📋 Identification" colspan="2">
+                                            <field name="company_id" invisible="1"/>
+                                            <field name="reference_ccc" placeholder="Référence CCC officielle"
+                                                   class="fw-bold"/>
+                                            <field name="campaign_id" 
+                                                   options="{'no_create': True, 'no_open': True}"
+                                                   readonly="state != 'draft'"/>
+                                            <field name="product_type" readonly="state != 'draft'"
+                                                   widget="radio" options="{'horizontal': true}"/>
+                                        </group>
+                                        <group string="📅 Validité" colspan="2">
+                                            <label for="date_emission" string="Période"/>
+                                            <div class="o_row">
+                                                <field name="date_emission" readonly="state != 'draft'" class="oe_inline"/>
+                                                <span class="mx-2">→</span>
+                                                <field name="date_end" readonly="state != 'draft'" class="oe_inline"/>
+                                            </div>
+                                            <field name="date_start" readonly="state != 'draft'" invisible="1"/>
+                                            <field name="days_remaining" 
+                                                   decoration-danger="days_remaining &lt;= 7"
+                                                   decoration-warning="days_remaining &lt;= 30"
+                                                   decoration-success="days_remaining > 30"
+                                                   string="Jours restants"/>
+                                        </group>
+                                    </group>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <group>
-                        <group string="📊 Tonnage">
+                    <!-- Tonnage avec indicateur visuel proéminent -->
+                    <group col="2">
+                        <group string="📊 Suivi du Tonnage">
+                            <div class="alert alert-light p-2 mb-2" role="status">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Progression d'utilisation</span>
+                                    <field name="tonnage_progress" widget="progressbar" class="w-50"/>
+                                </div>
+                            </div>
                             <field name="tonnage_autorise" 
                                    readonly="state != 'draft'"
-                                   class="oe_inline fw-bold"/>
-                            <field name="tonnage_utilise" readonly="1" class="text-info"/>
+                                   class="oe_inline fw-bold fs-5"
+                                   string="Tonnage autorisé (T)"/>
+                            <field name="tonnage_utilise" readonly="1" 
+                                   class="text-primary"
+                                   string="Tonnage utilisé (T)"/>
                             <field name="tonnage_restant" readonly="1"
                                    decoration-danger="tonnage_restant &lt;= 0"
                                    decoration-success="tonnage_restant > 0"
-                                   class="fw-bold"/>
-                            <field name="tonnage_progress" widget="progressbar"/>
+                                   class="fw-bold fs-5"
+                                   string="Tonnage disponible (T)"/>
                         </group>
-                        <group string="💰 Prix et Devise">
+                        <group string="💰 Conditions Commerciales">
                             <field name="currency_id" 
                                    options="{'no_create': True}"
-                                   readonly="state != 'draft'"/>
-                            <field name="prix_tonnage" readonly="state != 'draft'"/>
+                                   readonly="state != 'draft'"
+                                   groups="base.group_multi_currency"/>
+                            <field name="prix_tonnage" readonly="state != 'draft'"
+                                   class="fw-bold"
+                                   string="Prix par tonne"/>
                         </group>
                     </group>
                     
-                    <group>
-                        <group string="🌍 Destination">
+                    <group col="2">
+                        <group string="🌍 Destination Export">
                             <field name="destination_country_id" 
                                    options="{'no_create': True}"
-                                   readonly="state != 'draft'"/>
-                            <field name="destination_port" readonly="state != 'draft'"/>
+                                   readonly="state != 'draft'"
+                                   placeholder="Sélectionner le pays..."/>
+                            <field name="destination_port" readonly="state != 'draft'"
+                                   placeholder="Ex: Rotterdam, Anvers..."/>
                         </group>
-                        <group string="ℹ️ Informations">
+                        <group string="🏢 Société">
                             <field name="is_expired" invisible="1"/>
-                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="company_id" groups="base.group_multi_company"
+                                   readonly="state != 'draft'"/>
                         </group>
                     </group>
                     
                     <notebook>
+                        <page string="📦 Allocations Contrats" name="allocations">
+                            <div class="alert alert-info" role="alert" invisible="not cv_allocation_ids">
+                                <i class="fa fa-info-circle"/> 
+                                Tonnage total alloué : <field name="total_tonnage_alloue" class="fw-bold"/> T /
+                                <field name="tonnage_autorise"/> T autorisé
+                                <span class="ms-2" invisible="tonnage_disponible_allocation > 0">
+                                    (<span class="text-danger fw-bold">CV entièrement allouée</span>)
+                                </span>
+                                <span class="ms-2" invisible="tonnage_disponible_allocation &lt;= 0">
+                                    (<span class="text-success fw-bold"><field name="tonnage_disponible_allocation"/> T</span> disponible pour allocation)
+                                </span>
+                            </div>
+                            <field name="cv_allocation_ids" 
+                                   context="{'default_confirmation_vente_id': id}"
+                                   nolabel="1">
+                                <tree editable="bottom"
+                                      decoration-success="state == 'active'"
+                                      decoration-warning="state == 'consumed'"
+                                      decoration-muted="state == 'cancelled'">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="customer_order_id" 
+                                           options="{'no_create': True}"
+                                           domain="[('state', 'not in', ['cancelled', 'done'])]"
+                                           string="Contrat"/>
+                                    <field name="order_name" string="Réf."/>
+                                    <field name="contract_tonnage" string="Tonnage contrat"/>
+                                    <field name="order_state" widget="badge" string="État"/>
+                                    <field name="tonnage_alloue" sum="Total" class="fw-bold text-primary"/>
+                                    <field name="tonnage_utilise" string="Utilisé"/>
+                                    <field name="tonnage_restant" string="Restant"
+                                           decoration-success="tonnage_restant > 0"/>
+                                    <field name="progress" widget="progressbar" string="%"/>
+                                    <field name="note" optional="hide"/>
+                                    <field name="confirmation_vente_id" column_invisible="1"/>
+                                    <field name="state" column_invisible="1"/>
+                                </tree>
+                            </field>
+                        </page>
                         <page string="📝 Notes" name="notes">
                             <field name="note" placeholder="Notes et observations..."/>
+                        </page>
+                        <page string="📄 Facture Transitaire" name="forwarding_invoice">
+                            <group>
+                                <group string="📎 Document joint">
+                                    <field name="forwarding_agent_invoice" 
+                                           filename="forwarding_agent_invoice_filename"
+                                           widget="binary"/>
+                                    <field name="forwarding_agent_invoice_filename" invisible="1"/>
+                                </group>
+                            </group>
+                            <!-- Prévisualisation du PDF -->
+                            <div class="o_invoice_preview mt-3" 
+                                 style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: white;"
+                                 invisible="not forwarding_agent_invoice">
+                                <field name="forwarding_agent_invoice" 
+                                       invisible="not forwarding_agent_invoice"
+                                       widget="pdf_viewer"
+                                       filename="forwarding_agent_invoice_filename"
+                                       nolabel="1"/>
+                            </div>
+                            <div invisible="forwarding_agent_invoice" class="alert alert-info mt-3" role="alert">
+                                <i class="fa fa-info-circle me-2"/>
+                                Aucune facture transitaire jointe. Cliquez sur le champ ci-dessus pour téléverser un fichier (PDF ou image).
+                            </div>
                         </page>
                     </notebook>
                 </sheet>

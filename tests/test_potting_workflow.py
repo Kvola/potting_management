@@ -79,7 +79,7 @@ class TestPottingWorkflow(TransactionCase):
         
         # Étape 2: Créer un contrat client basé sur la CV
         order = self.env['potting.customer.order'].create({
-            'confirmation_vente_id': cv.id,
+            'confirmation_vente_ids': [(4, cv.id)],
             'customer_id': self.customer.id,
             'product_type': 'cocoa_mass',
             'contract_tonnage': 100.0,
@@ -154,7 +154,7 @@ class TestPottingWorkflow(TransactionCase):
         
         # Premier contrat: 80 T
         order1 = self.env['potting.customer.order'].create({
-            'confirmation_vente_id': cv.id,
+            'confirmation_vente_ids': [(4, cv.id)],
             'customer_id': self.customer.id,
             'product_type': 'cocoa_mass',
             'contract_tonnage': 80.0,
@@ -169,7 +169,7 @@ class TestPottingWorkflow(TransactionCase):
         
         # Deuxième contrat: 70 T
         order2 = self.env['potting.customer.order'].create({
-            'confirmation_vente_id': cv.id,
+            'confirmation_vente_ids': [(4, cv.id)],
             'customer_id': self.customer.id,
             'product_type': 'cocoa_butter',
             'contract_tonnage': 70.0,
@@ -185,7 +185,7 @@ class TestPottingWorkflow(TransactionCase):
         # Tenter un troisième contrat qui dépasse: 60 T
         with self.assertRaises(ValidationError):
             self.env['potting.customer.order'].create({
-                'confirmation_vente_id': cv.id,
+                'confirmation_vente_ids': [(4, cv.id)],
                 'customer_id': self.customer.id,
                 'product_type': 'cocoa_mass',
                 'contract_tonnage': 60.0,  # 150 + 60 > 200
@@ -210,7 +210,7 @@ class TestPottingWorkflow(TransactionCase):
         })
         
         order = self.env['potting.customer.order'].create({
-            'confirmation_vente_id': cv.id,
+            'confirmation_vente_ids': [(4, cv.id)],
             'customer_id': self.customer.id,
             'product_type': 'cocoa_mass',
             'contract_tonnage': 200.0,
@@ -291,7 +291,7 @@ class TestPottingWorkflow(TransactionCase):
         
         # Contrat avec cocoa_mass: OK
         order = self.env['potting.customer.order'].create({
-            'confirmation_vente_id': cv.id,
+            'confirmation_vente_ids': [(4, cv.id)],
             'customer_id': self.customer.id,
             'product_type': 'cocoa_mass',
             'contract_tonnage': 100.0,
@@ -303,7 +303,7 @@ class TestPottingWorkflow(TransactionCase):
         # Contrat avec cocoa_butter: ERREUR
         with self.assertRaises(ValidationError):
             self.env['potting.customer.order'].create({
-                'confirmation_vente_id': cv.id,
+                'confirmation_vente_ids': [(4, cv.id)],
                 'customer_id': self.customer.id,
                 'product_type': 'cocoa_butter',  # Différent de cocoa_mass
                 'contract_tonnage': 50.0,
@@ -328,7 +328,7 @@ class TestPottingWorkflow(TransactionCase):
         })
         
         order = self.env['potting.customer.order'].create({
-            'confirmation_vente_id': cv.id,
+            'confirmation_vente_ids': [(4, cv.id)],
             'customer_id': self.customer.id,
             'product_type': 'cocoa_mass',
             'contract_tonnage': 100.0,
@@ -402,7 +402,7 @@ class TestPottingWorkflow(TransactionCase):
         })
         
         order = self.env['potting.customer.order'].create({
-            'confirmation_vente_id': cv.id,
+            'confirmation_vente_ids': [(4, cv.id)],
             'customer_id': self.customer.id,
             'product_type': 'cocoa_mass',
             'contract_tonnage': 200.0,

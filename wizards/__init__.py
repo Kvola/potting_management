@@ -10,3 +10,5 @@ from . import potting_create_delivery_note_wizard
 from . import potting_create_forwarding_payment_wizard
 from . import potting_import_contracts_wizard
 from . import potting_add_production_wizard
+from . import potting_formule_payment_wizard
+from . import potting_forwarding_invoice_reject_wizard
