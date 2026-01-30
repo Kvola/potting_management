@@ -226,31 +226,6 @@ class PottingConfirmationVente(models.Model):
         store=True
     )
     
-    # Allocations de tonnage (nouveau système pour multi-CV)
-    cv_allocation_ids = fields.One2many(
-        'potting.cv.allocation',
-        'confirmation_vente_id',
-        string="Allocations de tonnage",
-        copy=False,
-        help="Détail des allocations de tonnage aux différents contrats"
-    )
-    
-    total_tonnage_alloue = fields.Float(
-        string="Tonnage total alloué (T)",
-        compute='_compute_allocation_totals',
-        store=True,
-        digits='Product Unit of Measure',
-        help="Somme des tonnages alloués via le système d'allocation"
-    )
-    
-    tonnage_disponible_allocation = fields.Float(
-        string="Tonnage disponible pour allocation (T)",
-        compute='_compute_allocation_totals',
-        store=True,
-        digits='Product Unit of Measure',
-        help="Tonnage encore disponible pour nouvelles allocations"
-    )
-    
     formule_ids = fields.One2many(
         'potting.formule',
         'confirmation_vente_id',
@@ -362,47 +337,24 @@ class PottingConfirmationVente(models.Model):
             else:
                 record.days_remaining = 0
     
-    @api.depends('cv_allocation_ids', 'cv_allocation_ids.tonnage_alloue',
-                 'cv_allocation_ids.tonnage_utilise', 'cv_allocation_ids.customer_order_id.state',
-                 'customer_order_ids', 'customer_order_ids.contract_tonnage')
+    @api.depends('customer_order_ids', 'customer_order_ids.contract_tonnage', 'customer_order_ids.state')
     def _compute_tonnage_utilise(self):
-        """Calcule le tonnage utilisé basé sur les allocations ou l'ancien système"""
+        """Calcule le tonnage utilisé basé sur les contrats liés"""
         for record in self:
-            # Nouveau système basé sur les allocations
-            if record.cv_allocation_ids:
-                # Utilise les allocations pour calculer le tonnage utilisé
-                active_allocations = record.cv_allocation_ids.filtered(
-                    lambda a: a.customer_order_id.state not in ('cancelled',)
-                )
-                tonnage_utilise = sum(a.tonnage_utilise for a in active_allocations)
-                tonnage_alloue = sum(a.tonnage_alloue for a in active_allocations)
-            else:
-                # Ancien système (compatibilité) - basé sur le Many2many direct
-                tonnage_utilise = sum(
-                    order.contract_tonnage 
-                    for order in record.customer_order_ids 
-                    if order.state not in ('cancelled',)
-                )
-                tonnage_alloue = tonnage_utilise  # Pas d'allocation distincte
+            # Calcul basé sur le Many2many direct avec les contrats
+            tonnage_utilise = sum(
+                order.contract_tonnage 
+                for order in record.customer_order_ids 
+                if order.state not in ('cancelled',)
+            )
             
             record.tonnage_utilise = tonnage_utilise
-            record.tonnage_restant = record.tonnage_autorise - tonnage_alloue
+            record.tonnage_restant = record.tonnage_autorise - tonnage_utilise
             
             if record.tonnage_autorise > 0:
-                record.tonnage_progress = (tonnage_alloue / record.tonnage_autorise) * 100
+                record.tonnage_progress = (tonnage_utilise / record.tonnage_autorise) * 100
             else:
                 record.tonnage_progress = 0
-    
-    @api.depends('cv_allocation_ids', 'cv_allocation_ids.tonnage_alloue',
-                 'cv_allocation_ids.customer_order_id.state', 'tonnage_autorise')
-    def _compute_allocation_totals(self):
-        """Calcule les totaux d'allocation"""
-        for record in self:
-            active_allocations = record.cv_allocation_ids.filtered(
-                lambda a: a.customer_order_id.state not in ('cancelled',)
-            )
-            record.total_tonnage_alloue = sum(a.tonnage_alloue for a in active_allocations)
-            record.tonnage_disponible_allocation = record.tonnage_autorise - record.total_tonnage_alloue
     
     @api.depends('customer_order_ids')
     def _compute_customer_order_count(self):

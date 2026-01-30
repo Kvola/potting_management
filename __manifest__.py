@@ -77,7 +77,6 @@
         # Views - CV et Formules (avant les contrats qui les référencent)
         'views/potting_confirmation_vente_views.xml',
         'views/potting_confirmation_vente_transfer_views.xml',
-        'views/potting_cv_allocation_views.xml',
         'views/potting_ot_contract_allocation_views.xml',
         'views/potting_formule_views.xml',
         # Views - Autres

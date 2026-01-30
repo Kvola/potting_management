@@ -4,7 +4,6 @@ from . import res_config_settings
 from . import potting_campaign
 from . import potting_certification
 from . import potting_confirmation_vente
-from . import potting_cv_allocation
 from . import potting_ot_contract_allocation
 from . import potting_formule
 from . import potting_customer_order

@@ -42,15 +42,6 @@ export class PottingCvFormuleManagerDashboard extends Component {
                 reste_a_payer: 0,
             },
             
-            // Allocations CV-Contrats
-            allocationStats: {
-                total: 0,
-                active: 0,
-                completed: 0,
-                tonnage_alloue: 0,
-                tonnage_utilise: 0,
-            },
-            
             // CV récentes
             recentCVs: [],
             
@@ -59,9 +50,6 @@ export class PottingCvFormuleManagerDashboard extends Component {
             
             // Formules à valider/payer
             formulesPending: [],
-            
-            // Allocations actives
-            activeAllocations: [],
             
             // Résumé par type de produit
             productStats: [],
@@ -90,7 +78,6 @@ export class PottingCvFormuleManagerDashboard extends Component {
 
         await this.loadCVStats();
         await this.loadFormuleStats();
-        await this.loadAllocationStats();
         await this.loadRecentData();
         await this.loadProductStats();
     }
@@ -189,42 +176,6 @@ export class PottingCvFormuleManagerDashboard extends Component {
         }
     }
 
-    async loadAllocationStats() {
-        try {
-            // Total des allocations
-            this.state.allocationStats.total = await this.orm.searchCount(
-                "potting.cv.allocation", []
-            );
-
-            // Allocations actives
-            this.state.allocationStats.active = await this.orm.searchCount(
-                "potting.cv.allocation",
-                [['state', '=', 'active']]
-            );
-            
-            this.state.allocationStats.completed = await this.orm.searchCount(
-                "potting.cv.allocation",
-                [['state', '=', 'completed']]
-            );
-
-            // Tonnages des allocations
-            const allocData = await this.orm.searchRead(
-                "potting.cv.allocation",
-                [],
-                ["tonnage_alloue", "tonnage_utilise"]
-            );
-            
-            this.state.allocationStats.tonnage_alloue = allocData.reduce(
-                (sum, a) => sum + (a.tonnage_alloue || 0), 0
-            );
-            this.state.allocationStats.tonnage_utilise = allocData.reduce(
-                (sum, a) => sum + (a.tonnage_utilise || 0), 0
-            );
-        } catch (e) {
-            console.log("Error loading allocation stats:", e);
-        }
-    }
-
     async loadRecentData() {
         try {
             // CV récentes
@@ -258,15 +209,6 @@ export class PottingCvFormuleManagerDashboard extends Component {
                 "potting.formule",
                 [['state', 'in', ['draft', 'validated', 'partial_paid']]],
                 ["reference", "ot_id", "montant_total", "reste_a_payer", "state"],
-                { limit: 5, order: "create_date desc" }
-            );
-
-            // Allocations actives
-            this.state.activeAllocations = await this.orm.searchRead(
-                "potting.cv.allocation",
-                [['state', '=', 'active']],
-                ["confirmation_vente_id", "customer_order_id", "tonnage_alloue", 
-                 "tonnage_utilise", "taux_utilisation"],
                 { limit: 5, order: "create_date desc" }
             );
         } catch (e) {
@@ -387,17 +329,6 @@ export class PottingCvFormuleManagerDashboard extends Component {
         });
     }
 
-    openAllocationList() {
-        this.action.doAction({
-            type: "ir.actions.act_window",
-            name: "Allocations CV-Contrats",
-            res_model: "potting.cv.allocation",
-            view_mode: "list,form,kanban,pivot",
-            views: [[false, "list"], [false, "form"], [false, "kanban"], [false, "pivot"]],
-            target: "current",
-        });
-    }
-
     createCV() {
         this.action.doAction({
             type: "ir.actions.act_window",
@@ -436,17 +367,6 @@ export class PottingCvFormuleManagerDashboard extends Component {
             type: "ir.actions.act_window",
             res_model: "potting.formule",
             res_id: formuleId,
-            view_mode: "form",
-            views: [[false, "form"]],
-            target: "current",
-        });
-    }
-
-    openAllocation(allocId) {
-        this.action.doAction({
-            type: "ir.actions.act_window",
-            res_model: "potting.cv.allocation",
-            res_id: allocId,
             view_mode: "form",
             views: [[false, "form"]],
             target: "current",

@@ -85,47 +85,6 @@ class PottingCustomerOrder(models.Model):
         help="Tonnage encore disponible sur les CV liées"
     )
     
-    # =========================================================================
-    # CHAMP - ALLOCATIONS CV (nouveau système multi-CV)
-    # =========================================================================
-    
-    cv_allocation_ids = fields.One2many(
-        'potting.cv.allocation',
-        'customer_order_id',
-        string="Allocations CV",
-        copy=False,
-        help="Répartition du tonnage du contrat sur plusieurs CV"
-    )
-    
-    total_tonnage_alloue_cv = fields.Float(
-        string="Tonnage total alloué aux CV (T)",
-        compute='_compute_cv_allocation_info',
-        store=True,
-        digits='Product Unit of Measure',
-        help="Somme des tonnages alloués sur toutes les CV"
-    )
-    
-    tonnage_non_alloue = fields.Float(
-        string="Tonnage non alloué (T)",
-        compute='_compute_cv_allocation_info',
-        store=True,
-        digits='Product Unit of Measure',
-        help="Tonnage du contrat non encore alloué à une CV"
-    )
-    
-    cv_allocation_count = fields.Integer(
-        string="Nombre d'allocations CV",
-        compute='_compute_cv_allocation_info',
-        store=True
-    )
-    
-    cv_coverage_complete = fields.Boolean(
-        string="Couverture CV complète",
-        compute='_compute_cv_allocation_info',
-        store=True,
-        help="Indique si le tonnage du contrat est entièrement couvert par des CV"
-    )
-    
     customer_id = fields.Many2one(
         'res.partner',
         string="Client",
@@ -448,20 +407,6 @@ class PottingCustomerOrder(models.Model):
                     "La date de livraison prévue ne peut pas être antérieure à la date de commande."
                 ))
     
-    @api.constrains('contract_tonnage', 'cv_allocation_ids')
-    def _check_cv_tonnage(self):
-        """Vérifie que le tonnage alloué ne dépasse pas le tonnage du contrat"""
-        for order in self:
-            if order.cv_allocation_ids and order.contract_tonnage:
-                total_alloue = sum(a.tonnage_alloue for a in order.cv_allocation_ids)
-                if total_alloue > order.contract_tonnage * 1.05:  # Tolérance de 5%
-                    raise ValidationError(_(
-                        "Le tonnage total alloué aux CV (%.2f T) dépasse le tonnage du contrat (%.2f T).\n"
-                        "Veuillez ajuster les allocations.",
-                        total_alloue,
-                        order.contract_tonnage
-                    ))
-    
     @api.constrains('product_type', 'confirmation_vente_ids')
     def _check_product_type_cv(self):
         """Vérifie la cohérence du type de produit avec les CV"""
@@ -550,17 +495,6 @@ class PottingCustomerOrder(models.Model):
             else:
                 order.cv_references = False
                 order.cv_tonnage_restant_total = 0.0
-    
-    @api.depends('cv_allocation_ids', 'cv_allocation_ids.tonnage_alloue', 'contract_tonnage')
-    def _compute_cv_allocation_info(self):
-        """Calcule les informations sur les allocations CV"""
-        for order in self:
-            allocations = order.cv_allocation_ids
-            order.cv_allocation_count = len(allocations)
-            order.total_tonnage_alloue_cv = sum(a.tonnage_alloue for a in allocations)
-            order.tonnage_non_alloue = (order.contract_tonnage or 0) - order.total_tonnage_alloue_cv
-            # Couverture complète si le tonnage alloué couvre au moins le tonnage du contrat
-            order.cv_coverage_complete = order.total_tonnage_alloue_cv >= (order.contract_tonnage or 0)
 
     # -------------------------------------------------------------------------
     # COMPUTE METHODS - PRIX & MONTANTS

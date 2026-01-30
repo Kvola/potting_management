@@ -259,52 +259,6 @@
                 </div>
             </div>
 
-            <!-- ========== SECTION ALLOCATIONS ========== -->
-            <div class="mb-4">
-                <div class="section-title">
-                    <i class="fa fa-link"/>Allocations CV-Contrats
-                </div>
-                
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <div class="card h-100 cursor-pointer" t-on-click="() => this.openAllocationList()">
-                            <div class="stat-card">
-                                <div class="stat-value text-primary" t-esc="state.allocationStats.total"/>
-                                <div class="stat-label">Total allocations</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card h-100 border-accent-success">
-                            <div class="stat-card">
-                                <div class="stat-value text-success" t-esc="state.allocationStats.active"/>
-                                <div class="stat-label">Allocations actives</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card h-100">
-                            <div class="stat-card">
-                                <div class="stat-value text-warning">
-                                    <t t-esc="formatNumber(state.allocationStats.tonnage_alloue, 0)"/> T
-                                </div>
-                                <div class="stat-label">Tonnage alloué</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card h-100 border-accent-info">
-                            <div class="stat-card">
-                                <div class="stat-value text-info">
-                                    <t t-esc="formatNumber(state.allocationStats.tonnage_utilise, 0)"/> T
-                                </div>
-                                <div class="stat-label">Tonnage utilisé</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- ========== LISTES ========== -->
             <div class="row g-3">
                 <!-- CV expirant bientôt -->

@@ -235,45 +235,7 @@
                     </group>
                     
                     <notebook>
-                        <page string="📦 Allocations Contrats" name="allocations">
-                            <div class="alert alert-info" role="alert" invisible="not cv_allocation_ids">
-                                <i class="fa fa-info-circle"/> 
-                                Tonnage total alloué : <field name="total_tonnage_alloue" class="fw-bold"/> T /
-                                <field name="tonnage_autorise"/> T autorisé
-                                <span class="ms-2" invisible="tonnage_disponible_allocation > 0">
-                                    (<span class="text-danger fw-bold">CV entièrement allouée</span>)
-                                </span>
-                                <span class="ms-2" invisible="tonnage_disponible_allocation &lt;= 0">
-                                    (<span class="text-success fw-bold"><field name="tonnage_disponible_allocation"/> T</span> disponible pour allocation)
-                                </span>
-                            </div>
-                            <field name="cv_allocation_ids" 
-                                   context="{'default_confirmation_vente_id': id}"
-                                   nolabel="1">
-                                <tree editable="bottom"
-                                      decoration-success="state == 'active'"
-                                      decoration-warning="state == 'consumed'"
-                                      decoration-muted="state == 'cancelled'">
-                                    <field name="sequence" widget="handle"/>
-                                    <field name="customer_order_id" 
-                                           options="{'no_create': True}"
-                                           domain="[('state', 'not in', ['cancelled', 'done'])]"
-                                           string="Contrat"/>
-                                    <field name="order_name" string="Réf."/>
-                                    <field name="contract_tonnage" string="Tonnage contrat"/>
-                                    <field name="order_state" widget="badge" string="État"/>
-                                    <field name="tonnage_alloue" sum="Total" class="fw-bold text-primary"/>
-                                    <field name="tonnage_utilise" string="Utilisé"/>
-                                    <field name="tonnage_restant" string="Restant"
-                                           decoration-success="tonnage_restant > 0"/>
-                                    <field name="progress" widget="progressbar" string="%"/>
-                                    <field name="note" optional="hide"/>
-                                    <field name="confirmation_vente_id" column_invisible="1"/>
-                                    <field name="state" column_invisible="1"/>
-                                </tree>
-                            </field>
-                        </page>
-                        <page string="📝 Notes" name="notes">
+                        <page string=" Notes" name="notes">
                             <field name="note" placeholder="Notes et observations..."/>
                         </page>
                         <page string="📄 Facture Transitaire" name="forwarding_invoice">
