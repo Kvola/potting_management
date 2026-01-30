@@ -72,14 +72,19 @@
         'wizards/potting_add_production_wizard_views.xml',
         'wizards/potting_formule_payment_wizard_views.xml',
         'wizards/potting_forwarding_invoice_reject_wizard_views.xml',
+        'wizards/potting_ot_payment_wizards_views.xml',
+        'wizards/potting_cv_tonnage_transfer_wizard_views.xml',
         # Views - CV et Formules (avant les contrats qui les référencent)
         'views/potting_confirmation_vente_views.xml',
+        'views/potting_confirmation_vente_transfer_views.xml',
         'views/potting_cv_allocation_views.xml',
+        'views/potting_ot_contract_allocation_views.xml',
         'views/potting_formule_views.xml',
         # Views - Autres
         'views/potting_certification_views.xml',
         'views/potting_customer_order_views.xml',
         'views/potting_transit_order_views.xml',
+        'views/potting_transit_order_export_views.xml',
         'views/potting_lot_views.xml',
         'views/potting_container_views.xml',
         'views/potting_delivery_note_views.xml',
@@ -95,6 +100,8 @@
         'reports/potting_report_actions.xml',
         # Mail Templates (after reports)
         'data/mail_template_data.xml',
+        # Cron for alerts
+        'data/potting_alert_cron.xml',
     ],
     'demo': [
         'demo/potting_demo_data.xml',

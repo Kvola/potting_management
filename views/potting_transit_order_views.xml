@@ -55,15 +55,15 @@
             <form string="Ordre de Transit">
                 <field name="is_invoiced" invisible="1"/>
                 <header>
-                    <button name="action_generate_lots" type="object" string="Générer les lots" class="btn-primary" invisible="state != 'draft'" groups="potting_management.group_potting_shipping"/>
-                    <button name="action_create_delivery_note" type="object" string="Créer un BL" class="btn-secondary" invisible="state not in ('in_progress', 'ready_validation', 'done')" groups="potting_management.group_potting_shipping"/>
-                    <button name="action_create_invoice" type="object" string="Créer Facture" class="btn-success" invisible="state != 'done' or is_invoiced" groups="potting_management.group_potting_manager"/>
-                    <button name="action_collect_export_duties" type="object" string="Droits collectés" class="btn-warning" invisible="export_duty_collected or state != 'done'" groups="potting_management.group_potting_manager"/>
-                    <button name="action_start_production" type="object" string="Démarrer production" invisible="state != 'lots_generated'" groups="potting_management.group_potting_ceo_agent"/>
-                    <button name="action_mark_ready" type="object" string="Prêt pour validation" invisible="state != 'in_progress'" groups="potting_management.group_potting_ceo_agent"/>
-                    <button name="action_validate" type="object" string="Valider" class="btn-success" invisible="state != 'ready_validation'" groups="potting_management.group_potting_ceo_agent"/>
-                    <button name="action_cancel" type="object" string="Annuler" invisible="state in ('done', 'cancelled')"/>
-                    <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state in ('draft', 'done')" groups="potting_management.group_potting_manager" confirm="Êtes-vous sûr de vouloir remettre cet OT en brouillon ? Les lots seront également remis en brouillon."/>
+                    <button name="action_generate_lots" type="object" string="Générer les lots" class="btn-primary" invisible="state != 'draft'" groups="potting_management.group_potting_shipping" title="Génère automatiquement les lots selon le tonnage et le type de produit"/>
+                    <button name="action_create_delivery_note" type="object" string="Créer un BL" class="btn-secondary" invisible="state not in ('in_progress', 'ready_validation', 'done')" groups="potting_management.group_potting_shipping" title="Créer un bon de livraison pour les lots empotés"/>
+                    <button name="action_create_invoice" type="object" string="Créer Facture" class="btn-success" invisible="state != 'done' or is_invoiced" groups="potting_management.group_potting_manager" title="Générer une facture client"/>
+                    <button name="action_collect_export_duties" type="object" string="Droits collectés" class="btn-warning" invisible="export_duty_collected or state != 'done'" groups="potting_management.group_potting_manager" title="Marquer les droits d'exportation comme encaissés"/>
+                    <button name="action_start_production" type="object" string="Démarrer production" invisible="state != 'lots_generated'" groups="potting_management.group_potting_ceo_agent" title="Lancer la production des lots"/>
+                    <button name="action_mark_ready" type="object" string="Prêt pour validation" invisible="state != 'in_progress'" groups="potting_management.group_potting_ceo_agent" title="Marquer comme prêt lorsque tous les lots sont empotés"/>
+                    <button name="action_validate" type="object" string="Valider" class="btn-success" invisible="state != 'ready_validation'" groups="potting_management.group_potting_ceo_agent" title="Valider l'OT pour finaliser l'expédition"/>
+                    <button name="action_cancel" type="object" string="Annuler" invisible="state in ('done', 'cancelled')" title="Annuler cet ordre de transit"/>
+                    <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state in ('draft', 'done')" groups="potting_management.group_potting_manager" confirm="Êtes-vous sûr de vouloir remettre cet OT en brouillon ? Les lots seront également remis en brouillon." title="Revenir à l'état brouillon"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,lots_generated,in_progress,ready_validation,done"/>
                 </header>
                 <sheet>

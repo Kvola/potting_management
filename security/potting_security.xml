@@ -3,97 +3,153 @@
     <data noupdate="1">
         <!-- Module Category -->
         <record id="module_category_potting" model="ir.module.category">
-            <field name="name">Gestion des Empotages</field>
-            <field name="description">Module de gestion des empotages de produits cacao</field>
+            <field name="name">Gestion des Exportations</field>
+            <field name="description">Module de gestion des exportations de produits cacao</field>
             <field name="sequence">50</field>
         </record>
 
-        <!-- Base User Group - All other groups inherit from this -->
+        <!-- ================================================================
+             GROUPES DE SÉCURITÉ - PROFILS UTILISATEURS
+             ================================================================ -->
+
+        <!-- Base User Group - Accès en lecture seule -->
         <record id="group_potting_user" model="res.groups">
-            <field name="name">Utilisateur empotage</field>
-            <field name="comment">Utilisateur de base - Accès en lecture aux données d'empotage</field>
+            <field name="name">Utilisateur - Lecture seule</field>
+            <field name="comment">Utilisateur de base - Accès en lecture aux données d'exportation</field>
             <field name="category_id" ref="module_category_potting"/>
             <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         </record>
 
-        <!-- Commercial User Group -->
+        <!-- Commercial - Création de Contrats -->
         <record id="group_potting_commercial" model="res.groups">
-            <field name="name">Commercial</field>
-            <field name="comment">Commercial - Peut créer les commandes (contrats) et renseigner le tonnage</field>
+            <field name="name">Commercial (Contrats)</field>
+            <field name="comment">Commercial - Spécialisé dans la création et gestion des Contrats d'exportation</field>
             <field name="category_id" ref="module_category_potting"/>
             <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
         </record>
 
-        <!-- CV/Formule Manager Group -->
-        <record id="group_potting_cv_formule" model="res.groups">
-            <field name="name">Responsable CV/Formules</field>
-            <field name="comment">Responsable CV/Formules - Peut créer et gérer les Confirmations de Vente (CV) et les Formules (FO)</field>
+        <!-- Agent CCC - Création de CV -->
+        <record id="group_potting_agent_ccc" model="res.groups">
+            <field name="name">Agent CCC (CV)</field>
+            <field name="comment">Agent du Conseil Café-Cacao - Spécialisé dans la création des Confirmations de Vente (CV)</field>
             <field name="category_id" ref="module_category_potting"/>
             <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
         </record>
 
-        <!-- Shipping User Group -->
+        <!-- Gestionnaire OT - Création des OT depuis les Contrats -->
+        <record id="group_potting_ot_manager" model="res.groups">
+            <field name="name">Gestionnaire OT</field>
+            <field name="comment">Gestionnaire OT - Création d'Ordres de Transit à partir des Contrats (prix, volume, produit)</field>
+            <field name="category_id" ref="module_category_potting"/>
+            <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
+        </record>
+
+        <!-- Gestionnaire Formules - Création des Formules depuis les CV -->
+        <record id="group_potting_formule_manager" model="res.groups">
+            <field name="name">Gestionnaire Formules</field>
+            <field name="comment">Gestionnaire Formules - Création de Formules à partir des CV (prix et volume fèves)</field>
+            <field name="category_id" ref="module_category_potting"/>
+            <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
+        </record>
+
+        <!-- Comptable - Paiements (Taxes et DUS) -->
+        <record id="group_potting_accountant" model="res.groups">
+            <field name="name">Comptable (Paiements)</field>
+            <field name="comment">Comptable - Gère les paiements des taxes (1ère partie) et du DUS (2ème partie) via chèques</field>
+            <field name="category_id" ref="module_category_potting"/>
+            <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
+        </record>
+
+        <!-- Shipping - Gestion logistique -->
         <record id="group_potting_shipping" model="res.groups">
-            <field name="name">Shipping - Utilisateur</field>
-            <field name="comment">Utilisateur Shipping - Peut créer et gérer les commandes et OT</field>
+            <field name="name">Shipping (Logistique)</field>
+            <field name="comment">Shipping - Gestion des lots, conteneurs, bons de livraison et transitaires</field>
             <field name="category_id" ref="module_category_potting"/>
             <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
         </record>
 
-        <!-- Export Agent Group -->
+        <!-- Agent Exportation - Validation des OT -->
         <record id="group_potting_ceo_agent" model="res.groups">
             <field name="name">Agent Exportation</field>
-            <field name="comment">Agent Exportation - Peut gérer les lots et valider les OT</field>
+            <field name="comment">Agent Exportation - Validation finale des OT et suivi des productions</field>
             <field name="category_id" ref="module_category_potting"/>
             <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
         </record>
 
-        <!-- Accountant Group - For payment validation -->
-        <record id="group_potting_accountant" model="res.groups">
-            <field name="name">Comptable</field>
-            <field name="comment">Comptable - Peut valider les factures transitaires et les paiements (formules et transitaires)</field>
-            <field name="category_id" ref="module_category_potting"/>
-            <field name="implied_ids" eval="[(4, ref('group_potting_user'))]"/>
-        </record>
-
-        <!-- Manager Group -->
+        <!-- Manager - Accès complet + Dashboard -->
         <record id="group_potting_manager" model="res.groups">
-            <field name="name">Responsable</field>
-            <field name="comment">Responsable - Accès complet au module</field>
+            <field name="name">Manager (Responsable)</field>
+            <field name="comment">Manager - Accès complet, tableau de bord intelligent, alertes critiques et notifications</field>
             <field name="category_id" ref="module_category_potting"/>
-            <field name="implied_ids" eval="[(4, ref('group_potting_shipping')), (4, ref('group_potting_ceo_agent'))]"/>
+            <field name="implied_ids" eval="[(4, ref('group_potting_commercial')), (4, ref('group_potting_agent_ccc')), (4, ref('group_potting_ot_manager')), (4, ref('group_potting_formule_manager')), (4, ref('group_potting_accountant')), (4, ref('group_potting_shipping')), (4, ref('group_potting_ceo_agent'))]"/>
             <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
         </record>
 
-        <!-- Record Rules -->
-        <!-- Company rule for all models -->
+        <!-- Groupe obsolète conservé pour compatibilité -->
+        <record id="group_potting_cv_formule" model="res.groups">
+            <field name="name">Responsable CV/Formules (obsolète)</field>
+            <field name="comment">OBSOLETE - Remplacé par Agent CCC et Gestionnaire Formules</field>
+            <field name="category_id" ref="module_category_potting"/>
+            <field name="implied_ids" eval="[(4, ref('group_potting_agent_ccc')), (4, ref('group_potting_formule_manager'))]"/>
+        </record>
+
+        <!-- ================================================================
+             RÈGLES D'ACCÈS (Record Rules)
+             ================================================================ -->
+        
+        <!-- Règle multi-société pour les Contrats -->
         <record id="potting_customer_order_company_rule" model="ir.rule">
-            <field name="name">Commandes client: multi-société</field>
+            <field name="name">Contrats: multi-société</field>
             <field name="model_id" ref="model_potting_customer_order"/>
             <field name="domain_force">[('company_id', 'in', company_ids)]</field>
         </record>
 
+        <!-- Règle multi-société pour les OT -->
         <record id="potting_transit_order_company_rule" model="ir.rule">
             <field name="name">OT: multi-société</field>
             <field name="model_id" ref="model_potting_transit_order"/>
             <field name="domain_force">[('company_id', 'in', company_ids)]</field>
         </record>
 
+        <!-- Règle multi-société pour les Lots -->
         <record id="potting_lot_company_rule" model="ir.rule">
             <field name="name">Lots: multi-société</field>
             <field name="model_id" ref="model_potting_lot"/>
             <field name="domain_force">[('company_id', 'in', company_ids)]</field>
         </record>
 
+        <!-- Règle multi-société pour les Conteneurs -->
         <record id="potting_container_company_rule" model="ir.rule">
             <field name="name">Conteneurs: multi-société</field>
             <field name="model_id" ref="model_potting_container"/>
             <field name="domain_force">[('company_id', 'in', company_ids)]</field>
         </record>
 
+        <!-- Règle multi-société pour les Lignes de production -->
         <record id="potting_production_line_company_rule" model="ir.rule">
             <field name="name">Lignes de production: multi-société</field>
             <field name="model_id" ref="model_potting_production_line"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- Règle multi-société pour les CV -->
+        <record id="potting_confirmation_vente_company_rule" model="ir.rule">
+            <field name="name">CV: multi-société</field>
+            <field name="model_id" ref="model_potting_confirmation_vente"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- Règle multi-société pour les Formules -->
+        <record id="potting_formule_company_rule" model="ir.rule">
+            <field name="name">Formules: multi-société</field>
+            <field name="model_id" ref="model_potting_formule"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- Règle multi-société pour les allocations OT-Contrats -->
+        <record id="potting_ot_contract_allocation_company_rule" model="ir.rule">
+            <field name="name">Allocations OT-Contrats: multi-société</field>
+            <field name="model_id" ref="model_potting_ot_contract_allocation"/>
             <field name="domain_force">[('company_id', 'in', company_ids)]</field>
         </record>
     </data>

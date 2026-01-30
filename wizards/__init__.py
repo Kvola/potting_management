@@ -12,3 +12,5 @@ from . import potting_import_contracts_wizard
 from . import potting_add_production_wizard
 from . import potting_formule_payment_wizard
 from . import potting_forwarding_invoice_reject_wizard
+from . import potting_ot_payment_wizards
+from . import potting_cv_tonnage_transfer_wizard

@@ -175,14 +175,22 @@
               name="🏛️ Réglementation CCC" 
               parent="menu_potting_root" 
               sequence="15"
-              groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+              groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_cv_formule,potting_management.group_potting_agent_ccc,potting_management.group_potting_formule_manager,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_confirmation_vente" 
               name="📜 Confirmations de Vente" 
               parent="menu_potting_ccc" 
               action="action_potting_confirmation_vente" 
               sequence="10"
-              groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+              groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_cv_formule,potting_management.group_potting_agent_ccc,potting_management.group_potting_manager"/>
+
+    <!-- Menu Agent CCC - Gestion CV -->
+    <menuitem id="menu_potting_cv_agent_ccc" 
+              name="📋 Mes CV (Agent CCC)" 
+              parent="menu_potting_ccc" 
+              action="action_potting_cv_agent_ccc" 
+              sequence="12"
+              groups="potting_management.group_potting_agent_ccc"/>
 
     <menuitem id="menu_potting_cv_allocation" 
               name="📊 Allocations CV-Contrats" 
@@ -196,7 +204,7 @@
               parent="menu_potting_ccc" 
               action="action_potting_formule" 
               sequence="20"
-              groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+              groups="potting_management.group_potting_commercial,potting_management.group_potting_shipping,potting_management.group_potting_cv_formule,potting_management.group_potting_formule_manager,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_taxe_type" 
               name="🏛️ Types de Taxes" 
@@ -204,6 +212,29 @@
               action="action_potting_taxe_type" 
               sequence="30"
               groups="potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+
+    <!-- ================================================================
+         MENU GESTION OT EXPORT (Gestionnaire OT)
+         ================================================================ -->
+    <menuitem id="menu_potting_ot_export" 
+              name="📦 Gestion OT Export" 
+              parent="menu_potting_root" 
+              sequence="17"
+              groups="potting_management.group_potting_ot_manager,potting_management.group_potting_manager"/>
+
+    <menuitem id="menu_potting_ot_manager" 
+              name="🚚 OT à traiter" 
+              parent="menu_potting_ot_export" 
+              action="action_potting_transit_order_ot_manager" 
+              sequence="10"
+              groups="potting_management.group_potting_ot_manager,potting_management.group_potting_manager"/>
+
+    <menuitem id="menu_potting_ot_allocations" 
+              name="📊 Allocations OT-Contrats" 
+              parent="menu_potting_ot_export" 
+              action="action_potting_ot_contract_allocation" 
+              sequence="20"
+              groups="potting_management.group_potting_ot_manager,potting_management.group_potting_manager"/>
 
     <!-- CEO Agent Menu -->
     <menuitem id="menu_potting_ceo_agent" 

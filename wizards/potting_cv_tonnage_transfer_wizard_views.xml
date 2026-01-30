@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================================
+         WIZARD: Report de tonnage CV entre campagnes
+         ================================================================ -->
+    
+    <record id="potting_cv_tonnage_transfer_wizard_form" model="ir.ui.view">
+        <field name="name">potting.cv.tonnage.transfer.wizard.form</field>
+        <field name="model">potting.cv.tonnage.transfer.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Report de tonnage CV">
+                <div class="alert alert-info" role="alert">
+                    <strong>📦 Report de tonnage entre campagnes</strong><br/>
+                    Ce wizard permet de reporter le tonnage non utilisé d'une CV 
+                    d'une campagne passée vers une CV de la campagne en cours.
+                </div>
+                
+                <group>
+                    <group string="📤 CV Source (campagne passée)">
+                        <field name="source_cv_id" options="{'no_create': True}"/>
+                        <field name="source_campaign_id" readonly="1"/>
+                        <field name="source_tonnage_restant" readonly="1"/>
+                        <field name="source_date_end" readonly="1"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                    
+                    <group string="📥 CV Destination">
+                        <field name="create_new_cv"/>
+                        <field name="target_campaign_id" 
+                               invisible="not create_new_cv"
+                               required="create_new_cv"
+                               options="{'no_create': True}"/>
+                        <field name="target_cv_id" 
+                               invisible="create_new_cv"
+                               required="not create_new_cv"
+                               options="{'no_create': True}"/>
+                    </group>
+                </group>
+                
+                <separator string="📊 Tonnage à transférer"/>
+                <group>
+                    <group>
+                        <field name="transfer_all"/>
+                        <field name="tonnage_to_transfer" 
+                               readonly="transfer_all"/>
+                    </group>
+                    <group>
+                        <field name="keep_original_price"/>
+                        <field name="new_price" 
+                               readonly="keep_original_price"/>
+                    </group>
+                </group>
+                
+                <group string="📝 Justification" col="1">
+                    <field name="note" nolabel="1" 
+                           placeholder="Motif du report de tonnage (campagne terminée, ajustement, etc.)"/>
+                </group>
+                
+                <footer>
+                    <button name="action_transfer_tonnage" 
+                            string="✅ Effectuer le report" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_potting_cv_tonnage_transfer_wizard" model="ir.actions.act_window">
+        <field name="name">Report de tonnage CV</field>
+        <field name="res_model">potting.cv.tonnage.transfer.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

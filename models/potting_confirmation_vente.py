@@ -754,3 +754,68 @@ class PottingConfirmationVente(models.Model):
                 'sticky': False,
             }
         }
+
+    def action_open_transfer_wizard(self):
+        """Ouvrir l'assistant de transfert de tonnage vers une autre CV
+        
+        Permet de transférer le tonnage restant d'une CV (expirée ou active)
+        vers une nouvelle CV ou une CV existante d'une autre campagne.
+        """
+        self.ensure_one()
+        if self.state not in ('active', 'expired'):
+            raise UserError(_("Seules les CV actives ou expirées peuvent être transférées."))
+        if self.tonnage_restant <= 0:
+            raise UserError(_("Cette CV n'a plus de tonnage disponible à transférer."))
+        
+        return {
+            'name': _('Transférer tonnage CV'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'potting.cv.tonnage.transfer.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_source_cv_id': self.id,
+                'default_tonnage_to_transfer': self.tonnage_restant,
+                'default_prix_tonnage': self.prix_tonnage,
+            }
+        }
+
+    @api.model
+    def _cron_check_cv_expiration(self):
+        """Cron job pour vérifier les CV qui arrivent à expiration
+        
+        Crée des activités pour les CV actives qui expirent dans les 7 prochains jours
+        et qui ont encore du tonnage disponible.
+        """
+        from datetime import timedelta
+        
+        today = date.today()
+        expiry_threshold = today + timedelta(days=7)
+        
+        cvs_expiring = self.search([
+            ('date_end', '<=', expiry_threshold),
+            ('date_end', '>=', today),
+            ('state', '=', 'active'),
+            ('tonnage_restant', '>', 0)
+        ])
+        
+        activity_type = self.env.ref('mail.mail_activity_data_warning', raise_if_not_found=False)
+        if not activity_type:
+            return
+        
+        for cv in cvs_expiring:
+            # Vérifier si une activité existe déjà
+            existing_activity = self.env['mail.activity'].search([
+                ('res_model', '=', self._name),
+                ('res_id', '=', cv.id),
+                ('activity_type_id', '=', activity_type.id),
+                ('summary', 'ilike', 'Expiration')
+            ], limit=1)
+            
+            if not existing_activity:
+                cv.activity_schedule(
+                    'mail.mail_activity_data_warning',
+                    date_deadline=cv.date_end,
+                    summary='⚠️ Expiration CV imminente',
+                    note=f'La CV {cv.name} expire le {cv.date_end}. Tonnage restant: {cv.tonnage_restant} T.'
+                )

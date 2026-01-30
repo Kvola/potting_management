@@ -1,8 +1,30 @@
 # -*- coding: utf-8 -*-
+"""
+Ordres de Transit (OT) - Module Potting Management
+
+Ce modèle gère les ordres de transit pour l'exportation de cacao.
+Un OT représente une opération d'exportation avec:
+- Liaison à une Formule (FO) du Conseil Café-Cacao
+- Workflow de paiement: taxes → vente → DUS
+- Génération de lots pour l'empotage
+- Facturation partielle
+
+Auteur: ICP
+Version: 2.0.0 - Améliorations robustesse
+"""
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import float_compare, float_round, float_is_zero
 import math
+import logging
+
+_logger = logging.getLogger(__name__)
+
+# Constantes de configuration
+TOLERANCE_FLOAT = 0.001  # Tolérance pour comparaisons de flottants
+MAX_TONNAGE_PER_OT = 1000.0  # Tonnage max par OT en tonnes
+MIN_TONNAGE_PER_OT = 0.001  # Tonnage min par OT en tonnes
 
 
 class PottingTransitOrder(models.Model):
@@ -50,14 +72,68 @@ class PottingTransitOrder(models.Model):
         help="Indique si l'OT a été créé directement depuis une commande client"
     )
     
+    # =========================================================================
+    # CHAMP - CONTRAT PRINCIPAL (optionnel - pour compatibilité)
+    # =========================================================================
+    
     customer_order_id = fields.Many2one(
         'potting.customer.order',
-        string="Commande client",
-        required=True,
-        ondelete='cascade',
+        string="Contrat principal",
+        required=False,  # Désormais optionnel car on utilise les allocations
+        ondelete='set null',
         tracking=True,
         check_company=True,
-        domain="[('state', 'not in', ['done', 'cancelled'])]"
+        domain="[('state', 'not in', ['done', 'cancelled'])]",
+        help="Contrat principal (optionnel). Utiliser les allocations pour multi-contrats."
+    )
+    
+    # =========================================================================
+    # ALLOCATIONS MULTI-CONTRATS
+    # =========================================================================
+    
+    contract_allocation_ids = fields.One2many(
+        'potting.ot.contract.allocation',
+        'transit_order_id',
+        string="Allocations Contrats",
+        copy=False,
+        help="Répartition du tonnage de l'OT sur plusieurs contrats"
+    )
+    
+    contract_allocation_count = fields.Integer(
+        string="Nombre d'allocations",
+        compute='_compute_contract_allocation_info',
+        store=True
+    )
+    
+    total_tonnage_alloue = fields.Float(
+        string="Tonnage alloué (T)",
+        compute='_compute_contract_allocation_info',
+        store=True,
+        digits='Product Unit of Measure',
+        help="Total du tonnage alloué depuis les contrats"
+    )
+    
+    tonnage_non_alloue = fields.Float(
+        string="Tonnage non alloué (T)",
+        compute='_compute_contract_allocation_info',
+        store=True,
+        digits='Product Unit of Measure',
+        help="Tonnage de l'OT non encore alloué à un contrat"
+    )
+    
+    prix_moyen_pondere = fields.Monetary(
+        string="Prix moyen pondéré (FCFA/T)",
+        compute='_compute_contract_allocation_info',
+        store=True,
+        currency_field='currency_id',
+        help="Prix moyen pondéré calculé à partir des allocations"
+    )
+    
+    allocation_complete = fields.Boolean(
+        string="Allocation complète",
+        compute='_compute_contract_allocation_info',
+        store=True,
+        help="Indique si le tonnage est entièrement alloué"
     )
     
     # =========================================================================
@@ -465,12 +541,90 @@ class PottingTransitOrder(models.Model):
     
     state = fields.Selection([
         ('draft', 'Brouillon'),
+        ('formule_linked', 'Formule liée'),
+        ('taxes_paid', 'Taxes payées'),
         ('lots_generated', 'Lots générés'),
         ('in_progress', 'En cours'),
         ('ready_validation', 'Prêt pour validation'),
-        ('done', 'Validé'),
+        ('sold', 'Vendu'),
+        ('dus_paid', 'DUS payé'),
+        ('done', 'Terminé'),
         ('cancelled', 'Annulé'),
     ], string="État", default='draft', tracking=True, index=True, copy=False)
+    
+    # =========================================================================
+    # CHAMPS PAIEMENT - TAXES (1ère partie de la Formule)
+    # =========================================================================
+    
+    taxes_paid = fields.Boolean(
+        string="Taxes payées",
+        default=False,
+        tracking=True,
+        help="Indique si la première partie (taxes/redevances) a été payée"
+    )
+    
+    taxes_payment_date = fields.Date(
+        string="Date paiement taxes",
+        tracking=True
+    )
+    
+    taxes_check_number = fields.Char(
+        string="N° Chèque taxes",
+        tracking=True,
+        help="Numéro du chèque utilisé pour payer les taxes"
+    )
+    
+    taxes_payment_request_id = fields.Many2one(
+        'payment.request',
+        string="Demande paiement taxes",
+        copy=False,
+        help="Demande de paiement pour les taxes/redevances"
+    )
+    
+    # =========================================================================
+    # CHAMPS PAIEMENT - DUS (2ème partie après vente)
+    # =========================================================================
+    
+    dus_paid = fields.Boolean(
+        string="DUS payé",
+        default=False,
+        tracking=True,
+        help="Indique si le DUS (Droit Unique de Sortie) a été payé"
+    )
+    
+    dus_payment_date = fields.Date(
+        string="Date paiement DUS",
+        tracking=True
+    )
+    
+    dus_check_number = fields.Char(
+        string="N° Chèque DUS",
+        tracking=True,
+        help="Numéro du chèque utilisé pour payer le DUS"
+    )
+    
+    dus_payment_request_id = fields.Many2one(
+        'payment.request',
+        string="Demande paiement DUS",
+        copy=False,
+        help="Demande de paiement pour le DUS"
+    )
+    
+    # =========================================================================
+    # CHAMPS VENTE
+    # =========================================================================
+    
+    date_sold = fields.Date(
+        string="Date de vente",
+        tracking=True,
+        help="Date à laquelle l'OT a été vendu"
+    )
+    
+    sold_by_id = fields.Many2one(
+        'res.users',
+        string="Vendu par",
+        tracking=True
+    )
     
     note = fields.Text(string="Notes")
     
@@ -540,23 +694,40 @@ class PottingTransitOrder(models.Model):
     # -------------------------------------------------------------------------
     @api.constrains('tonnage')
     def _check_tonnage(self):
+        """Valide le tonnage de l'OT.
+        
+        Le tonnage doit être:
+        - Supérieur au minimum configuré
+        - Inférieur au maximum configuré
+        """
         for order in self:
-            if order.tonnage <= 0:
-                raise ValidationError(_("Le tonnage doit être supérieur à 0."))
-            if order.tonnage > 1000:  # Max 1000 tonnes per OT
-                raise ValidationError(_("Le tonnage ne peut pas dépasser 1000 tonnes par OT."))
+            if float_compare(order.tonnage, MIN_TONNAGE_PER_OT, precision_digits=3) < 0:
+                raise ValidationError(_(
+                    "Le tonnage doit être supérieur à %.3f T."
+                ) % MIN_TONNAGE_PER_OT)
+            if float_compare(order.tonnage, MAX_TONNAGE_PER_OT, precision_digits=3) > 0:
+                raise ValidationError(_(
+                    "Le tonnage ne peut pas dépasser %.0f tonnes par OT."
+                ) % MAX_TONNAGE_PER_OT)
 
     @api.constrains('product_type', 'product_id')
     def _check_product_type_consistency(self):
+        """Vérifie la cohérence entre le type de produit et le produit sélectionné."""
         for order in self:
             if order.product_id and order.product_id.potting_product_type != order.product_type:
                 raise ValidationError(_(
-                    "Le produit sélectionné ne correspond pas au type de produit de l'OT."
+                    "Le produit '%s' ne correspond pas au type de produit '%s' de l'OT."
+                ) % (
+                    order.product_id.display_name,
+                    dict(order._fields['product_type'].selection).get(order.product_type)
                 ))
     
     @api.constrains('formule_id', 'tonnage')
     def _check_formule_tonnage(self):
-        """Vérifie que le tonnage de l'OT est cohérent avec la Formule"""
+        """Vérifie que le tonnage de l'OT est cohérent avec la Formule.
+        
+        Une Formule ne peut être liée qu'à un seul OT actif.
+        """
         for order in self:
             if order.formule_id and order.tonnage:
                 # Vérifier si d'autres OT utilisent cette formule
@@ -567,21 +738,20 @@ class PottingTransitOrder(models.Model):
                 ])
                 if other_ots:
                     raise ValidationError(_(
-                        "La Formule %s est déjà utilisée par l'OT %s. "
-                        "Une Formule ne peut être liée qu'à un seul OT.",
-                        order.formule_id.name,
-                        other_ots[0].name
-                    ))
+                        "La Formule '%s' est déjà utilisée par l'OT '%s'. "
+                        "Une Formule ne peut être liée qu'à un seul OT."
+                    ) % (order.formule_id.display_name, other_ots[0].name))
     
     @api.constrains('customer_order_id', 'product_type')
     def _check_product_type_order(self):
-        """Vérifie la cohérence du type de produit avec la commande"""
+        """Vérifie la cohérence du type de produit avec la commande."""
         for order in self:
             if order.customer_order_id and order.product_type:
                 if order.customer_order_id.product_type != order.product_type:
                     raise ValidationError(_(
                         "Le type de produit de l'OT (%s) doit correspondre "
-                        "au type de produit de la commande (%s).",
+                        "au type de produit de la commande (%s)."
+                    ) % (
                         dict(order._fields['product_type'].selection).get(order.product_type),
                         dict(order.customer_order_id._fields['product_type'].selection).get(
                             order.customer_order_id.product_type
@@ -590,14 +760,32 @@ class PottingTransitOrder(models.Model):
     
     @api.constrains('export_duty_collected', 'state')
     def _check_export_duty_before_validation(self):
-        """Vérifie que les droits d'export sont collectés avant validation"""
+        """Vérifie que les droits d'export sont collectés avant validation."""
         for order in self:
             if order.state == 'done' and not order.export_duty_collected:
                 raise ValidationError(_(
                     "Les droits d'exportation doivent être encaissés avant "
-                    "la validation de l'OT %s.",
+                    "la validation de l'OT '%s'."
+                ) % order.name)
+    
+    @api.constrains('taxes_paid', 'state')
+    def _check_taxes_for_state(self):
+        """Vérifie que les taxes sont payées pour certains états."""
+        for order in self:
+            if order.state in ('sold', 'dus_paid', 'done') and not order.taxes_paid:
+                raise ValidationError(_(
+                    "Les taxes doivent être payées avant de passer à l'état '%s'."
+                ) % dict(order._fields['state'].selection).get(order.state))
+    
+    @api.constrains('dus_paid', 'state')
+    def _check_dus_for_done(self):
+        """Vérifie que le DUS est payé pour l'état 'done' si après vente."""
+        for order in self:
+            if order.state == 'done' and order.date_sold and not order.dus_paid:
+                _logger.warning(
+                    "OT %s terminé avec vente mais sans DUS payé - à vérifier",
                     order.name
-                ))
+                )
 
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
@@ -627,6 +815,24 @@ class PottingTransitOrder(models.Model):
             order.max_tonnage_per_lot = self.env['res.config.settings'].get_max_tonnage_for_product(
                 order.product_type
             )
+
+    @api.depends('contract_allocation_ids', 'contract_allocation_ids.tonnage_alloue', 
+                 'contract_allocation_ids.montant_alloue', 'tonnage')
+    def _compute_contract_allocation_info(self):
+        """Calcule les informations d'allocation de contrats"""
+        for order in self:
+            allocations = order.contract_allocation_ids
+            order.contract_allocation_count = len(allocations)
+            order.total_tonnage_alloue = sum(a.tonnage_alloue for a in allocations)
+            order.tonnage_non_alloue = max(0, order.tonnage - order.total_tonnage_alloue)
+            order.allocation_complete = order.tonnage_non_alloue <= 0.01  # Tolérance
+            
+            # Prix moyen pondéré
+            if order.total_tonnage_alloue > 0:
+                total_montant = sum(a.montant_alloue for a in allocations)
+                order.prix_moyen_pondere = total_montant / order.total_tonnage_alloue
+            else:
+                order.prix_moyen_pondere = 0
 
     @api.depends('lot_ids', 'lot_ids.state')
     def _compute_lot_count(self):
@@ -999,23 +1205,235 @@ class PottingTransitOrder(models.Model):
         return result
 
     # -------------------------------------------------------------------------
-    # ACTION METHODS
+    # ACTION METHODS - WORKFLOW
+    # -------------------------------------------------------------------------
+    
+    def action_link_formule(self):
+        """Lier une formule à l'OT et passer à l'état 'formule_linked'"""
+        self.ensure_one()
+        if not self.formule_id:
+            raise UserError(_("Veuillez sélectionner une formule avant de continuer."))
+        if self.state != 'draft':
+            raise UserError(_("Cette action n'est possible qu'en état brouillon."))
+        
+        # Lier la formule à l'OT
+        self.formule_id.transit_order_id = self.id
+        self.state = 'formule_linked'
+        
+        self.message_post(
+            body=_("Formule %s liée à cet OT.") % self.formule_id.name,
+            subject=_("Formule liée"),
+            subtype_xmlid='mail.mt_comment'
+        )
+        return True
+    
+    def action_open_taxes_payment_wizard(self):
+        """Ouvrir le wizard de paiement des taxes (1ère partie)"""
+        self.ensure_one()
+        if self.state != 'formule_linked':
+            raise UserError(_("L'OT doit être en état 'Formule liée' pour payer les taxes."))
+        if not self.formule_id:
+            raise UserError(_("Aucune formule liée à cet OT."))
+        
+        return {
+            'name': _('Paiement Taxes - 1ère partie'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'potting.ot.taxes.payment.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_transit_order_id': self.id,
+                'default_formule_id': self.formule_id.id,
+            },
+        }
+    
+    def action_confirm_taxes_paid(self, check_number, payment_date=None):
+        """Confirmer le paiement des taxes"""
+        self.ensure_one()
+        if self.state != 'formule_linked':
+            raise UserError(_("L'OT doit être en état 'Formule liée'."))
+        
+        self.write({
+            'taxes_paid': True,
+            'taxes_check_number': check_number,
+            'taxes_payment_date': payment_date or fields.Date.context_today(self),
+            'state': 'taxes_paid',
+        })
+        
+        self.message_post(
+            body=_("Taxes payées - Chèque N° %s") % check_number,
+            subject=_("Taxes payées"),
+            subtype_xmlid='mail.mt_comment'
+        )
+        return True
+    
+    def action_mark_sold(self):
+        """Marquer l'OT comme vendu"""
+        self.ensure_one()
+        if self.state not in ('taxes_paid', 'lots_generated', 'in_progress', 'ready_validation', 'done'):
+            raise UserError(_("Les taxes doivent être payées avant de pouvoir vendre l'OT."))
+        
+        self.write({
+            'date_sold': fields.Date.context_today(self),
+            'sold_by_id': self.env.user.id,
+            'state': 'sold',
+        })
+        
+        self.message_post(
+            body=_("OT vendu par %s") % self.env.user.name,
+            subject=_("OT Vendu"),
+            subtype_xmlid='mail.mt_comment'
+        )
+        return True
+    
+    def action_open_dus_payment_wizard(self):
+        """Ouvrir le wizard de paiement DUS (2ème partie - après vente)"""
+        self.ensure_one()
+        if self.state != 'sold':
+            raise UserError(_("L'OT doit être vendu pour pouvoir payer le DUS."))
+        if not self.formule_id:
+            raise UserError(_("Aucune formule liée à cet OT."))
+        
+        return {
+            'name': _('Paiement DUS - 2ème partie'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'potting.ot.dus.payment.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_transit_order_id': self.id,
+                'default_formule_id': self.formule_id.id,
+            },
+        }
+    
+    def action_confirm_dus_paid(self, check_number, payment_date=None):
+        """Confirmer le paiement du DUS"""
+        self.ensure_one()
+        if self.state != 'sold':
+            raise UserError(_("L'OT doit être vendu pour payer le DUS."))
+        
+        self.write({
+            'dus_paid': True,
+            'dus_check_number': check_number,
+            'dus_payment_date': payment_date or fields.Date.context_today(self),
+            'state': 'dus_paid',
+        })
+        
+        self.message_post(
+            body=_("DUS payé - Chèque N° %s") % check_number,
+            subject=_("DUS payé"),
+            subtype_xmlid='mail.mt_comment'
+        )
+        _logger.info("OT %s: DUS payé, chèque N° %s", self.name, check_number)
+        return True
+    
+    def action_complete(self):
+        """Terminer l'OT (toutes les étapes accomplies).
+        
+        Valide que toutes les conditions sont remplies:
+        - DUS payé
+        - Tous les lots empotés (optionnel selon configuration)
+        """
+        self.ensure_one()
+        if self.state != 'dus_paid':
+            raise UserError(_("Le DUS doit être payé avant de terminer l'OT."))
+        
+        # Log de l'action
+        _logger.info(
+            "OT %s: Finalisation par %s (tonnage: %.3f T, %d lots)",
+            self.name, self.env.user.name, self.tonnage, len(self.lot_ids)
+        )
+        
+        self.write({
+            'state': 'done',
+            'date_validated': fields.Datetime.now(),
+            'validated_by_id': self.env.user.id,
+        })
+        
+        self.message_post(
+            body=_("✅ OT terminé avec succès."),
+            subject=_("OT Terminé"),
+            subtype_xmlid='mail.mt_comment'
+        )
+        return True
+
+    @api.model
+    def _cron_taxes_payment_reminder(self):
+        """Cron job pour rappeler le paiement des taxes en attente.
+        
+        Crée des activités pour les OT liés à une formule mais dont les taxes
+        ne sont pas payées depuis plus de 5 jours.
+        
+        Returns:
+            int: Nombre d'OT traités
+        """
+        from datetime import date, timedelta
+        
+        threshold_date = date.today() - timedelta(days=5)
+        count = 0
+        
+        try:
+            ots_pending = self.search([
+                ('state', '=', 'formule_linked'),
+                ('taxes_paid', '=', False),
+                ('write_date', '<', threshold_date)
+            ])
+            
+            for ot in ots_pending:
+                try:
+                    # Vérifier si une activité existe déjà
+                    existing = self.env['mail.activity'].search([
+                        ('res_model', '=', self._name),
+                        ('res_id', '=', ot.id),
+                        ('summary', 'ilike', 'Taxes')
+                    ], limit=1)
+                    
+                    if not existing:
+                        ot.activity_schedule(
+                            'mail.mail_activity_data_todo',
+                            date_deadline=date.today() + timedelta(days=2),
+                            summary='💰 Taxes à payer',
+                            note=_("L'OT %s est lié à la formule mais les taxes ne sont pas encore payées.") % ot.name
+                        )
+                        count += 1
+                        _logger.info("Activité créée pour rappel taxes OT %s", ot.name)
+                except Exception as e:
+                    _logger.error("Erreur lors de la création d'activité pour OT %s: %s", ot.name, str(e))
+                    continue
+                    
+        except Exception as e:
+            _logger.error("Erreur dans _cron_taxes_payment_reminder: %s", str(e))
+            
+        _logger.info("Cron rappel taxes: %d activités créées sur %d OT en attente", count, len(ots_pending) if 'ots_pending' in locals() else 0)
+        return count
+
+    # -------------------------------------------------------------------------
+    # ACTION METHODS - LOTS
     # -------------------------------------------------------------------------
     def action_generate_lots(self):
-        """Open wizard to generate lots with custom max tonnage."""
+        """Open wizard to generate lots with custom max tonnage.
+        
+        Raises:
+            UserError: Si l'OT n'est pas en brouillon ou si des lots existent déjà.
+        """
         self.ensure_one()
         
         if self.state != 'draft':
             raise UserError(_("Les lots ne peuvent être générés que pour les OT en brouillon."))
         
         if self.lot_ids:
-            raise UserError(_("Des lots existent déjà pour cet OT. Supprimez-les d'abord."))
+            raise UserError(_(
+                "Des lots existent déjà pour cet OT (%d lots). "
+                "Supprimez-les d'abord via 'Régénérer les lots'."
+            ) % len(self.lot_ids))
         
-        if not self.tonnage or self.tonnage <= 0:
+        if not self.tonnage or float_compare(self.tonnage, 0, precision_digits=3) <= 0:
             raise UserError(_("Le tonnage doit être supérieur à 0."))
         
         if not self.product_type:
             raise UserError(_("Veuillez sélectionner un type de produit."))
+        
+        _logger.info("OT %s: Ouverture wizard génération lots (tonnage: %.3f T)", self.name, self.tonnage)
         
         # Open the wizard
         return {

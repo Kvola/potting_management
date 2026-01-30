@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================================
+         WIZARD: Paiement Taxes OT (1ère partie)
+         ================================================================ -->
+    
+    <record id="potting_ot_taxes_payment_wizard_form" model="ir.ui.view">
+        <field name="name">potting.ot.taxes.payment.wizard.form</field>
+        <field name="model">potting.ot.taxes.payment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Paiement Taxes (1ère partie)">
+                <group>
+                    <group string="📋 Informations OT">
+                        <field name="transit_order_id" readonly="1"/>
+                        <field name="ot_name" readonly="1"/>
+                        <field name="formule_id" readonly="1"/>
+                        <field name="formule_name" readonly="1"/>
+                    </group>
+                    <group string="💰 Montants">
+                        <field name="currency_id" invisible="1"/>
+                        <field name="montant_taxes" readonly="1"/>
+                        <field name="amount"/>
+                    </group>
+                </group>
+                
+                <separator string="📝 Détail des taxes à payer"/>
+                <field name="taxes_detail" readonly="1" nolabel="1"/>
+                
+                <separator string="🏦 Informations du chèque"/>
+                <group>
+                    <group>
+                        <field name="check_number" placeholder="Ex: 0012345678"/>
+                        <field name="check_date"/>
+                    </group>
+                    <group>
+                        <field name="bank_id" options="{'no_create': True}"/>
+                        <field name="bank_account_id" options="{'no_create': True}"/>
+                    </group>
+                </group>
+                
+                <group string="👤 Bénéficiaire">
+                    <field name="beneficiary_name"/>
+                    <field name="beneficiary_id" options="{'no_create': True}"/>
+                </group>
+                
+                <group string="📝 Notes" col="1">
+                    <field name="notes" nolabel="1" placeholder="Notes ou justification..."/>
+                </group>
+                
+                <footer>
+                    <button name="action_confirm_payment" string="✅ Confirmer le paiement" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_potting_ot_taxes_payment_wizard" model="ir.actions.act_window">
+        <field name="name">Paiement Taxes</field>
+        <field name="res_model">potting.ot.taxes.payment.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ================================================================
+         WIZARD: Paiement DUS OT (2ème partie - après vente)
+         ================================================================ -->
+    
+    <record id="potting_ot_dus_payment_wizard_form" model="ir.ui.view">
+        <field name="name">potting.ot.dus.payment.wizard.form</field>
+        <field name="model">potting.ot.dus.payment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Paiement DUS (2ème partie)">
+                <div class="alert alert-info" role="alert">
+                    <strong>DUS - Droit Unique de Sortie</strong><br/>
+                    Le DUS est la seconde partie du paiement, effectuée après la vente de l'OT.
+                    Il correspond à 14,6% du montant brut de la formule.
+                </div>
+                
+                <group>
+                    <group string="📋 Informations OT">
+                        <field name="transit_order_id" readonly="1"/>
+                        <field name="ot_name" readonly="1"/>
+                        <field name="date_sold" readonly="1"/>
+                        <field name="formule_id" readonly="1"/>
+                        <field name="formule_name" readonly="1"/>
+                    </group>
+                    <group string="💰 Montants">
+                        <field name="currency_id" invisible="1"/>
+                        <field name="montant_dus" readonly="1"/>
+                        <field name="amount"/>
+                    </group>
+                </group>
+                
+                <separator string="🏦 Informations du chèque"/>
+                <group>
+                    <group>
+                        <field name="check_number" placeholder="Ex: 0012345678"/>
+                        <field name="check_date"/>
+                    </group>
+                    <group>
+                        <field name="bank_id" options="{'no_create': True}"/>
+                        <field name="bank_account_id" options="{'no_create': True}"/>
+                    </group>
+                </group>
+                
+                <group string="👤 Bénéficiaire">
+                    <field name="beneficiary_name"/>
+                    <field name="beneficiary_id" options="{'no_create': True}"/>
+                </group>
+                
+                <group string="📝 Notes" col="1">
+                    <field name="notes" nolabel="1" placeholder="Notes ou justification..."/>
+                </group>
+                
+                <footer>
+                    <button name="action_confirm_payment" string="✅ Confirmer le paiement DUS" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_potting_ot_dus_payment_wizard" model="ir.actions.act_window">
+        <field name="name">Paiement DUS</field>
+        <field name="res_model">potting.ot.dus.payment.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
