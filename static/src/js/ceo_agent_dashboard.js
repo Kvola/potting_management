@@ -232,6 +232,20 @@ export class PottingCeoAgentDashboard extends Component {
     addProduction() {
         this.action.doAction({
             type: 'ir.actions.act_window',
+            name: 'Production Rapide',
+            res_model: 'potting.quick.production.wizard',
+            views: [[false, 'form']],
+            target: 'new',
+            context: {
+                'default_mode': 'list',
+            },
+        });
+    }
+
+    addProductionSimple() {
+        // Alternative: ouvrir le wizard simple
+        this.action.doAction({
+            type: 'ir.actions.act_window',
             name: 'Ajouter une production',
             res_model: 'potting.add.production.wizard',
             views: [[false, 'form']],

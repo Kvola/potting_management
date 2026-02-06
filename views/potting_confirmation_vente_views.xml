@@ -186,14 +186,14 @@
                     </div>
                     
                     <!-- Tonnage avec indicateur visuel proéminent -->
+                    <div class="alert alert-light p-2 mb-2" role="status">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Progression d'utilisation</span>
+                            <field name="tonnage_progress" widget="progressbar" class="w-50"/>
+                        </div>
+                    </div>
                     <group col="2">
                         <group string="📊 Suivi du Tonnage">
-                            <div class="alert alert-light p-2 mb-2" role="status">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted">Progression d'utilisation</span>
-                                    <field name="tonnage_progress" widget="progressbar" class="w-50"/>
-                                </div>
-                            </div>
                             <field name="tonnage_autorise" 
                                    readonly="state != 'draft'"
                                    class="oe_inline fw-bold fs-5"

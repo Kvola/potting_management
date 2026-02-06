@@ -3,10 +3,11 @@
 Extension du modèle payment.request pour intégration avec potting_management.
 
 Ajoute des hooks pour mettre à jour automatiquement le statut de paiement
-des formules et des transitaires quand le payment.request est validé.
+des formules et des transitaires quand le payment.request est validé/signé.
 """
 
 from odoo import api, fields, models, _
+from datetime import date
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -62,6 +63,43 @@ class PaymentRequestPotting(models.Model):
             record.potting_fwd_payment_count = len(record.potting_fwd_payment_ids)
 
     # =========================================================================
+    # OVERRIDE WRITE - DÉTECTER CHANGEMENT D'ÉTAT VERS SIGNED
+    # =========================================================================
+    
+    def write(self, vals):
+        """Surcharge de write pour détecter le passage à l'état 'signed'"""
+        # Sauvegarder les anciens états pour détecter le changement
+        old_states = {record.id: record.state for record in self}
+        
+        # Appeler le write parent
+        result = super().write(vals)
+        
+        # Vérifier si l'état a changé vers 'signed'
+        if 'state' in vals and vals['state'] == 'signed':
+            for record in self:
+                if old_states.get(record.id) != 'signed':
+                    # L'état vient de passer à 'signed'
+                    _logger.info(
+                        f"🖊️ Payment.request {record.reference} signé - "
+                        f"Mise à jour automatique des formules liées"
+                    )
+                    record._on_signature_complete_hook()
+        
+        return result
+
+    # =========================================================================
+    # HOOK SIGNATURE COMPLÈTE
+    # =========================================================================
+    
+    def _on_signature_complete_hook(self):
+        """Hook appelé après signature complète - Met à jour potting"""
+        # Mettre à jour les formules liées
+        self._update_potting_formules_payment_status()
+        
+        # Mettre à jour les paiements transitaires
+        self._update_potting_forwarding_payments_status()
+
+    # =========================================================================
     # OVERRIDE VALIDATION HOOKS
     # =========================================================================
     
@@ -97,6 +135,26 @@ class PaymentRequestPotting(models.Model):
                     f"✅ Formule {formule.name} - Paiement avant-vente marqué comme payé "
                     f"(payment.request {record.reference})"
                 )
+                
+                # ✅ Mettre à jour l'OT lié : droits d'exportation encaissés
+                if formule.transit_order_id and not formule.transit_order_id.export_duty_collected:
+                    formule.transit_order_id.write({
+                        'export_duty_collected': True,
+                        'export_duty_collection_date': fields.Date.today(),
+                    })
+                    formule.transit_order_id.message_post(
+                        body=_(
+                            "✅ <b>Droits d'exportation encaissés</b><br/>"
+                            "Via paiement avant-vente de la Formule %s<br/>"
+                            "Demande de paiement: %s"
+                        ) % (formule.name, record.reference),
+                        subject=_("Droits d'exportation encaissés"),
+                        subtype_xmlid='mail.mt_comment'
+                    )
+                    _logger.info(
+                        f"✅ OT {formule.transit_order_id.name} - Droits d'exportation encaissés "
+                        f"via Formule {formule.name}"
+                    )
                 
                 # Message dans le chatter
                 formule.message_post(

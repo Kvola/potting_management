@@ -54,14 +54,21 @@
         <field name="arch" type="xml">
             <form string="Ordre de Transit">
                 <field name="is_invoiced" invisible="1"/>
+                <field name="taxes_paid" invisible="1"/>
+                <field name="formule_state" invisible="1"/>
+                <field name="delivery_status" invisible="1"/>
                 <header>
                     <button name="action_generate_lots" type="object" string="Générer les lots" class="btn-primary" invisible="state != 'draft'" groups="potting_management.group_potting_shipping" title="Génère automatiquement les lots selon le tonnage et le type de produit"/>
-                    <button name="action_create_delivery_note" type="object" string="Créer un BL" class="btn-secondary" invisible="state not in ('in_progress', 'ready_validation', 'done')" groups="potting_management.group_potting_shipping" title="Créer un bon de livraison pour les lots empotés"/>
+                    <button name="action_create_delivery_note" type="object" string="Créer un BL" class="btn-secondary" invisible="state not in ('in_progress', 'ready_validation', 'done') or delivery_status == 'fully_delivered'" groups="potting_management.group_potting_shipping" title="Créer un bon de livraison pour les lots empotés"/>
                     <button name="action_create_invoice" type="object" string="Créer Facture" class="btn-success" invisible="state != 'done' or is_invoiced" groups="potting_management.group_potting_manager" title="Générer une facture client"/>
                     <button name="action_collect_export_duties" type="object" string="Droits collectés" class="btn-warning" invisible="export_duty_collected or state != 'done'" groups="potting_management.group_potting_manager" title="Marquer les droits d'exportation comme encaissés"/>
                     <button name="action_start_production" type="object" string="Démarrer production" invisible="state != 'lots_generated'" groups="potting_management.group_potting_ceo_agent" title="Lancer la production des lots"/>
                     <button name="action_mark_ready" type="object" string="Prêt pour validation" invisible="state != 'in_progress'" groups="potting_management.group_potting_ceo_agent" title="Marquer comme prêt lorsque tous les lots sont empotés"/>
-                    <button name="action_validate" type="object" string="Valider" class="btn-success" invisible="state != 'ready_validation'" groups="potting_management.group_potting_ceo_agent" title="Valider l'OT pour finaliser l'expédition"/>
+                    <button name="action_validate" type="object" string="Valider" class="btn-success" invisible="state != 'ready_validation' or formule_state != 'partial_paid'" groups="potting_management.group_potting_ceo_agent" title="Valider l'OT (Formule doit être partiellement payée)"/>
+                    <button name="action_sync_taxes_from_formule" type="object" string="Sync. Taxes" class="btn-info" invisible="taxes_paid or not formule_id" groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager,potting_management.group_potting_accountant" title="Synchroniser le statut des taxes depuis la Formule liée"/>
+                    <button name="action_mark_sold" type="object" string="Marquer vendu" class="btn-warning" invisible="state not in ('taxes_paid', 'lots_generated', 'in_progress', 'ready_validation', 'done') or formule_state != 'partial_paid'" groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager" title="Marquer vendu (Formule doit être partiellement payée)"/>
+                    <button name="action_open_dus_payment_wizard" type="object" string="Payer DUS" class="btn-primary" invisible="state != 'sold'" groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager" title="Payer le DUS (Droit Unique de Sortie) après la vente"/>
+                    <button name="action_complete" type="object" string="Terminer" class="btn-success" invisible="state != 'dus_paid'" groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager" title="Terminer l'OT après paiement du DUS"/>
                     <button name="action_cancel" type="object" string="Annuler" invisible="state in ('done', 'cancelled')" title="Annuler cet ordre de transit"/>
                     <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state in ('draft', 'done')" groups="potting_management.group_potting_manager" confirm="Êtes-vous sûr de vouloir remettre cet OT en brouillon ? Les lots seront également remis en brouillon." title="Revenir à l'état brouillon"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,lots_generated,in_progress,ready_validation,done"/>
@@ -95,7 +102,7 @@
                         </h1>
                         <label for="ot_reference" string="Référence OT"/>
                         <h2>
-                            <field name="ot_reference" placeholder="Ex: OT10532"/>
+                            <field name="ot_reference" readonly="1"/>
                         </h2>
                     </div>
                     <group>
@@ -286,8 +293,8 @@
         <field name="model">potting.transit.order</field>
         <field name="arch" type="xml">
             <search string="Rechercher OT">
-                <field name="name"/>
-                <field name="ot_reference"/>
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('ot_reference', 'ilike', self)]"/>
+                <field name="ot_reference" string="Référence OT"/>
                 <field name="customer_order_id"/>
                 <field name="customer_id"/>
                 <field name="consignee_id"/>

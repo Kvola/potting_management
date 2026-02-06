@@ -40,8 +40,6 @@ class PottingTransitOrder(models.Model):
          'Le numéro OT doit être unique!'),
         ('tonnage_positive', 'CHECK(tonnage > 0)', 
          'Le tonnage doit être supérieur à 0!'),
-        ('ot_reference_uniq', 'unique(ot_reference)',
-         'La référence OT doit être unique!'),
         ('booking_number_company_uniq', 'unique(booking_number, company_id)',
          'Le numéro de booking doit être unique par société!'),
     ]
@@ -58,11 +56,21 @@ class PottingTransitOrder(models.Model):
     
     ot_reference = fields.Char(
         string="Référence OT",
-        tracking=True,
+        compute='_compute_ot_reference',
+        store=True,
+        readonly=True,
         index=True,
-        copy=True,
-        help="Référence alternative de l'OT (ex: OT10532)"
+        help="Référence OT (partie avant le '/' du numéro OT, ex: OT10532)"
     )
+    
+    @api.depends('name')
+    def _compute_ot_reference(self):
+        """Calcule la référence OT à partir du numéro OT (partie avant le '/')."""
+        for record in self:
+            if record.name and '/' in record.name:
+                record.ot_reference = record.name.split('/')[0]
+            else:
+                record.ot_reference = record.name or ''
     
     # Champ technique pour savoir si l'OT a été créé depuis une commande
     is_created_from_order = fields.Boolean(
@@ -171,6 +179,20 @@ class PottingTransitOrder(models.Model):
         'res.currency',
         related='formule_id.currency_id',
         string="Devise FO"
+    )
+    
+    formule_state = fields.Selection(
+        related='formule_id.state',
+        string="État Formule",
+        store=True,
+        help="État de la Formule liée"
+    )
+    
+    formule_avant_vente_paye = fields.Boolean(
+        related='formule_id.avant_vente_paye',
+        string="Avant-vente payé (FO)",
+        store=True,
+        help="Indique si le paiement avant-vente de la Formule a été effectué"
     )
     
     confirmation_vente_id = fields.Many2one(
@@ -758,15 +780,26 @@ class PottingTransitOrder(models.Model):
                         )
                     ))
     
-    @api.constrains('export_duty_collected', 'state')
+    @api.constrains('export_duty_collected', 'state', 'formule_avant_vente_paye')
     def _check_export_duty_before_validation(self):
-        """Vérifie que les droits d'export sont collectés avant validation."""
+        """Vérifie que les droits d'export sont collectés avant validation.
+        
+        Les droits sont considérés encaissés si :
+        - export_duty_collected = True (manuel)
+        - OU formule_avant_vente_paye = True (via paiement de la Formule)
+        """
         for order in self:
-            if order.state == 'done' and not order.export_duty_collected:
-                raise ValidationError(_(
-                    "Les droits d'exportation doivent être encaissés avant "
-                    "la validation de l'OT '%s'."
-                ) % order.name)
+            if order.state == 'done':
+                # Droits encaissés directement OU via paiement avant-vente de la Formule
+                droits_ok = order.export_duty_collected or order.formule_avant_vente_paye
+                if not droits_ok:
+                    raise ValidationError(_(
+                        "Les droits d'exportation doivent être encaissés avant "
+                        "la validation de l'OT '%s'.\n\n"
+                        "💡 Solutions :\n"
+                        "  • Effectuer le paiement avant-vente de la Formule %s\n"
+                        "  • Ou cocher manuellement 'Droits encaissés' sur l'OT"
+                    ) % (order.name, order.formule_id.name if order.formule_id else "N/A"))
     
     @api.constrains('taxes_paid', 'state')
     def _check_taxes_for_state(self):
@@ -1267,10 +1300,56 @@ class PottingTransitOrder(models.Model):
         )
         return True
     
+    def action_sync_taxes_from_formule(self):
+        """Synchroniser le statut des taxes depuis la Formule liée"""
+        self.ensure_one()
+        if not self.formule_id:
+            raise UserError(_("Aucune formule liée à cet OT."))
+        
+        if self.formule_id.avant_vente_paye and not self.taxes_paid:
+            self.write({
+                'taxes_paid': True,
+                'taxes_payment_date': self.formule_id.date_paiement_avant_vente or fields.Date.context_today(self),
+            })
+            self.message_post(
+                body=_("Taxes synchronisées depuis la Formule %s (avant-vente payé)") % self.formule_id.name,
+                subject=_("Taxes synchronisées"),
+                subtype_xmlid='mail.mt_comment'
+            )
+            return True
+        elif not self.formule_id.avant_vente_paye:
+            raise UserError(_(
+                "Le paiement avant-vente de la Formule %s n'est pas encore effectué."
+            ) % self.formule_id.name)
+        else:
+            raise UserError(_("Les taxes sont déjà marquées comme payées sur cet OT."))
+    
     def action_mark_sold(self):
         """Marquer l'OT comme vendu"""
         self.ensure_one()
-        if self.state not in ('taxes_paid', 'lots_generated', 'in_progress', 'ready_validation', 'done'):
+        
+        # Vérifier que la formule est partiellement payée (pas entièrement payée)
+        if not self.formule_id:
+            raise UserError(_("Aucune formule liée à cet OT."))
+        
+        if self.formule_id.state != 'partial_paid':
+            raise UserError(_(
+                "La Formule '%s' doit être partiellement payée pour pouvoir vendre l'OT.\n"
+                "État actuel: %s"
+            ) % (self.formule_id.name, dict(self.formule_id._fields['state'].selection).get(self.formule_id.state, self.formule_id.state)))
+        
+        # Auto-synchroniser les taxes depuis la formule si nécessaire
+        if not self.taxes_paid and self.formule_id and self.formule_id.avant_vente_paye:
+            self.write({
+                'taxes_paid': True,
+                'taxes_payment_date': self.formule_id.date_paiement_avant_vente or fields.Date.context_today(self),
+            })
+            self.message_post(
+                body=_("Taxes auto-synchronisées depuis la Formule %s") % self.formule_id.name,
+                subtype_xmlid='mail.mt_note'
+            )
+        
+        if not self.taxes_paid:
             raise UserError(_("Les taxes doivent être payées avant de pouvoir vendre l'OT."))
         
         self.write({
@@ -1527,6 +1606,17 @@ class PottingTransitOrder(models.Model):
         for order in self:
             if order.state != 'ready_validation':
                 raise UserError(_("L'OT doit être prêt pour validation."))
+            
+            # Vérifier que la formule est partiellement payée (pas entièrement payée)
+            if not order.formule_id:
+                raise UserError(_("Aucune formule liée à cet OT."))
+            
+            if order.formule_id.state != 'partial_paid':
+                raise UserError(_(
+                    "La Formule '%s' doit être partiellement payée pour pouvoir valider l'OT.\n"
+                    "État actuel: %s"
+                ) % (order.formule_id.name, dict(order.formule_id._fields['state'].selection).get(order.formule_id.state, order.formule_id.state)))
+            
             order.write({
                 'state': 'done',
                 'date_validated': fields.Datetime.now(),

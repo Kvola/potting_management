@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Wizard Form View -->
+    <!-- Wizard Form View - Génération d'OT depuis Formules -->
     <record id="potting_generate_ot_from_order_wizard_view_form" model="ir.ui.view">
         <field name="name">potting.generate.ot.from.order.wizard.form</field>
         <field name="model">potting.generate.ot.from.order.wizard</field>
         <field name="arch" type="xml">
-            <form string="Générer des Ordres de Transit">
+            <form string="Générer des Ordres de Transit depuis Formules">
                 <sheet>
                     <div class="oe_title mb-3">
                         <h2>
                             <i class="fa fa-magic me-2 text-primary" />
-                            <span>Génération automatique d'OT</span>
+                            <span>Génération d'OT depuis Formules</span>
                         </h2>
                         <div class="text-muted mt-2">
                             <span>Commande: </span>
@@ -22,13 +22,13 @@
                     <div class="alert alert-info" role="alert" invisible="contract_tonnage == 0">
                         <div class="row">
                             <div class="col-4">
-                                <i class="fa fa-file-text-o me-1" />
+                                <i class="fa fa-file-text-o me-1" title="Tonnage contrat"/>
                                 <span>Tonnage contrat: </span>
                                 <field name="contract_tonnage" readonly="1" class="oe_inline fw-bold" />
                                 <span> T</span>
                             </div>
                             <div class="col-4">
-                                <i class="fa fa-truck me-1" />
+                                <i class="fa fa-truck me-1" title="OT existants"/>
                                 <span>OT existants: </span>
                                 <field name="existing_ot_count" readonly="1" class="oe_inline fw-bold" />
                                 <span> (</span>
@@ -36,7 +36,7 @@
                                 <span> T)</span>
                             </div>
                             <div class="col-4">
-                                <i class="fa fa-balance-scale me-1" />
+                                <i class="fa fa-balance-scale me-1" title="Tonnage restant"/>
                                 <span>Restant: </span>
                                 <field name="remaining_contract_tonnage" readonly="1" class="oe_inline fw-bold text-success" />
                                 <span> T</span>
@@ -44,65 +44,78 @@
                         </div>
                     </div>
 
+                    <!-- Section Formules -->
+                    <group string="📋 Sélection des Formules">
+                        <field name="company_id" invisible="1" />
+                        <field name="available_formule_ids" invisible="1" />
+                        
+                        <div class="col-12 mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <button name="action_select_all_formules" type="object" 
+                                        string="✅ Tout sélectionner" class="btn btn-sm btn-outline-primary"
+                                        title="Sélectionner toutes les formules disponibles"/>
+                                <button name="action_clear_formules" type="object" 
+                                        string="❌ Tout désélectionner" class="btn btn-sm btn-outline-secondary"
+                                        title="Désélectionner toutes les formules"/>
+                                <span class="text-muted ms-3">
+                                    <i class="fa fa-info-circle me-1" title="Info"/>
+                                    Formules disponibles: validées et non liées à un OT
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <field name="formule_ids" nolabel="1" colspan="2"
+                               domain="[('state', 'in', ['validated', 'partial_paid']), ('transit_order_id', '=', False), ('company_id', '=', company_id)]"
+                               options="{'no_create': True, 'no_create_edit': True}">
+                            <tree string="Formules" editable="bottom" create="false" delete="true">
+                                <field name="name" string="N° Formule" readonly="1"/>
+                                <field name="reference_ccc" string="Réf. CCC" readonly="1"/>
+                                <field name="product_type" string="Produit" readonly="1"/>
+                                <field name="tonnage" string="Tonnage (T)" readonly="1" sum="Total"/>
+                                <field name="prix_tonnage" string="Prix/T" readonly="1"/>
+                                <field name="state" string="État" widget="badge" 
+                                       decoration-success="state == 'validated'"
+                                       decoration-info="state == 'partial_paid'" readonly="1"/>
+                                <field name="confirmation_vente_id" string="CV" readonly="1"/>
+                            </tree>
+                        </field>
+                    </group>
+
+                    <!-- Résumé de la sélection -->
+                    <div class="alert alert-secondary py-2 mt-3" invisible="formule_count == 0">
+                        <div class="row">
+                            <div class="col-4">
+                                <i class="fa fa-list-ol me-2 text-primary" title="Formules"/>
+                                <strong><field name="formule_count" readonly="1" class="oe_inline"/></strong>
+                                <span> Formule(s) sélectionnée(s)</span>
+                            </div>
+                            <div class="col-4">
+                                <i class="fa fa-truck me-2 text-success" title="OT à créer"/>
+                                <strong><field name="ot_count_to_generate" readonly="1" class="oe_inline"/></strong>
+                                <span> OT seront créés</span>
+                            </div>
+                            <div class="col-4">
+                                <i class="fa fa-balance-scale me-2 text-info" title="Tonnage total"/>
+                                <span>Tonnage total: </span>
+                                <strong><field name="total_formule_tonnage" readonly="1" class="oe_inline"/> T</strong>
+                            </div>
+                        </div>
+                    </div>
+
                     <group>
-                        <group string="📦 Configuration des OT">
-                            <field name="company_id" invisible="1" />
+                        <group string="📦 Configuration commune">
                             <field name="customer_id" readonly="1" />
                             <field name="campaign_id" 
                                    options="{'no_create': True}"
                                    domain="[('state', 'in', ['draft', 'active'])]"
                                    required="1"/>
                             <field name="consignee_id"
-                                placeholder="Sélectionner un destinataire..."
+                                placeholder="Par défaut: le client"
                                 domain="[('is_potting_consignee', '=', True)]"
                                 context="{'default_is_potting_consignee': True}"
                                 options="{'no_quick_create': True}" />
-                            <field name="product_type" widget="radio" options="{'horizontal': true}" readonly="1"/>
-                            <field name="product_id"
-                                placeholder="Produit spécifique (optionnel)"
-                                invisible="not product_type"
-                                options="{'no_create': True}" />
+                            <field name="product_type" readonly="1" invisible="1"/>
                         </group>
-                        <group string="⚖️ Tonnage">
-                            <field name="total_tonnage" class="fw-bold text-primary" />
-                            <field name="tonnage_per_ot" />
-                            <!-- <div class="alert alert-secondary py-2 mb-0"
-                            invisible="ot_count_to_generate == 0">
-                                <div class="d-flex align-items-center">
-                                    <i class="fa fa-calculator me-2 text-primary"/>
-                                    <span>
-                                        <strong><field name="ot_count_to_generate" readonly="1" class="oe_inline"/></strong>
-                                        <span> OT seront générés</span>
-                                    </span>
-                                </div>
-                                <div class="text-muted small mt-1" invisible="last_ot_tonnage == tonnage_per_ot">
-                                    <i class="fa fa-info-circle me-1"/>
-                                    <span>Le dernier OT aura un tonnage de </span>
-                                    <field name="last_ot_tonnage" readonly="1" class="oe_inline fw-bold"/>
-                                    <span> T</span>
-                                </div>
-                            </div> -->
-                        </group>
-                    </group>
-                    <div class="alert alert-secondary py-2 mb-0" invisible="ot_count_to_generate == 0">
-                        <div class="d-flex align-items-center">
-                            <i class="fa fa-calculator me-2 text-primary" />
-                            <span>
-                                <strong>
-                                    <field name="ot_count_to_generate" readonly="1"
-                                        class="oe_inline" />
-                                </strong>
-                                <span> OT seront générés</span>
-                            </span>
-                        </div>
-                        <div class="text-muted small mt-1" invisible="last_ot_tonnage == tonnage_per_ot">
-                            <i class="fa fa-info-circle me-1" />
-                            <span>Le dernier OT aura un tonnage de </span>
-                            <field name="last_ot_tonnage" readonly="1" class="oe_inline fw-bold" />
-                            <span> T</span>
-                        </div>
-                    </div>
-                    <group>
                         <group string="🚢 Transport (optionnel)">
                             <field name="vessel_id"
                                 placeholder="Sélectionner un navire..."
@@ -111,38 +124,58 @@
                             <field name="container_size" widget="radio"
                                 options="{'horizontal': true}" />
                         </group>
+                    </group>
+                    
+                    <group>
                         <group string="📝 Notes">
-                            <field name="note" nolabel="1"
-                                placeholder="Notes ou instructions particulières..." widget="text" />
+                            <field name="note" nolabel="1" colspan="2"
+                                placeholder="Notes ou instructions particulières (appliquées à tous les OT)..." 
+                                widget="text" />
                         </group>
                     </group>
 
-                    <!-- Résumé de la génération -->
-                    <div class="alert alert-success mt-3" role="alert"
-                        invisible="ot_count_to_generate == 0">
+                    <!-- Résumé final -->
+                    <div class="alert alert-success mt-3" role="alert" invisible="formule_count == 0">
                         <h5 class="alert-heading">
-                            <i class="fa fa-check-circle me-2" />Résumé de la génération </h5>
+                            <i class="fa fa-check-circle me-2" title="Résumé"/>
+                            Résumé de la génération
+                        </h5>
                         <hr class="my-2" />
                         <div class="row">
                             <div class="col-md-4">
-                                <strong>Nombre d'OT:</strong>
-                                <span class="ms-2">
-                                    <field name="ot_count_to_generate" readonly="1"
-                                        class="oe_inline" />
-                                </span>
+                                <strong>Formules:</strong>
+                                <span class="ms-2"><field name="formule_count" readonly="1" class="oe_inline" /></span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>OT à créer:</strong>
+                                <span class="ms-2"><field name="ot_count_to_generate" readonly="1" class="oe_inline" /></span>
                             </div>
                             <div class="col-md-4">
                                 <strong>Tonnage total:</strong>
-                                <span class="ms-2"><field name="total_tonnage" readonly="1"
-                                        class="oe_inline" /> T</span>
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Tonnage/OT:</strong>
-                                <span class="ms-2"><field name="tonnage_per_ot" readonly="1"
-                                        class="oe_inline" /> T</span>
+                                <span class="ms-2"><field name="total_formule_tonnage" readonly="1" class="oe_inline" /> T</span>
                             </div>
                         </div>
+                        <div class="mt-2 text-muted small">
+                            <i class="fa fa-info-circle me-1" title="Info"/>
+                            Chaque OT héritera automatiquement du tonnage et du type de produit de sa Formule.
+                        </div>
                     </div>
+                    
+                    <!-- Alerte si aucune formule disponible -->
+                    <div class="alert alert-warning mt-3" role="alert" invisible="available_formule_ids">
+                        <i class="fa fa-exclamation-triangle me-2" title="Attention"/>
+                        <strong>Aucune Formule disponible!</strong>
+                        <p class="mb-0 mt-2">
+                            Il n'y a pas de Formule validée et non liée à un OT. 
+                            Veuillez d'abord créer et valider des Formules avant de générer des OT.
+                        </p>
+                    </div>
+                    
+                    <!-- Champs obsolètes cachés pour compatibilité -->
+                    <field name="total_tonnage" invisible="1"/>
+                    <field name="tonnage_per_ot" invisible="1"/>
+                    <field name="last_ot_tonnage" invisible="1"/>
+                    <field name="product_id" invisible="1"/>
                 </sheet>
 
                 <footer>
@@ -150,7 +183,12 @@
                         type="object"
                         string="🚀 Générer les OT"
                         class="btn-primary"
-                        invisible="ot_count_to_generate == 0" />
+                        invisible="formule_count == 0" />
+                    <button name="action_preview"
+                        type="object"
+                        string="👁 Aperçu"
+                        class="btn-secondary"
+                        invisible="formule_count == 0" />
                     <button string="Annuler" class="btn-light" special="cancel" />
                 </footer>
             </form>
@@ -159,7 +197,7 @@
 
     <!-- Action to open the wizard -->
     <record id="action_potting_generate_ot_from_order_wizard" model="ir.actions.act_window">
-        <field name="name">Générer des OT</field>
+        <field name="name">Générer des OT depuis Formules</field>
         <field name="res_model">potting.generate.ot.from.order.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

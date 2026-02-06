@@ -265,12 +265,6 @@ class PottingFormulePaymentWizard(models.TransientModel):
         """Créer la demande de paiement avec le chèque"""
         self.ensure_one()
         
-        # Vérifications
-        if not self.env['payment.request']:
-            raise UserError(_(
-                "Le module 'payment_request_validation' doit être installé."
-            ))
-        
         # Vérifier que le paiement après-vente a une facture client OT
         if self.payment_type == 'apres_vente':
             if not self.formule_id.transit_order_id:

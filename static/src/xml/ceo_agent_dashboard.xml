@@ -13,8 +13,11 @@
 
             <!-- Quick Actions -->
             <div class="quick-actions mb-4">
-                <button class="btn btn-primary" t-on-click="addProduction">
-                    <i class="fa fa-plus me-1"/>Ajouter production
+                <button class="btn btn-primary btn-lg" t-on-click="addProduction">
+                    <i class="fa fa-bolt me-1"/>Production Rapide
+                </button>
+                <button class="btn btn-outline-success" t-on-click="addProductionSimple">
+                    <i class="fa fa-plus me-1"/>Production Simple
                 </button>
                 <button class="btn btn-secondary" t-on-click="openSendReportWizard">
                     <i class="fa fa-envelope me-1"/>Envoyer rapport

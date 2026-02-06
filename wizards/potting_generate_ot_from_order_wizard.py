@@ -9,12 +9,12 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
     """Wizard pour générer automatiquement des OT depuis une commande client.
     
     Ce wizard permet de:
-    - Afficher le tonnage total de la commande client
-    - Configurer le tonnage par défaut par OT (selon le produit)
-    - Générer automatiquement plusieurs OT en fonction du tonnage total
+    - Sélectionner des Formules disponibles (validées, sans OT)
+    - Générer 1 OT par Formule sélectionnée
+    - Chaque OT hérite des données de sa Formule (tonnage, type produit, etc.)
     """
     _name = 'potting.generate.ot.from.order.wizard'
-    _description = "Assistant de génération automatique d'OT"
+    _description = "Assistant de génération automatique d'OT depuis Formules"
 
     # =========================================================================
     # FIELDS - Informations de la commande (readonly)
@@ -78,57 +78,47 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
     )
 
     # =========================================================================
-    # FIELDS - Configuration de la génération
+    # FIELDS - Sélection des Formules
     # =========================================================================
     
-    total_tonnage = fields.Float(
-        string="Tonnage à générer (T)",
-        required=True,
-        digits='Product Unit of Measure',
-        help="Tonnage total pour lequel générer des OT (max = tonnage restant du contrat)"
+    formule_ids = fields.Many2many(
+        'potting.formule',
+        'potting_generate_ot_wizard_formule_rel',
+        'wizard_id',
+        'formule_id',
+        string="Formules à utiliser",
+        help="Sélectionnez les Formules disponibles pour générer les OT. "
+             "1 OT sera créé par Formule sélectionnée."
     )
+    
+    available_formule_ids = fields.Many2many(
+        'potting.formule',
+        string="Formules disponibles",
+        compute='_compute_available_formules',
+        help="Formules validées et non encore liées à un OT"
+    )
+    
+    formule_count = fields.Integer(
+        string="Formules sélectionnées",
+        compute='_compute_formule_stats',
+        help="Nombre de formules sélectionnées"
+    )
+    
+    total_formule_tonnage = fields.Float(
+        string="Tonnage total Formules (T)",
+        compute='_compute_formule_stats',
+        digits='Product Unit of Measure',
+        help="Tonnage total des formules sélectionnées"
+    )
+    
+    # =========================================================================
+    # FIELDS - Configuration commune (optionnel)
+    # =========================================================================
     
     consignee_id = fields.Many2one(
         'res.partner',
         string="Destinataire (Consignee)",
-        required=True,
-        help="Le destinataire de la marchandise"
-    )
-    
-    product_type = fields.Selection([
-        ('cocoa_mass', 'Masse de cacao'),
-        ('cocoa_butter', 'Beurre de cacao'),
-        ('cocoa_cake', 'Cake (Tourteau) de cacao'),
-        ('cocoa_powder', 'Poudre de cacao'),
-    ], string="Type de produit", required=True)
-    
-    product_id = fields.Many2one(
-        'product.product',
-        string="Produit",
-        domain="[('potting_product_type', '=', product_type)]",
-        help="Produit spécifique (optionnel). Permet de récupérer le tonnage par défaut."
-    )
-    
-    tonnage_per_ot = fields.Float(
-        string="Tonnage par OT (T)",
-        required=True,
-        digits='Product Unit of Measure',
-        default=0.0,
-        help="Tonnage pour chaque OT à générer. "
-             "Peut être configuré par défaut sur le produit."
-    )
-    
-    ot_count_to_generate = fields.Integer(
-        string="Nombre d'OT à générer",
-        compute='_compute_ot_count_to_generate',
-        help="Nombre d'OT qui seront créés en fonction du tonnage total et du tonnage par OT"
-    )
-    
-    last_ot_tonnage = fields.Float(
-        string="Tonnage dernier OT (T)",
-        compute='_compute_ot_count_to_generate',
-        digits='Product Unit of Measure',
-        help="Tonnage du dernier OT (peut être différent si le reste n'est pas exact)"
+        help="Destinataire commun à tous les OT (si vide, utilise le client)"
     )
     
     vessel_id = fields.Many2one(
@@ -150,6 +140,49 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
     note = fields.Text(
         string="Notes",
         help="Notes ou instructions particulières (appliquées à tous les OT)"
+    )
+    
+    # Champs obsolètes conservés pour compatibilité (non utilisés dans la nouvelle logique)
+    total_tonnage = fields.Float(
+        string="Tonnage à générer (T)",
+        digits='Product Unit of Measure',
+        compute='_compute_formule_stats',
+        help="Calculé automatiquement depuis les formules sélectionnées"
+    )
+    
+    product_type = fields.Selection([
+        ('cocoa_mass', 'Masse de cacao'),
+        ('cocoa_butter', 'Beurre de cacao'),
+        ('cocoa_cake', 'Cake (Tourteau) de cacao'),
+        ('cocoa_powder', 'Poudre de cacao'),
+    ], string="Type de produit", 
+       help="Information - le type de produit est défini par chaque Formule")
+    
+    product_id = fields.Many2one(
+        'product.product',
+        string="Produit",
+        domain="[('potting_product_type', '=', product_type)]",
+        help="Produit spécifique (optionnel)"
+    )
+    
+    tonnage_per_ot = fields.Float(
+        string="Tonnage par OT (T)",
+        digits='Product Unit of Measure',
+        default=0.0,
+        help="Non utilisé - le tonnage est défini par chaque Formule"
+    )
+    
+    ot_count_to_generate = fields.Integer(
+        string="Nombre d'OT à générer",
+        compute='_compute_formule_stats',
+        help="Nombre d'OT qui seront créés (= nombre de formules sélectionnées)"
+    )
+    
+    last_ot_tonnage = fields.Float(
+        string="Tonnage dernier OT (T)",
+        compute='_compute_formule_stats',
+        digits='Product Unit of Measure',
+        help="Non utilisé dans le nouveau mode"
     )
 
     # =========================================================================
@@ -179,12 +212,6 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
                 if order.customer_id:
                     res['consignee_id'] = order.customer_id.id
                 
-                # Tonnage par défaut = tonnage contrat - tonnage OT existants
-                if order.contract_tonnage:
-                    existing_tonnage = sum(order.transit_order_ids.mapped('tonnage'))
-                    remaining = order.contract_tonnage - existing_tonnage
-                    res['total_tonnage'] = max(0, remaining)
-                
                 # Type de produit par défaut
                 if order.product_type:
                     res['product_type'] = order.product_type
@@ -212,126 +239,88 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
                 wizard.existing_tonnage = 0.0
                 wizard.remaining_contract_tonnage = 0.0
     
-    @api.depends('total_tonnage', 'tonnage_per_ot')
-    def _compute_ot_count_to_generate(self):
-        """Calcule le nombre d'OT à générer et le tonnage du dernier OT."""
+    @api.depends('company_id')
+    def _compute_available_formules(self):
+        """Calcule les formules disponibles (validées, sans OT)."""
         for wizard in self:
-            if wizard.tonnage_per_ot > 0 and wizard.total_tonnage > 0:
-                # Nombre d'OT complets
-                full_ots = int(wizard.total_tonnage // wizard.tonnage_per_ot)
-                # Tonnage restant pour le dernier OT
-                remaining = wizard.total_tonnage % wizard.tonnage_per_ot
-                
-                if remaining > 0:
-                    wizard.ot_count_to_generate = full_ots + 1
-                    wizard.last_ot_tonnage = remaining
-                else:
-                    wizard.ot_count_to_generate = full_ots
-                    wizard.last_ot_tonnage = wizard.tonnage_per_ot
-            else:
-                wizard.ot_count_to_generate = 0
-                wizard.last_ot_tonnage = 0.0
+            domain = [
+                ('state', 'in', ['validated', 'partial_paid']),
+                ('transit_order_id', '=', False),
+                ('company_id', '=', wizard.company_id.id),
+            ]
+            wizard.available_formule_ids = self.env['potting.formule'].search(domain)
+    
+    @api.depends('formule_ids')
+    def _compute_formule_stats(self):
+        """Calcule les statistiques des formules sélectionnées."""
+        for wizard in self:
+            wizard.formule_count = len(wizard.formule_ids)
+            wizard.total_formule_tonnage = sum(wizard.formule_ids.mapped('tonnage'))
+            wizard.total_tonnage = wizard.total_formule_tonnage
+            wizard.ot_count_to_generate = len(wizard.formule_ids)
+            # last_ot_tonnage non pertinent dans ce mode, on met 0
+            wizard.last_ot_tonnage = 0.0
 
     # =========================================================================
     # ONCHANGE METHODS
     # =========================================================================
     
-    @api.onchange('product_type')
-    def _onchange_product_type(self):
-        """Reset product when product type changes and load default tonnage."""
-        if self.product_id and self.product_id.potting_product_type != self.product_type:
-            self.product_id = False
-        
-        # Charger le tonnage par défaut depuis la configuration par type de produit
-        self._set_default_tonnage_from_config()
-    
-    def _set_default_tonnage_from_config(self):
-        """Définit le tonnage par défaut depuis la configuration globale par type de produit."""
-        if not self.product_type:
-            return
-        
-        ICP = self.env['ir.config_parameter'].sudo()
-        
-        # Mapping type produit -> paramètre de config pour le tonnage OT par défaut
-        tonnage_params = {
-            'cocoa_mass': 'potting_management.default_ot_tonnage_cocoa_mass',
-            'cocoa_butter': 'potting_management.default_ot_tonnage_cocoa_butter',
-            'cocoa_cake': 'potting_management.default_ot_tonnage_cocoa_cake',
-            'cocoa_powder': 'potting_management.default_ot_tonnage_cocoa_powder',
-        }
-        
-        # Valeurs par défaut si le paramètre n'est pas défini
-        default_values = {
-            'cocoa_mass': 22.0,
-            'cocoa_butter': 22.0,
-            'cocoa_cake': 20.0,
-            'cocoa_powder': 22.5,
-        }
-        
-        param_name = tonnage_params.get(self.product_type)
-        default_value = default_values.get(self.product_type, 22.0)
-        
-        if param_name:
-            default_tonnage = float(ICP.get_param(param_name, str(default_value)))
-            self.tonnage_per_ot = default_tonnage
+    @api.onchange('formule_ids')
+    def _onchange_formule_ids(self):
+        """Met à jour les statistiques quand les formules changent."""
+        if self.formule_ids:
+            # Vérifier que toutes les formules sont du même type de produit
+            product_types = set(self.formule_ids.mapped('product_type'))
+            if len(product_types) == 1:
+                self.product_type = list(product_types)[0]
+            else:
+                self.product_type = False  # Plusieurs types = pas de type dominant
 
     # =========================================================================
     # ACTION METHODS
     # =========================================================================
     
     def action_generate_ots(self):
-        """Génère les OT et retourne à la commande."""
+        """Génère les OT depuis les Formules sélectionnées et retourne à la commande."""
         self.ensure_one()
         
         # Validations
-        if self.total_tonnage <= 0:
-            raise ValidationError(_("Le tonnage total doit être supérieur à 0."))
+        if not self.formule_ids:
+            raise ValidationError(_("Veuillez sélectionner au moins une Formule."))
         
-        if self.tonnage_per_ot <= 0:
-            raise ValidationError(_("Le tonnage par OT doit être supérieur à 0."))
-        
-        if self.ot_count_to_generate <= 0:
-            raise ValidationError(_("Aucun OT à générer."))
-        
-        # Vérifier que le tonnage ne dépasse pas le contrat
-        if self.customer_order_id.contract_tonnage > 0:
-            new_total = self.existing_tonnage + self.total_tonnage
-            if new_total > self.customer_order_id.contract_tonnage:
+        # Vérifier que les formules sont toujours disponibles
+        for formule in self.formule_ids:
+            if formule.transit_order_id:
                 raise ValidationError(_(
-                    "Le tonnage total (%.2f T existant + %.2f T nouveau = %.2f T) "
-                    "dépasserait le tonnage du contrat (%.2f T).\n\n"
-                    "Tonnage maximum à générer: %.2f T"
-                ) % (
-                    self.existing_tonnage,
-                    self.total_tonnage,
-                    new_total,
-                    self.customer_order_id.contract_tonnage,
-                    self.customer_order_id.contract_tonnage - self.existing_tonnage
-                ))
+                    "La Formule %s est déjà liée à l'OT %s. "
+                    "Veuillez la retirer de la sélection."
+                ) % (formule.display_name, formule.transit_order_id.name))
+            
+            if formule.state not in ('validated', 'partial_paid'):
+                raise ValidationError(_(
+                    "La Formule %s n'est pas dans un état valide (état actuel: %s). "
+                    "Seules les formules validées peuvent être utilisées."
+                ) % (formule.display_name, formule.state))
         
-        # Générer les OT
+        # Déterminer le destinataire par défaut
+        default_consignee = self.consignee_id or self.customer_order_id.customer_id
+        if not default_consignee:
+            raise ValidationError(_("Veuillez spécifier un destinataire."))
+        
+        # Générer les OT (1 OT par Formule)
         created_ots = self.env['potting.transit.order']
-        remaining_tonnage = self.total_tonnage
         
-        for i in range(self.ot_count_to_generate):
-            # Déterminer le tonnage de cet OT
-            if remaining_tonnage >= self.tonnage_per_ot:
-                ot_tonnage = self.tonnage_per_ot
-            else:
-                ot_tonnage = remaining_tonnage
-            
-            remaining_tonnage -= ot_tonnage
-            
-            # Créer l'OT
+        for formule in self.formule_ids:
+            # Créer l'OT avec les données de la Formule
             ot_vals = {
+                'formule_id': formule.id,
                 'customer_order_id': self.customer_order_id.id,
                 'campaign_id': self.campaign_id.id,
-                'consignee_id': self.consignee_id.id,
-                'product_type': self.product_type,
-                'product_id': self.product_id.id if self.product_id else False,
-                'tonnage': ot_tonnage,
+                'consignee_id': default_consignee.id,
+                'product_type': formule.product_type,
+                'tonnage': formule.tonnage,
                 'vessel_id': self.vessel_id.id if self.vessel_id else False,
-                'pod': self.pod,
+                'pod': self.pod or formule.port_destination,
                 'container_size': self.container_size,
                 'note': self.note,
                 'is_created_from_order': True,
@@ -341,17 +330,14 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
             created_ots |= ot
         
         # Message de succès sur la commande
-        product_type_label = dict(self._fields['product_type'].selection).get(self.product_type)
         self.customer_order_id.message_post(
-            body=_("✅ <b>%d Ordre(s) de Transit</b> généré(s) automatiquement:<br/>"
-                   "• Type de produit: %s<br/>"
+            body=_("✅ <b>%d Ordre(s) de Transit</b> généré(s) automatiquement depuis Formules:<br/>"
                    "• Tonnage total: %.2f T<br/>"
-                   "• Tonnage par OT: %.2f T<br/>"
+                   "• Formules: %s<br/>"
                    "• OT créés: %s") % (
                 len(created_ots),
-                product_type_label,
-                self.total_tonnage,
-                self.tonnage_per_ot,
+                self.total_formule_tonnage,
+                ', '.join(self.formule_ids.mapped('name')),
                 ', '.join(created_ots.mapped('name'))
             ),
             message_type='notification'
@@ -366,29 +352,49 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
             'target': 'current',
         }
     
+    def action_select_all_formules(self):
+        """Sélectionne toutes les formules disponibles."""
+        self.ensure_one()
+        self.formule_ids = self.available_formule_ids
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+    
+    def action_clear_formules(self):
+        """Désélectionne toutes les formules."""
+        self.ensure_one()
+        self.formule_ids = [(5, 0, 0)]
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+    
     def action_preview(self):
         """Affiche un aperçu des OT qui seront générés."""
         self.ensure_one()
         
-        if self.total_tonnage <= 0:
-            raise ValidationError(_("Le tonnage total doit être supérieur à 0."))
-        
-        if self.tonnage_per_ot <= 0:
-            raise ValidationError(_("Le tonnage par OT doit être supérieur à 0."))
+        if not self.formule_ids:
+            raise ValidationError(_("Veuillez sélectionner au moins une Formule."))
         
         # Construire l'aperçu
         preview_lines = []
-        remaining_tonnage = self.total_tonnage
+        total = 0
         
-        for i in range(self.ot_count_to_generate):
-            if remaining_tonnage >= self.tonnage_per_ot:
-                ot_tonnage = self.tonnage_per_ot
-            else:
-                ot_tonnage = remaining_tonnage
-            
-            remaining_tonnage -= ot_tonnage
-            preview_lines.append(f"OT {i+1}: {ot_tonnage:.2f} T")
+        for i, formule in enumerate(self.formule_ids, 1):
+            product_type_label = dict(self.env['potting.formule']._fields['product_type'].selection).get(formule.product_type, '')
+            preview_lines.append(
+                f"OT {i}: {formule.name} → {formule.tonnage:.2f} T ({product_type_label})"
+            )
+            total += formule.tonnage
         
+        preview_lines.append(f"\n📊 Total: {len(self.formule_ids)} OT pour {total:.2f} T")
         preview_text = "\n".join(preview_lines)
         
         # Afficher une notification avec l'aperçu

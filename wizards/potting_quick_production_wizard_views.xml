@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================================== -->
+    <!-- WIZARD: Production Rapide - Vue Form                               -->
+    <!-- Pour les Agents Exportation (CEO Agent)                            -->
+    <!-- ================================================================== -->
+    <record id="potting_quick_production_wizard_view_form" model="ir.ui.view">
+        <field name="name">potting.quick.production.wizard.form</field>
+        <field name="model">potting.quick.production.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Production Rapide">
+                <sheet>
+                    <!-- Header -->
+                    <div class="oe_title mb-3">
+                        <h2>
+                            <span class="badge bg-success" style="font-size: 1.2em;">
+                                ⚡ Production Rapide
+                            </span>
+                        </h2>
+                        <p class="text-muted">
+                            Enregistrez rapidement vos productions du jour
+                        </p>
+                    </div>
+
+                    <!-- Résumé des statistiques du jour -->
+                    <field name="summary_html" nolabel="1" readonly="1"/>
+
+                    <!-- Avertissement si dépassement -->
+                    <div class="alert alert-danger mb-3" role="alert" invisible="not will_exceed_capacity">
+                        <strong>⛔ Attention!</strong> Cette production dépasserait la capacité maximale du lot (110%).
+                    </div>
+
+                    <group>
+                        <!-- Colonne gauche: Sélection du lot et saisie -->
+                        <group string="📋 Nouvelle Production" col="2">
+                            <field name="selected_lot_id" 
+                                   string="Sélectionner un lot"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   placeholder="Choisir un lot..."
+                                   class="fw-bold"/>
+                            
+                            <field name="date" class="fw-bold"/>
+                            
+                            <label for="units_produced" string="Unités"/>
+                            <div class="d-flex align-items-center">
+                                <field name="units_produced" 
+                                       class="fw-bold text-primary" 
+                                       style="max-width: 100px;"/>
+                                <span class="ms-2 text-muted" invisible="not selected_lot_id">
+                                    <field name="selected_lot_packaging_unit_name" 
+                                           readonly="1" 
+                                           nolabel="1"/>
+                                </span>
+                            </div>
+                            
+                            <field name="shift" widget="radio" options="{'horizontal': true}"/>
+                            
+                            <field name="operator_id" options="{'no_create': True}"/>
+                        </group>
+
+                        <!-- Colonne droite: Informations du lot -->
+                        <group string="📊 Informations lot" invisible="not selected_lot_id">
+                            <field name="selected_lot_product_type_display" 
+                                   readonly="1" 
+                                   string="Type"/>
+                            
+                            <field name="selected_lot_transit_order_id" 
+                                   readonly="1" 
+                                   string="Ordre de Transit"/>
+                            
+                            <label for="production_tonnage" string="Tonnage ajouté"/>
+                            <div>
+                                <span class="badge bg-info fs-6">
+                                    <field name="production_tonnage" readonly="1" nolabel="1"/> T
+                                </span>
+                            </div>
+                            
+                            <field name="new_fill_percentage" 
+                                   readonly="1" 
+                                   string="Remplissage après" 
+                                   widget="progressbar" 
+                                   options="{'max_value': 110, 'editable': false}"/>
+                            
+                            <field name="selected_lot_remaining_units" 
+                                   readonly="1" 
+                                   string="Unités restantes"/>
+                            
+                            <label for="selected_lot_current_tonnage" string="Tonnage actuel"/>
+                            <div class="text-muted">
+                                <field name="selected_lot_current_tonnage" readonly="1" nolabel="1"/> T
+                                / <field name="selected_lot_target_tonnage" readonly="1" nolabel="1"/> T
+                            </div>
+                        </group>
+                    </group>
+
+                    <!-- Notes -->
+                    <group string="📝 Notes (optionnel)">
+                        <field name="note" 
+                               placeholder="Notes optionnelles..." 
+                               nolabel="1"
+                               colspan="2"/>
+                    </group>
+
+                    <!-- Séparateur -->
+                    <separator string="📦 Lots disponibles" invisible="selected_lot_id"/>
+                    
+                    <!-- Liste des lots disponibles -->
+                    <field name="lots_list_html" nolabel="1" readonly="1" invisible="selected_lot_id"/>
+
+                    <!-- Champs cachés -->
+                    <field name="company_id" invisible="1"/>
+                    <field name="can_confirm" invisible="1"/>
+                    <field name="will_exceed_capacity" invisible="1"/>
+                    <field name="selected_lot_packaging_unit_weight" invisible="1"/>
+                    <field name="selected_lot_fill_percentage" invisible="1"/>
+                    <field name="selected_lot_product_type" invisible="1"/>
+                    <field name="lots_in_production_count" invisible="1"/>
+                    <field name="today_productions_count" invisible="1"/>
+                    <field name="today_tonnage" invisible="1"/>
+                </sheet>
+                <footer>
+                    <button name="action_confirm_production" 
+                            string="✅ Confirmer" 
+                            type="object" 
+                            class="btn-primary"
+                            invisible="not can_confirm"/>
+                    <button name="action_confirm_and_continue" 
+                            string="✅ Confirmer et continuer" 
+                            type="object" 
+                            class="btn-secondary"
+                            invisible="not can_confirm"/>
+                    <button string="Fermer" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action pour ouvrir le wizard de production rapide -->
+    <record id="action_potting_quick_production_wizard" model="ir.actions.act_window">
+        <field name="name">⚡ Production Rapide</field>
+        <field name="res_model">potting.quick.production.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{}</field>
+        <field name="groups_id" eval="[(4, ref('potting_management.group_potting_ceo_agent'))]"/>
+    </record>
+
+    <!-- Menu item pour accès rapide -->
+    <menuitem id="menu_potting_quick_production" 
+              name="⚡ Production Rapide" 
+              parent="potting_management.menu_potting_root"
+              action="action_potting_quick_production_wizard"
+              sequence="2"
+              groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+
+</odoo>

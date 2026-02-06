@@ -40,6 +40,10 @@ class PottingFormule(models.Model):
          'Le coefficient de conversion doit être supérieur à 0!'),
         ('numero_fo1_uniq', 'unique(numero_fo1, company_id)', 
          'Le numéro FO1 doit être unique!'),
+        # Contrainte: apres_vente_paye ne peut pas être True si avant_vente_paye est False
+        ('apres_vente_requires_avant_vente', 
+         'CHECK(NOT (apres_vente_paye = TRUE AND avant_vente_paye = FALSE))',
+         'Le paiement après-vente nécessite que le paiement avant-vente soit effectué en premier!'),
     ]
 
     # =========================================================================
@@ -981,13 +985,21 @@ class PottingFormule(models.Model):
                 record.state = 'draft'
     
     def _update_payment_state(self):
-        """Met à jour l'état en fonction des paiements"""
+        """Met à jour l'état en fonction des paiements.
+        
+        Logique métier:
+        - avant_vente_paye seul = partial_paid
+        - avant_vente_paye + apres_vente_paye = paid (complet)
+        - Le paiement avant-vente doit TOUJOURS être fait en premier
+        - Impossible d'avoir apres_vente_paye sans avant_vente_paye
+        """
         for record in self:
             if record.state in ('draft', 'cancelled'):
                 continue
             if record.avant_vente_paye and record.apres_vente_paye:
                 record.state = 'paid'
-            elif record.avant_vente_paye or record.apres_vente_paye:
+            elif record.avant_vente_paye:
+                # Seul le paiement avant-vente déclenche l'état partial_paid
                 record.state = 'partial_paid'
             else:
                 record.state = 'validated'
@@ -1264,15 +1276,38 @@ class PottingFormule(models.Model):
         return payment_request
     
     def action_mark_avant_vente_paid(self):
-        """Marquer le paiement avant-vente comme effectué"""
+        """Marquer le paiement avant-vente comme effectué et synchroniser avec l'OT"""
         for record in self:
             record.avant_vente_paye = True
             record.date_paiement_avant_vente = date.today()
             record._update_payment_state()
+            
+            # Synchroniser avec l'OT lié
+            if record.transit_order_id:
+                record.transit_order_id.write({
+                    'taxes_paid': True,
+                    'taxes_payment_date': date.today(),
+                })
+                # Mettre à jour l'état de l'OT si nécessaire
+                if record.transit_order_id.state in ('draft', 'formule_linked'):
+                    record.transit_order_id.state = 'taxes_paid'
+                record.transit_order_id.message_post(
+                    body=_("Taxes payées via la Formule %s") % record.name,
+                    subject=_("Taxes payées"),
+                    subtype_xmlid='mail.mt_comment'
+                )
     
     def action_mark_apres_vente_paid(self):
-        """Marquer le paiement après-vente comme effectué"""
+        """Marquer le paiement après-vente comme effectué.
+        
+        Le paiement avant-vente doit OBLIGATOIREMENT être fait en premier.
+        """
         for record in self:
+            if not record.avant_vente_paye:
+                raise UserError(_(
+                    "Impossible de marquer le paiement après-vente comme effectué.\n"
+                    "Le paiement avant-vente de la Formule %s doit être fait en premier."
+                ) % record.name)
             record.apres_vente_paye = True
             record.date_paiement_apres_vente = date.today()
             record._update_payment_state()

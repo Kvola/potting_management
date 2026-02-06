@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Wizard Form View -->
+    <!-- Wizard Form View - Création individuelle d'OT depuis une Formule -->
     <record id="potting_create_ot_wizard_view_form" model="ir.ui.view">
         <field name="name">potting.create.ot.wizard.form</field>
         <field name="model">potting.create.ot.wizard</field>
@@ -9,7 +9,7 @@
                 <sheet>
                     <div class="oe_title mb-3">
                         <h2>
-                            <i class="fa fa-truck me-2 text-primary"/>
+                            <i class="fa fa-truck me-2 text-primary" title="OT"/>
                             <span>Nouvel Ordre de Transit</span>
                         </h2>
                         <div class="text-muted mt-2">
@@ -18,9 +18,39 @@
                         </div>
                     </div>
                     
+                    <!-- Section Formule - OBLIGATOIRE -->
+                    <group string="📋 Sélection de la Formule (obligatoire)">
+                        <field name="company_id" invisible="1"/>
+                        <field name="formule_id" 
+                               placeholder="Sélectionner une Formule validée..."
+                               options="{'no_create': True, 'no_create_edit': True}"
+                               class="fw-bold"/>
+                        <div class="col-12" invisible="not formule_id">
+                            <div class="alert alert-info py-2 mb-0">
+                                <div class="row">
+                                    <div class="col-4">
+                                        <i class="fa fa-file-text-o me-1" title="Réf. CCC"/>
+                                        <span>Réf. CCC: </span>
+                                        <field name="formule_reference" class="oe_inline fw-bold"/>
+                                    </div>
+                                    <div class="col-4">
+                                        <i class="fa fa-balance-scale me-1" title="Tonnage"/>
+                                        <span>Tonnage: </span>
+                                        <field name="formule_tonnage" class="oe_inline fw-bold"/>
+                                        <span> T</span>
+                                    </div>
+                                    <div class="col-4">
+                                        <i class="fa fa-cube me-1" title="Produit"/>
+                                        <span>Produit: </span>
+                                        <field name="formule_product_type" class="oe_inline fw-bold"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </group>
+                    
                     <group>
                         <group string="📦 Informations principales">
-                            <field name="company_id" invisible="1"/>
                             <field name="customer_id" readonly="1"/>
                             <field name="campaign_id" 
                                    options="{'no_create': True}"
@@ -31,7 +61,7 @@
                                    domain="[('is_potting_consignee', '=', True)]"
                                    context="{'default_is_potting_consignee': True}"
                                    options="{'no_quick_create': True}"/>
-                            <field name="product_type" widget="radio" options="{'horizontal': true}"/>
+                            <field name="product_type" widget="radio" options="{'horizontal': true}" readonly="1"/>
                             <field name="product_id" 
                                    placeholder="Produit spécifique (optionnel)"
                                    invisible="not product_type"
@@ -56,16 +86,19 @@
                     <button name="action_create_ot" 
                             type="object" 
                             string="✅ Créer l'OT" 
-                            class="btn-primary"/>
+                            class="btn-primary"
+                            invisible="not formule_id"/>
                     <button name="action_create_and_new" 
                             type="object" 
                             string="➕ Créer et Nouveau" 
                             class="btn-secondary"
+                            invisible="not formule_id"
                             title="Créer cet OT et ouvrir un nouveau formulaire pour en créer un autre"/>
                     <button name="action_view_ot" 
                             type="object" 
                             string="👁 Créer et Voir" 
                             class="btn-secondary"
+                            invisible="not formule_id"
                             title="Créer cet OT et ouvrir sa fiche"/>
                     <button string="Annuler" class="btn-light" special="cancel"/>
                 </footer>

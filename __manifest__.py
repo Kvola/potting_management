@@ -70,6 +70,7 @@
         'wizards/potting_create_delivery_note_wizard_views.xml',
         'wizards/potting_import_contracts_wizard_views.xml',
         'wizards/potting_add_production_wizard_views.xml',
+        'wizards/potting_quick_production_wizard_views.xml',
         'wizards/potting_formule_payment_wizard_views.xml',
         'wizards/potting_forwarding_invoice_reject_wizard_views.xml',
         'wizards/potting_ot_payment_wizards_views.xml',
