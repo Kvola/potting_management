@@ -94,12 +94,12 @@
               sequence="1"
               groups="potting_management.group_potting_user"/>
 
-    <menuitem id="menu_potting_dashboard_user" 
+    <!-- <menuitem id="menu_potting_dashboard_user" 
               name="🏠 Vue d'ensemble" 
               parent="menu_potting_dashboards" 
               action="action_potting_dashboard_user" 
               sequence="1"
-              groups="potting_management.group_potting_user"/>
+              groups="potting_management.group_potting_user"/> -->
 
     <menuitem id="menu_potting_dashboard_commercial" 
               name="💼 Commercial" 
