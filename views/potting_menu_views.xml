@@ -1,83 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- ================================================================
-         DASHBOARD ACTIONS (must be defined before menus that reference them)
-         Chaque profil utilisateur a son propre tableau de bord
-         
-         Groupes de sécurité disponibles :
-         - group_potting_user : Lecture seule
-         - group_potting_commercial : Contrats
-         - group_potting_agent_ccc : CV (Confirmations de Vente)
-         - group_potting_ot_manager : Gestionnaire OT
-         - group_potting_formule_manager : Formules
-         - group_potting_accountant : Paiements (Taxes/DUS)
-         - group_potting_shipping : Logistique
-         - group_potting_ceo_agent : Validation OT
-         - group_potting_manager : Accès complet
+         TABLEAUX DE BORD SIMPLIFIÉS - 3 dashboards au lieu de 9
          ================================================================ -->
     
-    <!-- Dashboard Utilisateur de base -->
-    <record id="action_potting_dashboard_user" model="ir.actions.client">
-        <field name="name">🏠 Tableau de bord</field>
-        <field name="tag">potting_user_dashboard</field>
+    <!-- Dashboard Principal (pour tous les utilisateurs) -->
+    <record id="action_potting_dashboard_main" model="ir.actions.client">
+        <field name="name">📊 Tableau de bord</field>
+        <field name="tag">potting_main_dashboard</field>
     </record>
 
-    <!-- Dashboard Commercial (Contrats) -->
-    <record id="action_potting_dashboard_commercial" model="ir.actions.client">
-        <field name="name">💼 Tableau de bord Commercial</field>
-        <field name="tag">potting_commercial_dashboard</field>
+    <!-- Dashboard Opérations (Production, OT, Lots) -->
+    <record id="action_potting_dashboard_operations" model="ir.actions.client">
+        <field name="name">🏭 Opérations</field>
+        <field name="tag">potting_operations_dashboard</field>
     </record>
 
-    <!-- Dashboard Agent CCC (CV) - NOUVEAU -->
-    <record id="action_potting_dashboard_agent_ccc" model="ir.actions.client">
-        <field name="name">📋 Tableau de bord Agent CCC</field>
-        <field name="tag">potting_agent_ccc_dashboard</field>
-    </record>
-
-    <!-- Dashboard Gestionnaire OT - NOUVEAU -->
-    <record id="action_potting_dashboard_ot_manager" model="ir.actions.client">
-        <field name="name">🚚 Tableau de bord Gestionnaire OT</field>
-        <field name="tag">potting_ot_manager_dashboard</field>
-    </record>
-
-    <!-- Dashboard Gestionnaire Formules (renommé depuis CV/Formules) -->
-    <record id="action_potting_dashboard_formule_manager" model="ir.actions.client">
-        <field name="name">📊 Tableau de bord Gestionnaire Formules</field>
-        <field name="tag">potting_cv_formule_manager_dashboard</field>
-    </record>
-
-    <!-- Dashboard CV/Formules - OBSOLÈTE mais conservé pour compatibilité -->
-    <record id="action_potting_dashboard_cv_formule" model="ir.actions.client">
-        <field name="name">📜 Tableau de bord CV/Formules (obsolète)</field>
-        <field name="tag">potting_cv_formule_manager_dashboard</field>
-    </record>
-
-    <!-- Dashboard Shipping (Logistique) -->
-    <record id="action_potting_dashboard_shipping" model="ir.actions.client">
-        <field name="name">🚢 Tableau de bord Shipping</field>
-        <field name="tag">potting_shipping_dashboard</field>
-    </record>
-
-    <!-- Dashboard Agent Exportation (Validation OT) -->
-    <record id="action_potting_dashboard_ceo_agent" model="ir.actions.client">
-        <field name="name">📦 Tableau de bord Agent Exportation</field>
-        <field name="tag">potting_ceo_agent_dashboard</field>
-    </record>
-
-    <!-- Dashboard Comptable (Paiements Taxes/DUS) -->
-    <record id="action_potting_dashboard_accountant" model="ir.actions.client">
-        <field name="name">💰 Tableau de bord Comptable</field>
-        <field name="tag">potting_accountant_dashboard</field>
-    </record>
-
-    <!-- Dashboard Responsable (Manager) - Vue complète -->
-    <record id="action_potting_dashboard_manager" model="ir.actions.client">
-        <field name="name">📊 Tableau de bord Responsable</field>
-        <field name="tag">potting_manager_dashboard</field>
+    <!-- Dashboard Finances (Factures, Paiements, Taxes) -->
+    <record id="action_potting_dashboard_finances" model="ir.actions.client">
+        <field name="name">💰 Finances</field>
+        <field name="tag">potting_finances_dashboard</field>
     </record>
 
     <!-- ================================================================
-         MENU PRINCIPAL
+         MENU PRINCIPAL - Structure simplifiée et logique
+         Flux: Accueil → Ventes → Opérations → Logistique → Finances → Config
          ================================================================ -->
     <menuitem id="menu_potting_root" 
               name="📦 Exportations" 
@@ -86,87 +33,17 @@
               groups="potting_management.group_potting_user"/>
 
     <!-- ================================================================
-         1. TABLEAUX DE BORD - Accueil personnalisé par profil
+         1. ACCUEIL - Dashboard principal (premier menu)
          ================================================================ -->
-    <menuitem id="menu_potting_dashboards" 
-              name="📊 Tableaux de bord" 
+    <menuitem id="menu_potting_home" 
+              name="🏠 Accueil" 
               parent="menu_potting_root" 
+              action="action_potting_dashboard_main"
               sequence="1"
               groups="potting_management.group_potting_user"/>
 
-    <!-- <menuitem id="menu_potting_dashboard_user" 
-              name="🏠 Vue d'ensemble" 
-              parent="menu_potting_dashboards" 
-              action="action_potting_dashboard_user" 
-              sequence="1"
-              groups="potting_management.group_potting_user"/> -->
-
-    <menuitem id="menu_potting_dashboard_commercial" 
-              name="💼 Commercial" 
-              parent="menu_potting_dashboards" 
-              action="action_potting_dashboard_commercial" 
-              sequence="10"
-              groups="potting_management.group_potting_commercial"/>
-
-    <menuitem id="menu_potting_dashboard_agent_ccc" 
-              name="📋 Agent CCC" 
-              parent="menu_potting_dashboards" 
-              action="action_potting_dashboard_agent_ccc" 
-              sequence="20"
-              groups="potting_management.group_potting_agent_ccc"/>
-
-    <menuitem id="menu_potting_dashboard_ot_manager" 
-              name="🚚 Gestionnaire OT" 
-              parent="menu_potting_dashboards" 
-              action="action_potting_dashboard_ot_manager" 
-              sequence="30"
-              groups="potting_management.group_potting_ot_manager"/>
-
-    <menuitem id="menu_potting_dashboard_formule_manager" 
-              name="📊 Gestionnaire Formules" 
-              parent="menu_potting_dashboards" 
-              action="action_potting_dashboard_formule_manager" 
-              sequence="40"
-              groups="potting_management.group_potting_formule_manager"/>
-
-    <menuitem id="menu_potting_dashboard_shipping" 
-              name="🚢 Shipping" 
-              parent="menu_potting_dashboards" 
-              action="action_potting_dashboard_shipping" 
-              sequence="50"
-              groups="potting_management.group_potting_shipping"/>
-
-    <menuitem id="menu_potting_dashboard_ceo_agent" 
-              name="📦 Agent Exportation" 
-              parent="menu_potting_dashboards" 
-              action="action_potting_dashboard_ceo_agent" 
-              sequence="60"
-              groups="potting_management.group_potting_ceo_agent"/>
-
-    <menuitem id="menu_potting_dashboard_accountant" 
-              name="💰 Comptable" 
-              parent="menu_potting_dashboards" 
-              action="action_potting_dashboard_accountant" 
-              sequence="70"
-              groups="potting_management.group_potting_accountant"/>
-
-    <menuitem id="menu_potting_dashboard_manager" 
-              name="📊 Responsable (tous)" 
-              parent="menu_potting_dashboards" 
-              action="action_potting_dashboard_manager" 
-              sequence="100"
-              groups="potting_management.group_potting_manager"/>
-
-    <!-- OBSOLÈTE - conservé pour compatibilité -->
-    <menuitem id="menu_potting_dashboard_cv_formule" 
-              name="📜 CV/Formules (obsolète)" 
-              parent="menu_potting_dashboards" 
-              action="action_potting_dashboard_cv_formule" 
-              sequence="999"
-              groups="potting_management.group_potting_cv_formule"/>
-
     <!-- ================================================================
-         2. VENTES - Contrats et CV (Commercial + Agent CCC)
+         2. VENTES - Contrats et Confirmations de Vente
          ================================================================ -->
     <menuitem id="menu_potting_sales" 
               name="💼 Ventes" 
@@ -188,208 +65,197 @@
               sequence="20"
               groups="potting_management.group_potting_agent_ccc,potting_management.group_potting_manager"/>
 
-    <menuitem id="menu_potting_cv_agent_ccc" 
-              name="📋 Mes CV (Agent CCC)" 
-              parent="menu_potting_sales" 
-              action="action_potting_cv_agent_ccc" 
-              sequence="25"
-              groups="potting_management.group_potting_agent_ccc"/>
-
     <!-- ================================================================
-         3. RÉGLEMENTATION CCC - Formules et Taxes (Gestionnaire Formules)
+         3. OPÉRATIONS - OT, Production, Lots (cœur du métier)
          ================================================================ -->
-    <menuitem id="menu_potting_ccc" 
-              name="🏛️ Réglementation CCC" 
+    <menuitem id="menu_potting_operations" 
+              name="🏭 Opérations" 
               parent="menu_potting_root" 
               sequence="20"
-              groups="potting_management.group_potting_formule_manager,potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
+              groups="potting_management.group_potting_ot_manager,potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
 
-    <menuitem id="menu_potting_formule" 
-              name="📊 Formules (FO)" 
-              parent="menu_potting_ccc" 
-              action="action_potting_formule" 
-              sequence="10"
-              groups="potting_management.group_potting_formule_manager,potting_management.group_potting_manager"/>
-
-    <menuitem id="menu_potting_taxe_type" 
-              name="🏛️ Types de Taxes" 
-              parent="menu_potting_ccc" 
-              action="action_potting_taxe_type" 
-              sequence="20"
-              groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
-
-    <!-- ================================================================
-         4. ORDRES DE TRANSIT - Gestion OT (Gestionnaire OT)
-         ================================================================ -->
-    <menuitem id="menu_potting_ot_export" 
-              name="🚚 Ordres de Transit" 
-              parent="menu_potting_root" 
-              sequence="30"
+    <menuitem id="menu_potting_operations_dashboard" 
+              name="📊 Vue d'ensemble" 
+              parent="menu_potting_operations" 
+              action="action_potting_dashboard_operations"
+              sequence="1"
               groups="potting_management.group_potting_ot_manager,potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_transit_order" 
-              name="📋 Tous les OT" 
-              parent="menu_potting_ot_export" 
+              name="🚚 Ordres de Transit (OT)" 
+              parent="menu_potting_operations" 
               action="action_potting_transit_order" 
               sequence="10"
               groups="potting_management.group_potting_ot_manager,potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
 
-    <menuitem id="menu_potting_ot_manager" 
-              name="🚚 OT à traiter" 
-              parent="menu_potting_ot_export" 
-              action="action_potting_transit_order_ot_manager" 
-              sequence="20"
-              groups="potting_management.group_potting_ot_manager,potting_management.group_potting_manager"/>
-
     <menuitem id="menu_potting_ot_allocations" 
               name="🔗 Allocations OT ↔ Contrats" 
-              parent="menu_potting_ot_export" 
+              parent="menu_potting_operations" 
               action="action_potting_ot_contract_allocation" 
-              sequence="30"
+              sequence="15"
               groups="potting_management.group_potting_ot_manager,potting_management.group_potting_manager"/>
 
-    <!-- ================================================================
-         5. PRODUCTION ET VALIDATION (Agent Exportation)
-         ================================================================ -->
-    <menuitem id="menu_potting_ceo_agent" 
-              name="✅ Production &amp; Validation" 
-              parent="menu_potting_root" 
-              sequence="40"
-              groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
-
-    <menuitem id="menu_potting_ceo_transit_order" 
-              name="📝 OT à valider" 
-              parent="menu_potting_ceo_agent" 
-              action="action_potting_transit_order_ceo_agent" 
-              sequence="10"
-              groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
-
-    <menuitem id="menu_potting_ceo_lot" 
-              name="📦 Lots à gérer" 
-              parent="menu_potting_ceo_agent" 
-              action="action_potting_lot_ceo_agent" 
+    <menuitem id="menu_potting_lot" 
+              name="📦 Lots" 
+              parent="menu_potting_operations" 
+              action="action_potting_lot" 
               sequence="20"
-              groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
+              groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_production_line" 
-              name="🏭 Productions" 
-              parent="menu_potting_ceo_agent" 
+              name="⚙️ Productions" 
+              parent="menu_potting_operations" 
               action="action_potting_production_line" 
               sequence="30"
               groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
 
+    <menuitem id="menu_potting_formule" 
+              name="📊 Formules (FO)" 
+              parent="menu_potting_operations" 
+              action="action_potting_formule" 
+              sequence="40"
+              groups="potting_management.group_potting_formule_manager,potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
+
     <!-- ================================================================
-         6. LOGISTIQUE - Shipping et Empotage
+         4. LOGISTIQUE - Conteneurs, BL, Transitaires
          ================================================================ -->
     <menuitem id="menu_potting_logistics" 
               name="🚢 Logistique" 
               parent="menu_potting_root" 
-              sequence="50"
+              sequence="30"
               groups="potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
 
-    <menuitem id="menu_potting_lot" 
-              name="📦 Lots" 
+    <menuitem id="menu_potting_shipping_company" 
+              name="⚓ Compagnies Maritimes" 
               parent="menu_potting_logistics" 
-              action="action_potting_lot" 
-              sequence="10"
+              action="action_potting_shipping_company" 
+              sequence="5"
               groups="potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_container" 
               name="🏗️ Conteneurs" 
               parent="menu_potting_logistics" 
               action="action_potting_container" 
-              sequence="20"
+              sequence="10"
               groups="potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_delivery_note" 
               name="📄 Bons de Livraison" 
               parent="menu_potting_logistics" 
               action="action_potting_delivery_note" 
-              sequence="30"
+              sequence="20"
               groups="potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_forwarding_agent"
-              name="🚚 Transitaires"
+              name="🚛 Transitaires"
               parent="menu_potting_logistics"
               action="potting_forwarding_agent_action"
-              sequence="40"
+              sequence="30"
               groups="potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
 
     <!-- ================================================================
-         7. COMPTABILITÉ - Paiements et Factures
+         5. FINANCES - Factures, Paiements, Taxes
          ================================================================ -->
-    <menuitem id="menu_potting_accounting" 
-              name="💰 Comptabilité" 
+    <menuitem id="menu_potting_finances" 
+              name="💰 Finances" 
               parent="menu_potting_root" 
-              sequence="60"
+              sequence="40"
+              groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
+
+    <menuitem id="menu_potting_finances_dashboard" 
+              name="📊 Vue d'ensemble" 
+              parent="menu_potting_finances" 
+              action="action_potting_dashboard_finances"
+              sequence="1"
               groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_fwd_invoice_to_validate" 
-              name="📋 Factures à Valider" 
-              parent="menu_potting_accounting" 
+              name="⏳ Factures à Valider" 
+              parent="menu_potting_finances" 
               action="action_potting_forwarding_invoice_to_validate" 
               sequence="10"
               groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_fwd_invoice_ready" 
-              name="✅ Factures Prêtes au Paiement" 
-              parent="menu_potting_accounting" 
+              name="✅ Factures Prêtes" 
+              parent="menu_potting_finances" 
               action="action_potting_forwarding_invoice_ready_payment" 
               sequence="20"
               groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_fwd_invoices_all" 
               name="📁 Toutes les Factures" 
-              parent="menu_potting_accounting" 
+              parent="menu_potting_finances" 
               action="action_potting_forwarding_agent_invoice" 
               sequence="30"
               groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_forwarding_agent_payments"
               name="💳 Paiements Transitaires"
-              parent="menu_potting_accounting"
+              parent="menu_potting_finances"
               action="potting_forwarding_agent_payment_action"
               sequence="40"
               groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
 
+    <menuitem id="menu_potting_taxe_type" 
+              name="🏛️ Types de Taxes" 
+              parent="menu_potting_finances" 
+              action="action_potting_taxe_type" 
+              sequence="50"
+              groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
+
+    <menuitem id="menu_potting_formule_to_pay" 
+              name="💰 Formules à Payer" 
+              parent="menu_potting_finances" 
+              action="action_potting_formule_to_pay" 
+              sequence="55"
+              groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
+
+    <menuitem id="menu_potting_formule_paid" 
+              name="✅ Formules Payées" 
+              parent="menu_potting_finances" 
+              action="action_potting_formule_paid" 
+              sequence="56"
+              groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
+
     <!-- ================================================================
-         8. RAPPORTS
+         6. RAPPORTS
          ================================================================ -->
     <menuitem id="menu_potting_reports" 
               name="📊 Rapports" 
               parent="menu_potting_root" 
-              sequence="70"
+              sequence="50"
               groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_daily_report"
-              name="📊 Rapport quotidien OT"
+              name="📈 Rapport quotidien"
               parent="menu_potting_reports"
               action="action_potting_daily_report_wizard"
               sequence="10"
               groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
 
     <menuitem id="menu_potting_ceo_send_report" 
-              name="📧 Envoyer rapport par email" 
+              name="📧 Envoyer par email" 
               parent="menu_potting_reports" 
               action="action_potting_send_report_wizard" 
               sequence="20"
               groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
 
     <!-- ================================================================
-         9. CONFIGURATION (Manager uniquement)
+         7. CONFIGURATION (Manager et Shipping pour les campagnes)
          ================================================================ -->
     <menuitem id="menu_potting_config"
               name="⚙️ Configuration"
               parent="menu_potting_root"  
               sequence="100"
-              groups="potting_management.group_potting_manager"/>
+              groups="potting_management.group_potting_manager,potting_management.group_potting_shipping"/>
 
     <menuitem id="menu_potting_campaign"
               name="📅 Campagnes"
               parent="menu_potting_config"
               action="potting_campaign_action"
               sequence="10"
-              groups="potting_management.group_potting_manager"/>
+              groups="potting_management.group_potting_manager,potting_management.group_potting_shipping"/>
 
     <menuitem id="menu_potting_certification"
               name="🏅 Certifications"
@@ -420,7 +286,46 @@
               groups="potting_management.group_potting_manager"/>
 
     <!-- ================================================================
-         MENUS LEGACY/OBSOLÈTES - Conservés pour compatibilité
+         ACTIONS OBSOLÈTES - Conservées pour rétrocompatibilité
          ================================================================ -->
-    <!-- Ancien menu Operations supprimé, fonctionnalités réparties -->
+    <record id="action_potting_dashboard_user" model="ir.actions.client">
+        <field name="name">🏠 Tableau de bord</field>
+        <field name="tag">potting_main_dashboard</field>
+    </record>
+    <record id="action_potting_dashboard_commercial" model="ir.actions.client">
+        <field name="name">💼 Tableau de bord</field>
+        <field name="tag">potting_main_dashboard</field>
+    </record>
+    <record id="action_potting_dashboard_agent_ccc" model="ir.actions.client">
+        <field name="name">📋 Tableau de bord</field>
+        <field name="tag">potting_main_dashboard</field>
+    </record>
+    <record id="action_potting_dashboard_ot_manager" model="ir.actions.client">
+        <field name="name">🚚 Tableau de bord</field>
+        <field name="tag">potting_operations_dashboard</field>
+    </record>
+    <record id="action_potting_dashboard_formule_manager" model="ir.actions.client">
+        <field name="name">📊 Tableau de bord</field>
+        <field name="tag">potting_operations_dashboard</field>
+    </record>
+    <record id="action_potting_dashboard_cv_formule" model="ir.actions.client">
+        <field name="name">📜 Tableau de bord</field>
+        <field name="tag">potting_operations_dashboard</field>
+    </record>
+    <record id="action_potting_dashboard_shipping" model="ir.actions.client">
+        <field name="name">🚢 Tableau de bord</field>
+        <field name="tag">potting_operations_dashboard</field>
+    </record>
+    <record id="action_potting_dashboard_ceo_agent" model="ir.actions.client">
+        <field name="name">📦 Tableau de bord</field>
+        <field name="tag">potting_operations_dashboard</field>
+    </record>
+    <record id="action_potting_dashboard_accountant" model="ir.actions.client">
+        <field name="name">💰 Tableau de bord</field>
+        <field name="tag">potting_finances_dashboard</field>
+    </record>
+    <record id="action_potting_dashboard_manager" model="ir.actions.client">
+        <field name="name">📊 Tableau de bord Responsable</field>
+        <field name="tag">potting_main_dashboard</field>
+    </record>
 </odoo>

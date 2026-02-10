@@ -114,14 +114,15 @@ Les exportations sont soumises à différentes taxes et redevances prélevées p
 | **DIUS** | Droit Indicatif à l'Usine | 14.6% | Taxe de transformation |
 | **DUS** | Droit Unique de Sortie | 5% | Taxe d'exportation |
 
-### 💳 Système de paiement en deux temps
+### 💳 Système de paiement simplifié
 
-Les formules CCC prévoient un paiement en deux phases :
+Le paiement aux producteurs est effectué en une seule fois :
 
 | Phase | Pourcentage | Moment | Description |
 |-------|-------------|--------|-------------|
-| **Avant-vente** | 60% | Avant embarquement | Avance versée aux producteurs |
-| **Après-vente** | 40% | Après embarquement | Solde après réalisation de la vente |
+| **Paiement producteurs** | 100% | À la validation | Totalité versée aux producteurs |
+
+> **Note** : Le **DUS (Droit Unique de Sortie)** est géré séparément sur l'Ordre de Transit (OT) après la vente.
 
 ---
 
@@ -279,10 +280,8 @@ La **Formule (FO ou FO1)** est un document du CCC qui fixe le prix d'achat aux p
    - **Prix au kg** : Prix effectif FCFA/kg
    - **Tonnage** : Quantité couverte
 5. Détail des taxes (section dédiée)
-6. Configuration du paiement :
-   - **Pourcentage avant-vente** : Défaut 60%
-7. Cliquer sur **Enregistrer**
-8. Cliquer sur **Valider** pour activer la formule
+6. Cliquer sur **Enregistrer**
+7. Cliquer sur **Valider** pour activer la formule
 
 ### 🧮 Grades qualité
 
@@ -309,25 +308,22 @@ La formule inclut le détail de toutes les taxes prélevées :
 | État | Description | Actions possibles |
 |------|-------------|-------------------|
 | **Brouillon** | Formule en saisie | Modifier, Valider |
-| **Validée** | Formule active | Lier à un OT |
-| **Paiement partiel** | Avant-vente payé | Enregistrer après-vente |
-| **Payée** | Tous paiements effectués | Consultation |
+| **Validée** | Formule active | Enregistrer paiement, Lier à un OT |
+| **Payée** | Paiement producteurs effectué | Consultation |
 | **Annulée** | Formule annulée | Consultation |
 
 ### 💳 Gestion des paiements
 
-#### Paiement avant-vente (60%)
+#### Paiement aux producteurs (100%)
 1. Ouvrir la formule validée
-2. Cliquer sur **Enregistrer paiement avant-vente**
+2. Cliquer sur **Enregistrer le paiement**
 3. Sélectionner le mode de paiement (chèque, virement)
 4. Renseigner les informations bancaires
 5. Valider
 
-#### Paiement après-vente (40%)
-1. Ouvrir la formule en "Paiement partiel"
-2. Cliquer sur **Enregistrer paiement après-vente**
-3. Compléter les informations
-4. Valider
+La formule passe automatiquement à l'état **Payée**.
+
+> **DUS** : Le Droit Unique de Sortie est géré sur l'Ordre de Transit après la vente.
 
 ---
 
@@ -912,10 +908,10 @@ Les séquences sont configurables pour :
 #### Formules
 
 **Q : Je ne peux pas lier une formule à mon OT ?**
-> ✅ La formule doit être à l'état "Validée" et ne pas être déjà liée à un autre OT.
+> ✅ La formule doit être à l'état "Validée" ou "Payée" et ne pas être déjà liée à un autre OT.
 
-**Q : Comment enregistrer un paiement partiel ?**
-> ✅ Utilisez les boutons "Paiement avant-vente" puis "Paiement après-vente" dans l'ordre.
+**Q : Comment enregistrer le paiement aux producteurs ?**
+> ✅ Ouvrez la formule validée et cliquez sur "Enregistrer le paiement". Le paiement est effectué à 100%.
 
 #### OT et Lots
 

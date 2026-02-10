@@ -155,7 +155,7 @@ class PottingTransitOrder(models.Model):
         ondelete='restrict',
         tracking=True,
         index=True,
-        domain="[('state', 'in', ['validated', 'partial_paid']), "
+        domain="[('state', 'in', ['validated', 'paid']), "
                "('transit_order_id', '=', False)]",
         help="Formule du Conseil Café-Cacao obligatoire pour cet OT. "
              "Une FO ne peut être liée qu'à un seul OT."
@@ -190,9 +190,9 @@ class PottingTransitOrder(models.Model):
     
     formule_avant_vente_paye = fields.Boolean(
         related='formule_id.avant_vente_paye',
-        string="Avant-vente payé (FO)",
+        string="Producteurs payés (FO)",
         store=True,
-        help="Indique si le paiement avant-vente de la Formule a été effectué"
+        help="Indique si le paiement aux producteurs de la Formule a été effectué"
     )
     
     confirmation_vente_id = fields.Many2one(
@@ -251,7 +251,8 @@ class PottingTransitOrder(models.Model):
         currency_field='currency_id',
         compute='_compute_forwarding_agent_fee',
         store=True,
-        help="Frais du transitaire pour cet OT"
+        readonly=True,
+        help="Frais du transitaire pour cet OT (calculé automatiquement)"
     )
     
     # =========================================================================
@@ -414,7 +415,12 @@ class PottingTransitOrder(models.Model):
         ('cocoa_butter', 'Beurre de cacao'),
         ('cocoa_cake', 'Cake (Tourteau) de cacao'),
         ('cocoa_powder', 'Poudre de cacao'),
-    ], string="Type de produit", required=True, tracking=True, index=True)
+    ], string="Type de produit", 
+       required=True, 
+       tracking=True, 
+       index=True,
+       states={'draft': [('readonly', False)]},
+       help="Type de produit de cacao - Non modifiable après la création des lots")
     
     product_id = fields.Many2one(
         'product.product',
@@ -428,7 +434,8 @@ class PottingTransitOrder(models.Model):
         required=True,
         tracking=True,
         digits='Product Unit of Measure',
-        help="Tonnage total de l'OT"
+        states={'draft': [('readonly', False)]},
+        help="Tonnage total de l'OT - Non modifiable après la génération des lots"
     )
     
     max_tonnage_per_lot = fields.Float(
@@ -472,7 +479,9 @@ class PottingTransitOrder(models.Model):
     booking_number = fields.Char(
         string="Numéro de réservation (Booking)",
         tracking=True,
-        index=True
+        index=True,
+        copy=False,
+        help="Numéro de booking unique pour cette expédition"
     )
     
     lot_ids = fields.One2many(
@@ -569,10 +578,50 @@ class PottingTransitOrder(models.Model):
         ('in_progress', 'En cours'),
         ('ready_validation', 'Prêt pour validation'),
         ('sold', 'Vendu'),
+        ('sent_to_customer', 'Envoyé au client'),
         ('dus_paid', 'DUS payé'),
         ('done', 'Terminé'),
         ('cancelled', 'Annulé'),
     ], string="État", default='draft', tracking=True, index=True, copy=False)
+    
+    # =========================================================================
+    # CHAMPS ENVOI AU CLIENT
+    # =========================================================================
+    
+    has_validated_bl = fields.Boolean(
+        string="BL validé",
+        compute='_compute_customer_send_status',
+        store=True,
+        help="Indique si au moins un BL a été validé (confirmé) pour cet OT"
+    )
+    
+    has_customer_invoice = fields.Boolean(
+        string="Facture client créée",
+        compute='_compute_customer_send_status',
+        store=True,
+        help="Indique si une facture client a été créée pour cet OT"
+    )
+    
+    can_send_to_customer = fields.Boolean(
+        string="Peut être envoyé au client",
+        compute='_compute_customer_send_status',
+        store=True,
+        help="Indique si l'OT peut être marqué comme envoyé au client (BL validé + Facture créée)"
+    )
+    
+    date_sent_to_customer = fields.Datetime(
+        string="Date d'envoi au client",
+        readonly=True,
+        copy=False,
+        tracking=True
+    )
+    
+    sent_by_id = fields.Many2one(
+        'res.users',
+        string="Envoyé par",
+        readonly=True,
+        copy=False
+    )
     
     # =========================================================================
     # CHAMPS PAIEMENT - TAXES (1ère partie de la Formule)
@@ -908,6 +957,25 @@ class PottingTransitOrder(models.Model):
             else:
                 order.delivery_status = 'partial'
 
+    @api.depends('delivery_note_ids', 'delivery_note_ids.state', 'invoice_ids', 'invoice_ids.state')
+    def _compute_customer_send_status(self):
+        """Compute if OT can be sent to customer (BL validated + Invoice created)."""
+        for order in self:
+            # Check if at least one BL is validated (confirmed or delivered)
+            validated_bls = order.delivery_note_ids.filtered(
+                lambda bl: bl.state in ('confirmed', 'delivered')
+            )
+            order.has_validated_bl = len(validated_bls) > 0
+            
+            # Check if at least one customer invoice exists (not cancelled)
+            customer_invoices = order.invoice_ids.filtered(
+                lambda inv: inv.move_type == 'out_invoice' and inv.state != 'cancel'
+            )
+            order.has_customer_invoice = len(customer_invoices) > 0
+            
+            # Can send to customer if both conditions are met
+            order.can_send_to_customer = order.has_validated_bl and order.has_customer_invoice
+
     @api.depends('lot_ids.name')
     def _compute_lot_range(self):
         for order in self:
@@ -1075,6 +1143,66 @@ class PottingTransitOrder(models.Model):
     # -------------------------------------------------------------------------
     # ONCHANGE METHODS
     # -------------------------------------------------------------------------
+    @api.onchange('formule_id')
+    def _onchange_formule_id(self):
+        """Auto-remplir les champs de l'OT depuis la Formule sélectionnée.
+        
+        Cela évite la ressaisie et assure la cohérence des données.
+        Les champs suivants sont synchronisés depuis la Formule:
+        - Type de produit
+        - Tonnage
+        - Transitaire
+        - Navire (via vessel ou nom direct)
+        - Destinataire
+        - Port de destination (POD)
+        - Campagne
+        """
+        if self.formule_id:
+            fo = self.formule_id
+            
+            # Type de produit (obligatoire)
+            if fo.product_type:
+                self.product_type = fo.product_type
+            
+            # Tonnage (depuis formule si non défini)
+            if fo.tonnage and not self.tonnage:
+                self.tonnage = fo.tonnage
+            
+            # Transitaire
+            if fo.transitaire_id and not self.forwarding_agent_id:
+                self.forwarding_agent_id = fo.transitaire_id
+            
+            # Navire - rechercher ou créer
+            if fo.navire and not self.vessel_id:
+                vessel = self.env['potting.vessel'].search([
+                    ('name', 'ilike', fo.navire)
+                ], limit=1)
+                if vessel:
+                    self.vessel_id = vessel
+                else:
+                    # Créer le navire s'il n'existe pas
+                    self.vessel_id = self.env['potting.vessel'].create({
+                        'name': fo.navire,
+                        'active': True,
+                    })
+            
+            # Destinataire (consignee) - rechercher par nom
+            if fo.destinataire_nom and not self.consignee_id:
+                partner = self.env['res.partner'].search([
+                    ('name', 'ilike', fo.destinataire_nom),
+                    ('is_company', '=', True)
+                ], limit=1)
+                if partner:
+                    self.consignee_id = partner
+            
+            # Port de destination (POD)
+            if fo.port_destination and not self.pod:
+                self.pod = fo.port_destination
+            
+            # Campagne
+            if fo.campaign_id and not self.campaign_id:
+                self.campaign_id = fo.campaign_id
+
     @api.onchange('vessel_id')
     def _onchange_vessel_id(self):
         if self.vessel_id:
@@ -1332,9 +1460,9 @@ class PottingTransitOrder(models.Model):
         if not self.formule_id:
             raise UserError(_("Aucune formule liée à cet OT."))
         
-        if self.formule_id.state != 'partial_paid':
+        if self.formule_id.state != 'paid':
             raise UserError(_(
-                "La Formule '%s' doit être partiellement payée pour pouvoir vendre l'OT.\n"
+                "La Formule '%s' doit être payée (producteurs payés) pour pouvoir vendre l'OT.\n"
                 "État actuel: %s"
             ) % (self.formule_id.name, dict(self.formule_id._fields['state'].selection).get(self.formule_id.state, self.formule_id.state)))
         
@@ -1365,11 +1493,61 @@ class PottingTransitOrder(models.Model):
         )
         return True
     
+    def action_send_to_customer(self):
+        """Marquer l'OT comme envoyé au client.
+        
+        Cette action est disponible uniquement si:
+        - L'OT est vendu (facture client créée)
+        - Au moins un BL est validé (confirmé ou livré)
+        """
+        self.ensure_one()
+        
+        if self.state != 'sold':
+            raise UserError(_("L'OT doit être vendu avant de pouvoir l'envoyer au client."))
+        
+        if not self.has_validated_bl:
+            raise UserError(_(
+                "Aucun Bill of Lading (BL) n'a été validé pour cet OT.\n"
+                "Veuillez d'abord créer et confirmer un BL."
+            ))
+        
+        if not self.has_customer_invoice:
+            raise UserError(_(
+                "Aucune facture client n'a été créée pour cet OT.\n"
+                "Veuillez d'abord créer la facture client."
+            ))
+        
+        self.write({
+            'state': 'sent_to_customer',
+            'date_sent_to_customer': fields.Datetime.now(),
+            'sent_by_id': self.env.user.id,
+        })
+        
+        # Récupérer les infos pour le message
+        validated_bls = self.delivery_note_ids.filtered(
+            lambda bl: bl.state in ('confirmed', 'delivered')
+        )
+        bl_names = ', '.join(validated_bls.mapped('name'))
+        invoice_names = ', '.join(self.invoice_ids.filtered(
+            lambda inv: inv.move_type == 'out_invoice' and inv.state != 'cancel'
+        ).mapped('name'))
+        
+        self.message_post(
+            body=_(
+                "📦 OT envoyé au client par %s.\n\n"
+                "• BL validé(s): %s\n"
+                "• Facture(s) client: %s"
+            ) % (self.env.user.name, bl_names, invoice_names),
+            subject=_("OT Envoyé au client"),
+            subtype_xmlid='mail.mt_comment'
+        )
+        return True
+
     def action_open_dus_payment_wizard(self):
         """Ouvrir le wizard de paiement DUS (2ème partie - après vente)"""
         self.ensure_one()
-        if self.state != 'sold':
-            raise UserError(_("L'OT doit être vendu pour pouvoir payer le DUS."))
+        if self.state not in ('sold', 'sent_to_customer'):
+            raise UserError(_("L'OT doit être vendu ou envoyé au client pour pouvoir payer le DUS."))
         if not self.formule_id:
             raise UserError(_("Aucune formule liée à cet OT."))
         
@@ -1388,8 +1566,8 @@ class PottingTransitOrder(models.Model):
     def action_confirm_dus_paid(self, check_number, payment_date=None):
         """Confirmer le paiement du DUS"""
         self.ensure_one()
-        if self.state != 'sold':
-            raise UserError(_("L'OT doit être vendu pour payer le DUS."))
+        if self.state not in ('sold', 'sent_to_customer'):
+            raise UserError(_("L'OT doit être vendu ou envoyé au client pour payer le DUS."))
         
         self.write({
             'dus_paid': True,
@@ -1611,9 +1789,9 @@ class PottingTransitOrder(models.Model):
             if not order.formule_id:
                 raise UserError(_("Aucune formule liée à cet OT."))
             
-            if order.formule_id.state != 'partial_paid':
+            if order.formule_id.state != 'paid':
                 raise UserError(_(
-                    "La Formule '%s' doit être partiellement payée pour pouvoir valider l'OT.\n"
+                    "La Formule '%s' doit être payée (producteurs payés) pour pouvoir valider l'OT.\n"
                     "État actuel: %s"
                 ) % (order.formule_id.name, dict(order.formule_id._fields['state'].selection).get(order.formule_id.state, order.formule_id.state)))
             
@@ -1948,7 +2126,17 @@ class PottingVessel(models.Model):
     
     name = fields.Char(string="Nom du navire", required=True, index=True)
     code = fields.Char(string="Code", index=True)
-    shipping_company = fields.Char(string="Compagnie maritime")
+    shipping_company_id = fields.Many2one(
+        'potting.shipping.company',
+        string="Compagnie maritime",
+        index=True,
+        ondelete='set null'
+    )
+    # Keep old field for backward compatibility (will be migrated)
+    shipping_company = fields.Char(
+        string="Compagnie maritime (ancien)",
+        help="Champ obsolète - Utilisez 'Compagnie maritime' à la place"
+    )
     active = fields.Boolean(string="Actif", default=True)
     
     def name_get(self):

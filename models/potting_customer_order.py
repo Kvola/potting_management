@@ -52,38 +52,9 @@ class PottingCustomerOrder(models.Model):
     )
     
     # =========================================================================
-    # CHAMP - CONFIRMATIONS DE VENTE (CV) - Relation Many2many
+    # NOTE: Le lien avec les CV se fait via OT → Formule → CV
+    # Les champs confirmation_vente_ids ont été supprimés (v2.1)
     # =========================================================================
-    
-    confirmation_vente_ids = fields.Many2many(
-        'potting.confirmation.vente',
-        'potting_customer_order_confirmation_vente_rel',
-        'customer_order_id',
-        'confirmation_vente_id',
-        string="Confirmations de Vente",
-        tracking=True,
-        domain="[('state', '=', 'active'), ('tonnage_restant', '>', 0)]",
-        help="Confirmations de Vente (CV) du Conseil Café-Cacao autorisant ce contrat"
-    )
-    
-    confirmation_vente_count = fields.Integer(
-        string="Nombre de CV",
-        compute='_compute_confirmation_vente_count',
-        store=True,
-    )
-    
-    cv_references = fields.Char(
-        string="Réf. CCC",
-        compute='_compute_cv_info',
-        store=True,
-        help="Références CCC des Confirmations de Vente"
-    )
-    
-    cv_tonnage_restant_total = fields.Float(
-        string="Tonnage CV restant total",
-        compute='_compute_cv_info',
-        help="Tonnage encore disponible sur les CV liées"
-    )
     
     customer_id = fields.Many2one(
         'res.partner',
@@ -407,21 +378,6 @@ class PottingCustomerOrder(models.Model):
                     "La date de livraison prévue ne peut pas être antérieure à la date de commande."
                 ))
     
-    @api.constrains('product_type', 'confirmation_vente_ids')
-    def _check_product_type_cv(self):
-        """Vérifie la cohérence du type de produit avec les CV"""
-        for order in self:
-            if order.confirmation_vente_ids and order.product_type:
-                for cv in order.confirmation_vente_ids:
-                    if cv.product_type != 'all' and cv.product_type != order.product_type:
-                        raise ValidationError(_(
-                            "Le type de produit '%s' ne correspond pas au type "
-                            "autorisé par la CV %s ('%s').",
-                            dict(order._fields['product_type'].selection).get(order.product_type),
-                            cv.name,
-                            dict(cv._fields['product_type'].selection).get(cv.product_type)
-                        ))
-    
     @api.constrains('unit_price')
     def _check_unit_price(self):
         """Vérifie que le prix unitaire est raisonnable"""
@@ -471,30 +427,6 @@ class PottingCustomerOrder(models.Model):
             return float(rate)
         except (ValueError, TypeError):
             return 14.6  # Default rate
-
-    # -------------------------------------------------------------------------
-    # COMPUTE METHODS - CONFIRMATIONS DE VENTE
-    # -------------------------------------------------------------------------
-
-    @api.depends('confirmation_vente_ids')
-    def _compute_confirmation_vente_count(self):
-        """Calcule le nombre de CV liées au contrat"""
-        for order in self:
-            order.confirmation_vente_count = len(order.confirmation_vente_ids)
-
-    @api.depends('confirmation_vente_ids', 'confirmation_vente_ids.reference_ccc', 'confirmation_vente_ids.tonnage_restant')
-    def _compute_cv_info(self):
-        """Calcule les informations agrégées des CV"""
-        for order in self:
-            if order.confirmation_vente_ids:
-                # Références CCC séparées par virgule
-                refs = [cv.reference_ccc for cv in order.confirmation_vente_ids if cv.reference_ccc]
-                order.cv_references = ', '.join(refs) if refs else False
-                # Tonnage restant total sur toutes les CV
-                order.cv_tonnage_restant_total = sum(cv.tonnage_restant for cv in order.confirmation_vente_ids)
-            else:
-                order.cv_references = False
-                order.cv_tonnage_restant_total = 0.0
 
     # -------------------------------------------------------------------------
     # COMPUTE METHODS - PRIX & MONTANTS
@@ -797,20 +729,6 @@ class PottingCustomerOrder(models.Model):
             order.state = 'draft'
             order.message_post(body=_("🔄 Commande remise en brouillon par %s.") % self.env.user.name)
 
-    def action_view_confirmations_vente(self):
-        """Voir les Confirmations de Vente liées à ce contrat"""
-        self.ensure_one()
-        action = {
-            'type': 'ir.actions.act_window',
-            'name': _('Confirmations de Vente'),
-            'res_model': 'potting.confirmation.vente',
-            'view_mode': 'tree,form',
-            'domain': [('id', 'in', self.confirmation_vente_ids.ids)],
-        }
-        if len(self.confirmation_vente_ids) == 1:
-            action['view_mode'] = 'form'
-            action['res_id'] = self.confirmation_vente_ids.id
-        return action
 
     def action_view_transit_orders(self):
         self.ensure_one()

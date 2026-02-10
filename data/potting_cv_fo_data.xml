@@ -45,7 +45,7 @@
          Basés sur le document FO1 EGY060
          ==================================================================== -->
     
-    <data noupdate="0">
+    <data noupdate="1">
         
         <!-- ==================== REDEVANCES (taux FCFA/kg) ==================== -->
         
@@ -57,6 +57,7 @@
             <field name="categorie">redevance</field>
             <field name="taux_par_kg">1.245</field>
             <field name="is_preleve_default">True</field>
+            <field name="is_apres_vente">False</field>
             <field name="description">Redevance versée au Conseil Café-Cacao pour le fonctionnement et la régulation de la filière. Taux: 1,245 FCFA/kg</field>
         </record>
         
@@ -68,6 +69,7 @@
             <field name="categorie">redevance</field>
             <field name="taux_par_kg">0.36</field>
             <field name="is_preleve_default">True</field>
+            <field name="is_apres_vente">False</field>
             <field name="description">Contribution pour le développement et l'investissement agricole. Taux: 0,36 FCFA/kg</field>
         </record>
         
@@ -79,6 +81,7 @@
             <field name="categorie">redevance</field>
             <field name="taux_par_kg">0.386</field>
             <field name="is_preleve_default">True</field>
+            <field name="is_apres_vente">False</field>
             <field name="description">Fonds d'Investissement en Milieu Rural - Contribution pour le développement rural. Taux: 0,386 FCFA/kg</field>
         </record>
         
@@ -90,12 +93,13 @@
             <field name="categorie">redevance</field>
             <field name="taux_par_kg">0.27</field>
             <field name="is_preleve_default">True</field>
+            <field name="is_apres_vente">False</field>
             <field name="description">Frais liés à la sacherie et à l'emballage pour l'exportation. Taux: 0,27 FCFA/kg</field>
         </record>
         
         <!-- ==================== TAXES (% du montant) ==================== -->
         
-        <!-- Taxe d'enregistrement (5%) -->
+        <!-- Taxe d'enregistrement (5%) - AVANT-VENTE -->
         <record id="taxe_type_enregistrement" model="potting.taxe.type">
             <field name="name">Taxe d'enregistrement</field>
             <field name="code">ENREG</field>
@@ -103,40 +107,34 @@
             <field name="categorie">taxe</field>
             <field name="taux_pourcentage">5.0</field>
             <field name="is_preleve_default">False</field>
+            <field name="is_apres_vente">False</field>
             <field name="description">Taxe d'enregistrement prélevée sur le montant de la transaction. Taux: 5%</field>
         </record>
         
-        <!-- DIUS - Droit Indicatif Unique de Sortie (14,6%) -->
+        <!-- DUS - Droit Unique de Sortie (14,6%) - APRÈS-VENTE -->
         <record id="taxe_type_dius" model="potting.taxe.type">
-            <field name="name">DIUS</field>
-            <field name="code">DIUS</field>
+            <field name="name">DUS</field>
+            <field name="code">DUS</field>
             <field name="sequence">60</field>
             <field name="categorie">taxe</field>
             <field name="taux_pourcentage">14.6</field>
             <field name="is_preleve_default">False</field>
-            <field name="description">Droit Indicatif Unique de Sortie - Taxe douanière à l'exportation. Taux: 14,6%</field>
+            <field name="is_apres_vente">True</field>
+            <field name="description">Droit Unique de Sortie - Taxe douanière à l'exportation payée après la vente de l'OT. Taux: 14,6%</field>
         </record>
         
         <!-- ==================== SOUTIEN/REVERSEMENT ==================== -->
         
-        <!-- Soutien/Reversement producteurs -->
+        <!-- Soutien/Reversement producteurs (BASE: -836,941 FCFA/kg) -->
         <record id="taxe_type_soutien" model="potting.taxe.type">
             <field name="name">Soutien/Reversement</field>
             <field name="code">SOUTIEN</field>
             <field name="sequence">70</field>
             <field name="categorie">soutien</field>
+            <field name="taux_par_kg">-836.941</field>
             <field name="is_preleve_default">False</field>
-            <field name="description">Montant reversé aux producteurs de cacao. Montant variable selon la formule.</field>
-        </record>
-        
-        <!-- DUS - Droit Unique de Sortie (alternative au DIUS) -->
-        <record id="taxe_type_dus" model="potting.taxe.type">
-            <field name="name">DUS</field>
-            <field name="code">DUS</field>
-            <field name="sequence">65</field>
-            <field name="categorie">taxe</field>
-            <field name="is_preleve_default">True</field>
-            <field name="description">Droit Unique de Sortie - Peut être utilisé comme alternative au DIUS selon le type d'exportation.</field>
+            <field name="is_apres_vente">False</field>
+            <field name="description">Montant reversé aux producteurs de cacao. BASE: -836,941 FCFA/kg × tonnage</field>
         </record>
         
         <!-- FDPCC - Fonds de Développement et de Promotion Café-Cacao -->
@@ -146,6 +144,7 @@
             <field name="sequence">45</field>
             <field name="categorie">redevance</field>
             <field name="is_preleve_default">True</field>
+            <field name="is_apres_vente">False</field>
             <field name="description">Fonds de Développement et de Promotion des activités des Producteurs de Café et de Cacao.</field>
         </record>
         

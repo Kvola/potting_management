@@ -50,11 +50,9 @@ class PaymentRequestPotting(models.Model):
     def _compute_potting_links(self):
         """Calculer les liens avec les objets potting"""
         for record in self:
-            # Formules liées (avant-vente ou après-vente)
+            # Formules liées via paiement producteurs
             formules = self.env['potting.formule'].search([
-                '|',
-                ('payment_request_avant_vente_id', '=', record.id),
-                ('payment_request_apres_vente_id', '=', record.id)
+                ('payment_request_avant_vente_id', '=', record.id)
             ])
             record.potting_formule_ids = formules
             record.potting_formule_count = len(formules)
@@ -105,24 +103,38 @@ class PaymentRequestPotting(models.Model):
     
     def _on_validation_complete_hook(self):
         """Hook appelé après validation complète - Met à jour potting"""
-        result = super()._on_validation_complete_hook()
+        # Appeler le parent (peut retourner None)
+        try:
+            super()._on_validation_complete_hook()
+        except Exception as e:
+            _logger.warning(f"Erreur dans parent _on_validation_complete_hook: {e}")
+        
+        _logger.info(
+            f"🔔 _on_validation_complete_hook appelé pour payment.request {self.mapped('reference')}"
+        )
         
         # Mettre à jour les formules liées
         self._update_potting_formules_payment_status()
         
         # Mettre à jour les paiements transitaires
         self._update_potting_forwarding_payments_status()
-        
-        return result
     
     def _update_potting_formules_payment_status(self):
         """Mettre à jour le statut de paiement des formules liées"""
         for record in self:
+            _logger.info(
+                f"🔍 Recherche formules liées à payment.request {record.reference} (id={record.id})"
+            )
+            
             # Formules avec paiement avant-vente lié à cette demande
             formules_avant_vente = self.env['potting.formule'].search([
                 ('payment_request_avant_vente_id', '=', record.id),
                 ('avant_vente_paye', '=', False)
             ])
+            
+            _logger.info(
+                f"   📋 Formules avant-vente trouvées: {formules_avant_vente.mapped('name')}"
+            )
             
             for formule in formules_avant_vente:
                 formule.write({
@@ -159,7 +171,7 @@ class PaymentRequestPotting(models.Model):
                 # Message dans le chatter
                 formule.message_post(
                     body=_(
-                        "💰 <b>Paiement avant-vente validé</b><br/>"
+                        "💰 <b>Paiement producteurs validé</b><br/>"
                         "Demande de paiement: %s<br/>"
                         "Montant: %s %s<br/>"
                         "Date: %s"
@@ -169,43 +181,7 @@ class PaymentRequestPotting(models.Model):
                         formule.currency_id.symbol,
                         fields.Date.today()
                     ),
-                    subject=_("Paiement avant-vente validé"),
-                    subtype_xmlid='mail.mt_comment'
-                )
-            
-            # Formules avec paiement après-vente lié à cette demande
-            formules_apres_vente = self.env['potting.formule'].search([
-                ('payment_request_apres_vente_id', '=', record.id),
-                ('apres_vente_paye', '=', False)
-            ])
-            
-            for formule in formules_apres_vente:
-                formule.write({
-                    'apres_vente_paye': True,
-                    'date_paiement_apres_vente': fields.Date.today(),
-                })
-                formule._update_payment_state()
-                
-                _logger.info(
-                    f"✅ Formule {formule.name} - Paiement après-vente marqué comme payé "
-                    f"(payment.request {record.reference})"
-                )
-                
-                # Message dans le chatter
-                formule.message_post(
-                    body=_(
-                        "💰 <b>Paiement après-vente validé</b><br/>"
-                        "Demande de paiement: %s<br/>"
-                        "Montant: %s %s<br/>"
-                        "Date: %s<br/>"
-                        "🎉 Formule entièrement payée !"
-                    ) % (
-                        record.reference,
-                        formule.montant_apres_vente,
-                        formule.currency_id.symbol,
-                        fields.Date.today()
-                    ),
-                    subject=_("Paiement après-vente validé"),
+                    subject=_("Paiement producteurs validé"),
                     subtype_xmlid='mail.mt_comment'
                 )
     

@@ -301,14 +301,13 @@ registry.category("actions").add("potting_commercial_dashboard", PottingCommerci
 ### Workflow Formule
 
 ```
-[draft] ──action_validate──▶ [validated]
-   │                            │
-   │                            └──mark_avant_vente_paid──▶ [partial_paid]
-   │                                                           │
-   │                                                           └──mark_apres_vente_paid──▶ [paid]
+[draft] ──action_validate──▶ [validated] ──paiement_producteurs──▶ [paid]
    │
    └──action_cancel──▶ [cancelled]
 ```
+
+**Note:** Le paiement aux producteurs est de 100% du prix bord champ.
+Le DUS (Droit Unique de Sortie) est géré séparément sur l'Ordre de Transit après la vente.
 
 ### Workflow OT
 

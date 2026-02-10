@@ -281,8 +281,6 @@ class PottingCvTonnageTransferWizard(models.TransientModel):
             'currency_id': source.currency_id.id,
             'prix_tonnage': prix,
             'tonnage_autorise': self.tonnage_to_transfer,
-            'destination_country_id': source.destination_country_id.id if source.destination_country_id else False,
-            'destination_port': source.destination_port,
             'product_type': source.product_type,
             'state': 'active',
             'note': _("CV créée par report de tonnage depuis %s.\n%s") % (

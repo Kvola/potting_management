@@ -55,7 +55,7 @@ class PottingCreateOTWizard(models.TransientModel):
         'potting.formule',
         string="Formule (FO)",
         required=True,
-        domain="[('state', 'in', ['validated', 'partial_paid']), "
+        domain="[('state', 'in', ['validated', 'paid']), "
                "('transit_order_id', '=', False), "
                "('company_id', '=', company_id)]",
         help="Sélectionnez une Formule validée et non liée à un OT. "

@@ -100,6 +100,89 @@ class PottingDeliveryNote(models.Model):
         store=True
     )
     
+    # -------------------------------------------------------------------------
+    # BILL OF LADING - Informations externes (compagnie maritime)
+    # -------------------------------------------------------------------------
+    bl_external_number = fields.Char(
+        string="N° BL (Compagnie maritime)",
+        tracking=True,
+        index=True,
+        help="Numéro du Bill of Lading fourni par la compagnie maritime"
+    )
+    
+    shipping_company_id = fields.Many2one(
+        'potting.shipping.company',
+        string="Compagnie maritime",
+        tracking=True,
+        index=True,
+        ondelete='set null',
+        help="Compagnie maritime qui a émis le BL"
+    )
+    
+    port_of_loading = fields.Char(
+        string="Port de chargement",
+        tracking=True,
+        default="Abidjan",
+        help="Port où la marchandise a été embarquée"
+    )
+    
+    port_of_discharge = fields.Char(
+        string="Port de destination",
+        tracking=True,
+        help="Port de destination finale"
+    )
+    
+    date_shipment = fields.Date(
+        string="Date d'embarquement",
+        tracking=True,
+        help="Date effective d'embarquement sur le navire"
+    )
+    
+    shipped_weight = fields.Float(
+        string="Poids embarqué (T)",
+        digits='Product Unit of Measure',
+        tracking=True,
+        help="Poids total embarqué en tonnes (tel qu'indiqué sur le BL)"
+    )
+    
+    number_of_bags = fields.Integer(
+        string="Nombre de sacs",
+        tracking=True,
+        help="Nombre total de sacs embarqués"
+    )
+    
+    # Conteneurs liés au BL
+    container_ids = fields.Many2many(
+        'potting.container',
+        'potting_delivery_note_container_rel',
+        'delivery_note_id',
+        'container_id',
+        string="Conteneurs",
+        tracking=True,
+        help="Conteneurs spécifiques embarqués avec ce BL"
+    )
+    
+    container_count = fields.Integer(
+        string="Nombre de conteneurs",
+        compute='_compute_container_count',
+        store=True
+    )
+    
+    # Pièces jointes BL (scans PDF)
+    bl_attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'potting_delivery_note_attachment_rel',
+        'delivery_note_id',
+        'attachment_id',
+        string="Documents BL",
+        help="Scans du Bill of Lading original (PDF)"
+    )
+    
+    bl_attachment_count = fields.Integer(
+        string="Nombre de documents",
+        compute='_compute_bl_attachment_count'
+    )
+    
     campaign_period = fields.Char(
         related='transit_order_id.campaign_period',
         string="Campagne",
@@ -295,6 +378,15 @@ class PottingDeliveryNote(models.Model):
     def _compute_is_invoiced(self):
         for note in self:
             note.is_invoiced = bool(note.invoice_id)
+    
+    @api.depends('container_ids')
+    def _compute_container_count(self):
+        for note in self:
+            note.container_count = len(note.container_ids)
+    
+    def _compute_bl_attachment_count(self):
+        for note in self:
+            note.bl_attachment_count = len(note.bl_attachment_ids)
 
     # -------------------------------------------------------------------------
     # CONSTRAINTS
@@ -455,6 +547,40 @@ class PottingDeliveryNote(models.Model):
                     'destination': note.destination,
                     'contract_number': note.contract_number,
                 })
+            
+            # Vérifier si tous les lots des conteneurs concernés sont livrés
+            # et marquer ces conteneurs comme "livrés"
+            note._check_containers_delivery()
+
+    def _check_containers_delivery(self):
+        """Vérifie si tous les lots d'un conteneur sont livrés et marque le conteneur comme livré."""
+        self.ensure_one()
+        
+        # Récupérer tous les conteneurs liés aux lots de ce BL
+        containers = self.lot_ids.mapped('container_id').filtered(
+            lambda c: c.state == 'shipped'
+        )
+        
+        for container in containers:
+            # Vérifier si tous les lots du conteneur sont livrés
+            all_lots_delivered = True
+            for lot in container.lot_ids:
+                # Un lot est considéré livré s'il apparaît dans un BL à l'état 'delivered'
+                delivered_bls = self.search([
+                    ('lot_ids', 'in', lot.id),
+                    ('state', '=', 'delivered')
+                ])
+                if not delivered_bls:
+                    all_lots_delivered = False
+                    break
+            
+            if all_lots_delivered and container.lot_ids:
+                container.write({'state': 'delivered'})
+                container.message_post(body=_(
+                    "✅ Conteneur marqué comme livré automatiquement.\n"
+                    "Tous les lots (%d) ont été livrés.\n"
+                    "(Dernier BL: %s)"
+                ) % (len(container.lot_ids), self.name))
 
     def action_cancel(self):
         """Cancel the delivery note."""
@@ -482,6 +608,33 @@ class PottingDeliveryNote(models.Model):
             'view_mode': 'tree,form',
             'domain': [('id', 'in', self.lot_ids.ids)],
             'context': {'create': False},
+        }
+
+    def action_view_containers(self):
+        """View the containers of this delivery note."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Conteneurs - %s') % self.name,
+            'res_model': 'potting.container',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', self.container_ids.ids)],
+            'context': {'create': False},
+        }
+
+    def action_view_attachments(self):
+        """View the BL attachments."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Documents BL - %s') % self.name,
+            'res_model': 'ir.attachment',
+            'view_mode': 'kanban,tree,form',
+            'domain': [('id', 'in', self.bl_attachment_ids.ids)],
+            'context': {
+                'default_res_model': 'potting.delivery.note',
+                'default_res_id': self.id,
+            },
         }
 
     def action_view_invoice(self):

@@ -8,7 +8,7 @@
         <field name="name">potting.formule.payment.wizard.form</field>
         <field name="model">potting.formule.payment.wizard</field>
         <field name="arch" type="xml">
-            <form string="Paiement Formule par Chèque">
+            <form string="Paiement Producteurs - Formule">
                 <sheet>
                     <div class="oe_title">
                         <h1>
@@ -24,20 +24,18 @@
                             <field name="transit_order_id" readonly="1"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
-                        <group string="État des Paiements">
-                            <field name="montant_avant_vente" readonly="1"/>
-                            <field name="avant_vente_paye" readonly="1" widget="boolean_toggle"/>
-                            <field name="montant_apres_vente" readonly="1"/>
-                            <field name="apres_vente_paye" readonly="1" widget="boolean_toggle"/>
+                        <group string="État du Paiement">
+                            <field name="montant_avant_vente" string="Montant à payer" readonly="1"/>
+                            <field name="avant_vente_paye" string="Déjà payé" readonly="1" widget="boolean_toggle"/>
                         </group>
                     </group>
                     
                     <separator string="Détails du Paiement"/>
                     
                     <group>
-                        <group string="Type de Paiement">
-                            <field name="payment_type" widget="radio" options="{'horizontal': true}"/>
-                            <field name="amount"/>
+                        <group string="Paiement">
+                            <field name="payment_type" invisible="1"/>
+                            <field name="amount" string="Montant (100%)"/>
                             <field name="expected_payment_date"/>
                         </group>
                         <group string="Bénéficiaire">

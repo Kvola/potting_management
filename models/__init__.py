@@ -13,6 +13,7 @@ from . import potting_container
 from . import potting_production_line
 from . import product_product
 from . import potting_consignee
+from . import potting_shipping_company
 from . import potting_delivery_note
 from . import potting_forwarding_agent
 from . import potting_forwarding_agent_invoice

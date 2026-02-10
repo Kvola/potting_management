@@ -123,6 +123,63 @@ class PottingForwardingAgent(models.Model):
     )
     
     # =========================================================================
+    # CHAMPS - FACTURES TRANSITAIRE
+    # =========================================================================
+    
+    invoice_ids = fields.One2many(
+        'potting.forwarding.agent.invoice',
+        'forwarding_agent_id',
+        string="Factures"
+    )
+    
+    invoice_count = fields.Integer(
+        string="Nombre de factures",
+        compute='_compute_invoice_stats',
+        store=True
+    )
+    
+    pending_invoice_count = fields.Integer(
+        string="Factures en attente",
+        compute='_compute_invoice_stats',
+        store=True,
+        help="Nombre de factures validées mais non encore payées"
+    )
+    
+    total_invoice_amount = fields.Monetary(
+        string="Total factures",
+        currency_field='currency_id',
+        compute='_compute_invoice_stats',
+        store=True,
+        help="Montant total des factures transitaire"
+    )
+    
+    total_pending_invoice_amount = fields.Monetary(
+        string="Montant factures en attente",
+        currency_field='currency_id',
+        compute='_compute_invoice_stats',
+        store=True,
+        help="Montant total des factures validées non payées"
+    )
+    
+    # =========================================================================
+    # CHAMPS - MONTANT À REVERSER
+    # =========================================================================
+    
+    amount_to_refund = fields.Monetary(
+        string="Montant à reverser",
+        currency_field='currency_id',
+        compute='_compute_refund_amount',
+        store=True,
+        help="Montant que le transitaire doit nous reverser (trop-perçu ou avances non utilisées)"
+    )
+    
+    has_amount_to_refund = fields.Boolean(
+        string="A un montant à reverser",
+        compute='_compute_refund_amount',
+        store=True
+    )
+    
+    # =========================================================================
     # CHAMPS - PAIEMENTS
     # =========================================================================
     
@@ -273,6 +330,42 @@ class PottingForwardingAgent(models.Model):
                 agent.payment_progress = (agent.total_paid / agent.total_invoiced) * 100
             else:
                 agent.payment_progress = 0.0
+    
+    @api.depends('invoice_ids', 'invoice_ids.state', 'invoice_ids.amount_total')
+    def _compute_invoice_stats(self):
+        """Calcule les statistiques des factures transitaire"""
+        for agent in self:
+            invoices = agent.invoice_ids.filtered(lambda i: i.state != 'cancelled')
+            agent.invoice_count = len(invoices)
+            agent.total_invoice_amount = sum(invoices.mapped('amount_total'))
+            
+            # Factures validées mais non payées
+            pending_invoices = invoices.filtered(lambda i: i.state == 'validated')
+            agent.pending_invoice_count = len(pending_invoices)
+            agent.total_pending_invoice_amount = sum(pending_invoices.mapped('amount_total'))
+    
+    @api.depends('total_paid', 'total_invoiced', 'total_invoice_amount')
+    def _compute_refund_amount(self):
+        """Calcule le montant à reverser par le transitaire.
+        
+        Le montant à reverser correspond au trop-perçu:
+        - Si le total payé > total des factures validées/payées → reverser la différence
+        """
+        for agent in self:
+            # Calculer le montant réellement dû (factures non annulées)
+            total_due = sum(
+                agent.invoice_ids.filtered(
+                    lambda i: i.state in ('validated', 'paid')
+                ).mapped('amount_total')
+            )
+            
+            # Si on a payé plus que ce qui est dû
+            if agent.total_paid > total_due:
+                agent.amount_to_refund = agent.total_paid - total_due
+                agent.has_amount_to_refund = True
+            else:
+                agent.amount_to_refund = 0.0
+                agent.has_amount_to_refund = False
 
     # =========================================================================
     # ACTION METHODS
@@ -286,6 +379,18 @@ class PottingForwardingAgent(models.Model):
             'name': _('Ordres de Transit - %s') % self.name,
             'res_model': 'potting.transit.order',
             'view_mode': 'tree,kanban,form',
+            'domain': [('forwarding_agent_id', '=', self.id)],
+            'context': {'default_forwarding_agent_id': self.id},
+        }
+    
+    def action_view_invoices(self):
+        """View invoices for this forwarding agent"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Factures - %s') % self.name,
+            'res_model': 'potting.forwarding.agent.invoice',
+            'view_mode': 'tree,form',
             'domain': [('forwarding_agent_id', '=', self.id)],
             'context': {'default_forwarding_agent_id': self.id},
         }

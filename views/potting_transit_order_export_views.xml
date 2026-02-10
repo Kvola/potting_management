@@ -57,15 +57,9 @@
                         string="📋 Marquer vendu" 
                         class="btn-primary"
                         invisible="state != 'taxes_paid'"
-                        groups="potting_management.group_potting_ot_manager,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+                        groups="potting_management.group_potting_accountant"/>
                 
-                <!-- Bouton paiement DUS (après vente) -->
-                <button name="action_open_dus_payment_wizard" 
-                        type="object" 
-                        string="💰 Payer DUS" 
-                        class="btn-success"
-                        invisible="state != 'sold' or dus_paid"
-                        groups="potting_management.group_potting_ot_manager,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+                <!-- Note: Le bouton "Payer DUS" est déjà dans la vue principale -->
                 
                 <!-- Bouton finaliser (après DUS payé) -->
                 <button name="action_complete" 

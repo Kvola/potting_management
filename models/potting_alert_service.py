@@ -248,7 +248,8 @@ class PottingAlertService(models.AbstractModel):
     
     def _count_formules_unpaid(self):
         return self.env['potting.formule'].search_count([
-            ('state', 'in', ['validated', 'partial_paid'])
+            ('state', '=', 'validated'),
+            ('avant_vente_paye', '=', False)
         ])
     
     def _count_contracts_uncovered(self):

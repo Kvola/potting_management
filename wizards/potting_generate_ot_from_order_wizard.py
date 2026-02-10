@@ -244,7 +244,7 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
         """Calcule les formules disponibles (validées, sans OT)."""
         for wizard in self:
             domain = [
-                ('state', 'in', ['validated', 'partial_paid']),
+                ('state', 'in', ['validated', 'paid']),
                 ('transit_order_id', '=', False),
                 ('company_id', '=', wizard.company_id.id),
             ]
@@ -296,10 +296,10 @@ class PottingGenerateOTFromOrderWizard(models.TransientModel):
                     "Veuillez la retirer de la sélection."
                 ) % (formule.display_name, formule.transit_order_id.name))
             
-            if formule.state not in ('validated', 'partial_paid'):
+            if formule.state not in ('validated', 'paid'):
                 raise ValidationError(_(
                     "La Formule %s n'est pas dans un état valide (état actuel: %s). "
-                    "Seules les formules validées peuvent être utilisées."
+                    "Seules les formules validées ou payées peuvent être utilisées."
                 ) % (formule.display_name, formule.state))
         
         # Déterminer le destinataire par défaut

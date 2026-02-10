@@ -57,21 +57,24 @@
                 <field name="taxes_paid" invisible="1"/>
                 <field name="formule_state" invisible="1"/>
                 <field name="delivery_status" invisible="1"/>
+                <field name="can_send_to_customer" invisible="1"/>
+                <field name="has_validated_bl" invisible="1"/>
+                <field name="has_customer_invoice" invisible="1"/>
                 <header>
-                    <button name="action_generate_lots" type="object" string="Générer les lots" class="btn-primary" invisible="state != 'draft'" groups="potting_management.group_potting_shipping" title="Génère automatiquement les lots selon le tonnage et le type de produit"/>
-                    <button name="action_create_delivery_note" type="object" string="Créer un BL" class="btn-secondary" invisible="state not in ('in_progress', 'ready_validation', 'done') or delivery_status == 'fully_delivered'" groups="potting_management.group_potting_shipping" title="Créer un bon de livraison pour les lots empotés"/>
-                    <button name="action_create_invoice" type="object" string="Créer Facture" class="btn-success" invisible="state != 'done' or is_invoiced" groups="potting_management.group_potting_manager" title="Générer une facture client"/>
-                    <button name="action_collect_export_duties" type="object" string="Droits collectés" class="btn-warning" invisible="export_duty_collected or state != 'done'" groups="potting_management.group_potting_manager" title="Marquer les droits d'exportation comme encaissés"/>
-                    <button name="action_start_production" type="object" string="Démarrer production" invisible="state != 'lots_generated'" groups="potting_management.group_potting_ceo_agent" title="Lancer la production des lots"/>
-                    <button name="action_mark_ready" type="object" string="Prêt pour validation" invisible="state != 'in_progress'" groups="potting_management.group_potting_ceo_agent" title="Marquer comme prêt lorsque tous les lots sont empotés"/>
-                    <button name="action_validate" type="object" string="Valider" class="btn-success" invisible="state != 'ready_validation' or formule_state != 'partial_paid'" groups="potting_management.group_potting_ceo_agent" title="Valider l'OT (Formule doit être partiellement payée)"/>
-                    <button name="action_sync_taxes_from_formule" type="object" string="Sync. Taxes" class="btn-info" invisible="taxes_paid or not formule_id" groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager,potting_management.group_potting_accountant" title="Synchroniser le statut des taxes depuis la Formule liée"/>
-                    <button name="action_mark_sold" type="object" string="Marquer vendu" class="btn-warning" invisible="state not in ('taxes_paid', 'lots_generated', 'in_progress', 'ready_validation', 'done') or formule_state != 'partial_paid'" groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager" title="Marquer vendu (Formule doit être partiellement payée)"/>
-                    <button name="action_open_dus_payment_wizard" type="object" string="Payer DUS" class="btn-primary" invisible="state != 'sold'" groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager" title="Payer le DUS (Droit Unique de Sortie) après la vente"/>
-                    <button name="action_complete" type="object" string="Terminer" class="btn-success" invisible="state != 'dus_paid'" groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager" title="Terminer l'OT après paiement du DUS"/>
-                    <button name="action_cancel" type="object" string="Annuler" invisible="state in ('done', 'cancelled')" title="Annuler cet ordre de transit"/>
-                    <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state in ('draft', 'done')" groups="potting_management.group_potting_manager" confirm="Êtes-vous sûr de vouloir remettre cet OT en brouillon ? Les lots seront également remis en brouillon." title="Revenir à l'état brouillon"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,lots_generated,in_progress,ready_validation,done"/>
+                    <button name="action_generate_lots" type="object" string="📦 Générer les lots" class="btn-primary" invisible="state != 'draft'" groups="potting_management.group_potting_shipping" title="Génère automatiquement les lots selon le tonnage et le type de produit"/>
+                    <button name="action_start_production" type="object" string="🏭 Démarrer production" class="btn-info" invisible="state != 'lots_generated'" groups="potting_management.group_potting_ceo_agent" title="Lancer la production des lots"/>
+                    <button name="action_mark_ready" type="object" string="✓ Prêt pour validation" class="btn-warning" invisible="state != 'in_progress'" groups="potting_management.group_potting_ceo_agent" title="Marquer comme prêt lorsque tous les lots sont empotés"/>
+                    <button name="action_validate" type="object" string="✅ Valider" class="btn-success" invisible="state != 'ready_validation' or formule_state != 'paid'" groups="potting_management.group_potting_ceo_agent" title="Valider l'OT (Formule doit être payée)"/>
+                    <button name="action_mark_sold" type="object" string="💰 Marquer vendu" class="btn-warning" invisible="state not in ('taxes_paid', 'lots_generated', 'in_progress', 'ready_validation') or formule_state != 'paid'" groups="potting_management.group_potting_accountant" title="Marquer vendu (Formule doit être payée)"/>
+                    <button name="action_send_to_customer" type="object" string="📤 Envoyer au client" class="btn-info" invisible="state != 'sold' or not can_send_to_customer" groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager" title="Marquer comme envoyé au client (BL validé + Facture créée requis)"/>
+                    <button name="action_open_dus_payment_wizard" type="object" string="💳 Payer DUS" class="btn-primary" invisible="state not in ('sold', 'sent_to_customer')" groups="potting_management.group_potting_accountant" title="Payer le DUS (Droit Unique de Sortie) après la vente"/>
+                    <button name="action_complete" type="object" string="🏁 Terminer" class="btn-success" invisible="state != 'dus_paid'" groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_manager" title="Terminer l'OT après paiement du DUS"/>
+                    <button name="action_create_delivery_note" type="object" string="🚚 Créer BL" class="btn-secondary" invisible="state not in ('in_progress', 'ready_validation', 'done') or delivery_status == 'fully_delivered'" groups="potting_management.group_potting_shipping,potting_management.group_potting_ot_manager" title="Créer un bon de livraison pour les lots empotés"/>
+                    <button name="action_create_invoice" type="object" string="📄 Créer Facture" class="btn-success" invisible="state != 'done' or is_invoiced" groups="potting_management.group_potting_manager" title="Générer une facture client"/>
+                    <button name="action_collect_export_duties" type="object" string="💵 Droits collectés" class="btn-warning" invisible="export_duty_collected or state != 'done'" groups="potting_management.group_potting_manager" title="Marquer les droits d'exportation comme encaissés"/>
+                    <button name="action_cancel" type="object" string="❌ Annuler" class="btn-outline-danger" invisible="state in ('done', 'cancelled')" title="Annuler cet ordre de transit"/>
+                    <button name="action_draft" type="object" string="↩️ Brouillon" class="btn-outline-secondary" invisible="state in ('draft', 'done')" groups="potting_management.group_potting_manager" confirm="Êtes-vous sûr de vouloir remettre cet OT en brouillon ? Les lots seront également remis en brouillon." title="Revenir à l'état brouillon"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,lots_generated,in_progress,ready_validation,sold,sent_to_customer,dus_paid,done"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -91,10 +94,59 @@
                         </button>
                     </div>
                     <widget name="web_ribbon" title="Facturé" bg_color="bg-info" invisible="not is_invoiced"/>
-                    <widget name="web_ribbon" title="Validé" bg_color="bg-success" invisible="state != 'done' or is_invoiced"/>
+                    <widget name="web_ribbon" title="Terminé" bg_color="bg-success" invisible="state != 'done' or is_invoiced"/>
                     <widget name="web_ribbon" title="Annulé" bg_color="bg-danger" invisible="state != 'cancelled'"/>
-                    <widget name="web_ribbon" title="Livraison partielle" bg_color="bg-warning" invisible="delivery_status != 'partial'"/>
-                    <widget name="web_ribbon" title="Entièrement livré" bg_color="bg-info" invisible="delivery_status != 'fully_delivered'"/>
+                    
+                    <!-- Alertes contextuelles workflow -->
+                    <div class="alert alert-primary mb-3 d-flex align-items-center" role="alert" invisible="state != 'draft'">
+                        <i class="fa fa-info-circle fa-2x me-3"/>
+                        <div>
+                            <strong>Étape 1/6 - Brouillon</strong>
+                            <p class="mb-0 mt-1">Liez une Formule et générez les lots pour démarrer la production.</p>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mb-3 d-flex align-items-center" role="alert" invisible="state != 'lots_generated'">
+                        <i class="fa fa-cubes fa-2x me-3"/>
+                        <div>
+                            <strong>Étape 2/6 - Lots générés</strong>
+                            <p class="mb-0 mt-1">Cliquez sur "Démarrer production" pour lancer l'empotage des lots.</p>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning mb-3 d-flex align-items-center" role="alert" invisible="state != 'in_progress'">
+                        <i class="fa fa-industry fa-2x me-3"/>
+                        <div>
+                            <strong>Étape 3/6 - Production en cours</strong>
+                            <p class="mb-0 mt-1">Remplissez les lots puis marquez l'OT comme "Prêt pour validation".</p>
+                        </div>
+                    </div>
+                    <div class="alert alert-success mb-3 d-flex align-items-center" role="alert" invisible="state != 'sold'">
+                        <i class="fa fa-money fa-2x me-3"/>
+                        <div>
+                            <strong>Étape 5/7 - Vendu</strong>
+                            <p class="mb-0 mt-1">
+                                L'OT est vendu. Avant de payer le DUS, vous pouvez envoyer au client.
+                            </p>
+                            <p class="mb-0 mt-1">
+                                <field name="has_validated_bl" widget="boolean" readonly="1"/> BL validé | 
+                                <field name="has_customer_invoice" widget="boolean" readonly="1"/> Facture client
+                            </p>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mb-3 d-flex align-items-center" role="alert" invisible="state != 'sent_to_customer'">
+                        <i class="fa fa-paper-plane fa-2x me-3"/>
+                        <div>
+                            <strong>Étape 6/7 - Envoyé au client</strong>
+                            <p class="mb-0 mt-1">Le BL et la facture ont été envoyés au client. Procédez au paiement du DUS (14,6%).</p>
+                        </div>
+                    </div>
+                    <div class="alert alert-light border-success mb-3 d-flex align-items-center" role="alert" invisible="state != 'dus_paid'">
+                        <i class="fa fa-check-circle fa-2x text-success me-3"/>
+                        <div>
+                            <strong>Étape 7/7 - DUS payé</strong>
+                            <p class="mb-0 mt-1">Cliquez sur "Terminer" pour clôturer définitivement cet OT.</p>
+                        </div>
+                    </div>
+                    
                     <div class="oe_title">
                         <label for="name" string="Numéro OT"/>
                         <h1>
@@ -129,9 +181,13 @@
                             <field name="date_created" readonly="1"/>
                         </group>
                         <group string="📦 Produit">
-                            <field name="product_type" widget="radio" options="{'horizontal': True}"/>
-                            <field name="product_id" domain="[('potting_product_type', '=', product_type)]" options="{'no_create': True}"/>
-                            <field name="tonnage" widget="float" class="fw-bold text-primary"/>
+                            <field name="product_type" widget="radio" options="{'horizontal': True}"
+                                   readonly="state != 'draft'"/>
+                            <field name="product_id" domain="[('potting_product_type', '=', product_type)]" 
+                                   options="{'no_create': True}"
+                                   readonly="state != 'draft'"/>
+                            <field name="tonnage" widget="float" class="fw-bold text-primary"
+                                   readonly="state != 'draft'"/>
                             <field name="formule_prix_tonnage" readonly="1" invisible="not formule_id"
                                    string="Prix FO (FCFA/T)"/>
                             <field name="formule_currency_id" invisible="1"/>
@@ -142,9 +198,9 @@
                             <field name="vessel_id" options="{'no_create_edit': True}"/>
                             <field name="pod" placeholder="Port de destination..."/>
                             <field name="container_size" widget="radio" options="{'horizontal': True}"/>
-                            <field name="booking_number" placeholder="N° Booking..."/>
+                            <field name="booking_number" placeholder="N° Booking..." required="state in ('ready_validation', 'done')"/>
                             <field name="forwarding_agent_id" options="{'no_create_edit': True}"/>
-                            <field name="forwarding_agent_fee"/>
+                            <field name="forwarding_agent_fee" readonly="1"/>
                         </group>
                         <group string="📊 Progression">
                             <field name="lot_range" readonly="1"/>
@@ -160,27 +216,28 @@
                     </group>
                     <group invisible="delivery_note_count == 0">
                         <group string="🚚 Statut de livraison">
-                            <field name="delivery_status" widget="badge" 
+                            <field name="delivery_status" widget="badge" readonly="1"
                                    decoration-warning="delivery_status == 'partial'"
                                    decoration-success="delivery_status == 'fully_delivered'"
                                    decoration-muted="delivery_status == 'not_delivered'"/>
-                            <field name="delivered_lot_count"/>
-                            <field name="delivered_tonnage"/>
-                            <field name="remaining_to_deliver_tonnage"/>
+                            <field name="delivered_lot_count" readonly="1"/>
+                            <field name="delivered_tonnage" readonly="1"/>
+                            <field name="remaining_to_deliver_tonnage" readonly="1"/>
                         </group>
                     </group>
                     <group>
-                        <group string="💰 Prix">
+                        <group string="💰 Prix (calculés)" readonly="1">
                             <field name="currency_id" invisible="1"/>
-                            <field name="unit_price"/>
-                            <field name="certification_premium"/>
-                            <field name="total_amount"/>
-                            <field name="net_amount"/>
+                            <field name="unit_price" readonly="1"/>
+                            <field name="certification_premium" readonly="1"/>
+                            <field name="total_amount" readonly="1"/>
+                            <field name="net_amount" readonly="1"/>
                         </group>
                         <group string="📋 Droits d'exportation">
-                            <field name="export_duty_rate"/>
-                            <field name="export_duty_amount"/>
-                            <field name="export_duty_collected" widget="boolean_toggle"/>
+                            <field name="export_duty_rate" readonly="1"/>
+                            <field name="export_duty_amount" readonly="1"/>
+                            <field name="export_duty_collected" widget="boolean_toggle"
+                                   readonly="state == 'done'"/>
                         </group>
                     </group>
                     <!-- Section conversion devise société -->
@@ -203,23 +260,47 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Lots" name="lots">
+                        <page string="📦 Lots" name="lots" badge="lot_count">
+                            <div class="alert alert-info mb-3" role="alert" invisible="state != 'draft'">
+                                <i class="fa fa-lightbulb-o me-2"/>
+                                <strong>Conseil:</strong> Les lots seront générés automatiquement en fonction du tonnage et du type de produit.
+                            </div>
                             <field name="lot_ids" readonly="state not in ('draft', 'lots_generated', 'in_progress')">
                                 <tree string="Lots" decoration-info="state == 'draft'" decoration-warning="state == 'in_production'" decoration-primary="state == 'ready'" decoration-success="state == 'potted'">
-                                    <field name="name"/>
-                                    <field name="product_type"/>
+                                    <field name="name" decoration-bf="1"/>
+                                    <field name="product_type" widget="badge"/>
                                     <field name="target_tonnage"/>
-                                    <field name="current_tonnage"/>
+                                    <field name="current_tonnage" class="text-primary fw-bold"/>
                                     <field name="remaining_tonnage"/>
                                     <field name="fill_percentage" widget="progressbar"/>
-                                    <field name="is_full"/>
+                                    <field name="is_full" widget="boolean_toggle"/>
                                     <field name="container_id"/>
                                     <field name="date_potted"/>
                                     <field name="state" widget="badge"/>
                                 </tree>
                             </field>
                         </page>
-                        <page string="Notes" name="notes">
+                        <page string="💰 Paiements &amp; Taxes" name="payments">
+                            <group>
+                                <group string="📊 État des paiements Formule">
+                                    <field name="formule_avant_vente_paye" readonly="1" widget="boolean_toggle"
+                                           string="Producteurs payés"
+                                           decoration-success="formule_avant_vente_paye"/>
+                                    <field name="taxes_paid" readonly="1" widget="boolean_toggle"
+                                           string="Taxes OT synchronisées"
+                                           decoration-success="taxes_paid"/>
+                                    <field name="taxes_payment_date" readonly="1" invisible="not taxes_paid"/>
+                                </group>
+                                <group string="💳 DUS (Droit Unique de Sortie)">
+                                    <field name="dus_paid" readonly="1" widget="boolean_toggle"
+                                           decoration-success="dus_paid"/>
+                                    <field name="dus_payment_date" readonly="1" invisible="not dus_paid"/>
+                                    <field name="dus_check_number" readonly="1" invisible="not dus_paid"/>
+                                    <field name="dus_payment_request_id" readonly="1" invisible="not dus_payment_request_id"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="📝 Notes" name="notes">
                             <field name="note" placeholder="Ajoutez des notes ici..."/>
                         </page>
                     </notebook>
@@ -370,7 +451,8 @@
             <tree string="Navires" multi_edit="1">
                 <field name="name" decoration-bf="1"/>
                 <field name="code" optional="show"/>
-                <field name="shipping_company"/>
+                <field name="shipping_company_id" optional="show"/>
+                <field name="shipping_company" optional="hide" string="Compagnie (legacy)"/>
                 <field name="active" widget="boolean_toggle"/>
             </tree>
         </field>
@@ -393,7 +475,8 @@
                     <group>
                         <group string="🚢 Informations">
                             <field name="code" placeholder="Ex: MSMA"/>
-                            <field name="shipping_company" placeholder="Ex: MSC, CMA-CGM, Maersk..."/>
+                            <field name="shipping_company_id" options="{'no_create_edit': True}"/>
+                            <field name="shipping_company" placeholder="Ex: MSC, CMA-CGM, Maersk..." groups="base.group_no_one"/>
                         </group>
                         <group string="⚙️ Paramètres">
                             <field name="active" widget="boolean_toggle"/>
@@ -411,7 +494,7 @@
             <kanban class="o_kanban_mobile">
                 <field name="name"/>
                 <field name="code"/>
-                <field name="shipping_company"/>
+                <field name="shipping_company_id"/>
                 <field name="active"/>
                 <templates>
                     <t t-name="kanban-box">
@@ -428,9 +511,9 @@
                                 </span>
                             </div>
                             <div class="o_kanban_record_body">
-                                <div t-if="record.shipping_company.value" class="text-muted">
+                                <div t-if="record.shipping_company_id.value" class="text-muted">
                                     <i class="fa fa-building me-1"/>
-                                    <field name="shipping_company"/>
+                                    <field name="shipping_company_id"/>
                                 </div>
                             </div>
                         </div>
@@ -447,11 +530,11 @@
             <search string="Rechercher navires">
                 <field name="name"/>
                 <field name="code"/>
-                <field name="shipping_company"/>
+                <field name="shipping_company_id"/>
                 <filter string="Actifs" name="active" domain="[('active', '=', True)]"/>
                 <filter string="Archivés" name="inactive" domain="[('active', '=', False)]"/>
                 <group expand="0" string="Grouper par">
-                    <filter string="Compagnie" name="company" context="{'group_by': 'shipping_company'}"/>
+                    <filter string="Compagnie" name="company" context="{'group_by': 'shipping_company_id'}"/>
                 </group>
             </search>
         </field>

@@ -175,23 +175,6 @@ class PottingConfirmationVente(models.Model):
     )
     
     # =========================================================================
-    # CHAMPS - DESTINATION
-    # =========================================================================
-    
-    destination_country_id = fields.Many2one(
-        'res.country',
-        string="Pays de destination",
-        tracking=True,
-        help="Pays de destination autorisé pour cette CV"
-    )
-    
-    destination_port = fields.Char(
-        string="Port de destination",
-        tracking=True,
-        help="Port de destination pour l'exportation"
-    )
-    
-    # =========================================================================
     # CHAMPS - TYPE DE PRODUIT
     # =========================================================================
     
@@ -262,20 +245,6 @@ class PottingConfirmationVente(models.Model):
     )
     
     # =========================================================================
-    # CHAMPS - FACTURE TRANSITAIRE JOINTE
-    # =========================================================================
-    
-    forwarding_agent_invoice = fields.Binary(
-        string="Facture Transitaire",
-        attachment=True,
-        help="Scan ou PDF de la facture du transitaire"
-    )
-    
-    forwarding_agent_invoice_filename = fields.Char(
-        string="Nom du fichier facture"
-    )
-    
-    # =========================================================================
     # MÉTHODES PAR DÉFAUT
     # =========================================================================
     
@@ -283,40 +252,6 @@ class PottingConfirmationVente(models.Model):
         """Retourne XOF (FCFA) par défaut"""
         xof = self.env['res.currency'].search([('name', '=', 'XOF')], limit=1)
         return xof or self.env.company.currency_id
-    
-    # =========================================================================
-    # MÉTHODES ACTIONS
-    # =========================================================================
-    
-    def action_download_invoice(self):
-        """Ouvre la facture transitaire dans un nouvel onglet"""
-        self.ensure_one()
-        if not self.forwarding_agent_invoice:
-            raise UserError(_("Aucune facture transitaire jointe."))
-        
-        # Chercher l'attachment correspondant
-        attachment = self.env['ir.attachment'].search([
-            ('res_model', '=', self._name),
-            ('res_id', '=', self.id),
-            ('res_field', '=', 'forwarding_agent_invoice'),
-        ], limit=1)
-        
-        if attachment:
-            return {
-                'type': 'ir.actions.act_url',
-                'url': '/web/content/%s?download=false' % attachment.id,
-                'target': 'new',
-            }
-        else:
-            # Fallback: télécharger directement
-            import base64
-            return {
-                'type': 'ir.actions.act_url',
-                'url': '/web/content?model=%s&id=%s&field=forwarding_agent_invoice&filename=%s&download=false' % (
-                    self._name, self.id, self.forwarding_agent_invoice_filename or 'facture'
-                ),
-                'target': 'new',
-            }
     
     # =========================================================================
     # MÉTHODES COMPUTED

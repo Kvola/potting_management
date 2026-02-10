@@ -12,7 +12,6 @@
             <tree string="Formules" 
                   decoration-info="state == 'draft'" 
                   decoration-success="state == 'paid'"
-                  decoration-warning="state == 'partial_paid'" 
                   decoration-primary="state == 'validated'"
                   decoration-muted="state == 'cancelled'"
                   multi_edit="1"
@@ -45,14 +44,11 @@
                 <field name="total_paye" widget="monetary" string="Payé" optional="show"
                        decoration-success="total_paye > 0"/>
                 <field name="paiement_progress" widget="progressbar" optional="show" string="Progression"/>
-                <field name="avant_vente_paye" widget="boolean_toggle" optional="hide" string="AV"
+                <field name="avant_vente_paye" widget="boolean_toggle" optional="hide" string="Payé"
                        decoration-success="avant_vente_paye"/>
-                <field name="apres_vente_paye" widget="boolean_toggle" optional="hide" string="AP"
-                       decoration-success="apres_vente_paye"/>
                 <field name="state" widget="badge" 
                        decoration-info="state == 'draft'" 
                        decoration-primary="state == 'validated'"
-                       decoration-warning="state == 'partial_paid'"
                        decoration-success="state == 'paid'"
                        decoration-muted="state == 'cancelled'"/>
             </tree>
@@ -68,34 +64,31 @@
                 <header>
                     <button name="action_validate" type="object" string="✅ Valider la formule" 
                             class="btn-primary" invisible="state != 'draft'"
-                            confirm="Voulez-vous valider cette formule ? Elle sera prête pour le paiement."/>
+                            confirm="Voulez-vous valider cette formule ? Elle sera prête pour le paiement."
+                            groups="potting_management.group_potting_formule_manager,potting_management.group_potting_manager"/>
                     <button name="action_create_payment_request_avant_vente" type="object" 
-                            string="💳 Paiement Avant-vente (60%)" 
+                            string="💳 Payer Producteurs" 
                             class="btn-success" 
-                            invisible="state not in ('validated', 'partial_paid') or avant_vente_paye"/>
-                    <button name="action_create_payment_request_apres_vente" type="object" 
-                            string="💳 Paiement Après-vente (40%)" 
-                            class="btn-success" 
-                            invisible="state not in ('validated', 'partial_paid') or not avant_vente_paye or apres_vente_paye"/>
-                    <button name="action_mark_avant_vente_paid" type="object" 
-                            string="✓ Marquer AV payé" 
-                            class="btn-outline-success" 
-                            invisible="state not in ('validated', 'partial_paid') or avant_vente_paye"
-                            confirm="Confirmer que le paiement avant-vente a été effectué ?"/>
-                    <button name="action_mark_apres_vente_paid" type="object" 
-                            string="✓ Marquer AP payé" 
-                            class="btn-outline-success" 
-                            invisible="state not in ('validated', 'partial_paid') or not avant_vente_paye or apres_vente_paye"
-                            confirm="Confirmer que le paiement après-vente a été effectué ?"/>
+                            invisible="state != 'validated' or avant_vente_paye"
+                            groups="potting_management.group_potting_accountant,potting_management.group_potting_formule_manager,potting_management.group_potting_manager"
+                            title="Payer les producteurs (100% du prix bord champ)"/>
+                    <!-- Bouton Paiement Après-vente supprimé - Non conforme aux pratiques CI -->
+                    <button name="action_sync_payment_status" type="object" 
+                            string="🔄 Synchroniser paiements" 
+                            class="btn-warning" 
+                            invisible="state != 'validated' or not payment_request_avant_vente_id"
+                            title="Vérifier et synchroniser le statut de paiement depuis les demandes de paiement validées"
+                            groups="potting_management.group_potting_accountant,potting_management.group_potting_formule_manager,potting_management.group_potting_manager"/>
                     <button name="action_cancel" type="object" string="❌ Annuler" 
                             class="btn-outline-danger"
                             invisible="state in ('cancelled', 'paid')"
-                            confirm="Voulez-vous vraiment annuler cette formule ?"/>
+                            confirm="Voulez-vous vraiment annuler cette formule ?"
+                            groups="potting_management.group_potting_formule_manager,potting_management.group_potting_manager"/>
                     <button name="action_draft" type="object" string="↩️ Brouillon" 
                             invisible="state != 'cancelled'"
                             groups="potting_management.group_potting_manager"/>
                     <field name="state" widget="statusbar" 
-                           statusbar_visible="draft,validated,partial_paid,paid"/>
+                           statusbar_visible="draft,validated,paid"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -109,7 +102,7 @@
                         </button>
                         <button name="action_view_payment_requests" type="object" 
                                 class="oe_stat_button" icon="fa-credit-card"
-                                invisible="not payment_request_avant_vente_id and not payment_request_apres_vente_id">
+                                invisible="not payment_request_avant_vente_id">
                             <div class="o_stat_info">
                                 <span class="o_stat_text">Demandes</span>
                                 <span class="o_stat_text">Paiement</span>
@@ -132,19 +125,7 @@
                             <div>
                                 <strong class="text-primary">Formule validée - Prête pour paiement</strong>
                                 <p class="mb-0 mt-1">
-                                    Montant avant-vente (60%): <strong><field name="montant_avant_vente"/> FCFA</strong>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="alert alert-warning mb-3" role="alert" 
-                         invisible="state != 'partial_paid'">
-                        <div class="d-flex align-items-center">
-                            <i class="fa fa-clock-o fa-2x text-warning me-3"/> 
-                            <div>
-                                <strong>Avant-vente payé ✓</strong> - En attente du paiement après-vente
-                                <p class="mb-0 mt-1">
-                                    Reste à payer (40%): <strong><field name="montant_apres_vente"/> FCFA</strong>
+                                    Montant producteurs (100%): <strong><field name="montant_avant_vente"/> FCFA</strong>
                                 </p>
                             </div>
                         </div>
@@ -164,8 +145,6 @@
                     
                     <widget name="web_ribbon" title="Validée" bg_color="bg-primary" 
                             invisible="state != 'validated'"/>
-                    <widget name="web_ribbon" title="Partiellement payée" bg_color="bg-warning" 
-                            invisible="state != 'partial_paid'"/>
                     <widget name="web_ribbon" title="Entièrement payée" bg_color="bg-success" 
                             invisible="state != 'paid'"/>
                     <widget name="web_ribbon" title="Annulée" bg_color="bg-secondary" 
@@ -313,43 +292,39 @@
                                     <field name="total_taxes_prelevees" readonly="1" class="text-danger"/>
                                     <field name="montant_net" readonly="1" class="fw-bold text-success"/>
                                 </group>
-                                <group string="Répartition paiements">
-                                    <label for="pourcentage_avant_vente"/>
-                                    <div class="o_row">
-                                        <field name="pourcentage_avant_vente" class="oe_inline"
-                                               readonly="state not in ('draft', 'validated')"/>
-                                        <span>%</span>
-                                    </div>
-                                    <field name="montant_avant_vente" readonly="1"/>
-                                    <label for="pourcentage_apres_vente"/>
-                                    <div class="o_row">
-                                        <field name="pourcentage_apres_vente" class="oe_inline" readonly="1"/>
-                                        <span>%</span>
-                                    </div>
-                                    <field name="montant_apres_vente" readonly="1"/>
+                                <group string="Montant à payer aux producteurs">
+                                    <field name="montant_avant_vente" readonly="1" class="fw-bold text-primary fs-4"
+                                           string="Montant producteurs (100%)"/>
                                 </group>
                             </group>
                         </page>
                         
-                        <page string="🏛️ Taxes &amp; Redevances" name="taxes">
+                        <page string="🏛️ Taxes &amp; Redevances" name="taxes" badge="taxe_ids">
                             <field name="taxe_ids" readonly="state not in ('draft', 'validated')">
-                                <tree string="Taxes et Redevances" editable="bottom">
+                                <tree string="Taxes et Redevances" editable="bottom"
+                                      decoration-warning="is_apres_vente"
+                                      decoration-success="is_preleve and not is_apres_vente">
                                     <field name="sequence" widget="handle"/>
                                     <field name="taxe_type_id" options="{'no_create': True}"
                                            placeholder="Type prédéfini..."/>
-                                    <field name="categorie" optional="show"/>
-                                    <field name="code"/>
+                                    <field name="categorie" widget="badge" optional="show"
+                                           decoration-info="categorie == 'redevance'"
+                                           decoration-warning="categorie == 'taxe'"
+                                           decoration-success="categorie == 'soutien'"/>
+                                    <field name="code" decoration-bf="1"/>
                                     <field name="name"/>
                                     <field name="taux_par_kg" string="Taux/Kg" optional="show"/>
                                     <field name="taux_pourcentage" string="Taux %" optional="show"/>
                                     <field name="montant_unitaire" optional="hide"/>
                                     <field name="montant_fixe" optional="show"/>
-                                    <field name="montant" sum="Total" class="fw-bold"/>
-                                    <field name="is_preleve" widget="boolean_toggle"/>
-                                    <field name="date_prelevement" invisible="not is_preleve"/>
+                                    <field name="montant" sum="Total" class="fw-bold text-primary"/>
+                                    <field name="is_preleve" widget="boolean_toggle" string="Prélevé"/>
+                                    <field name="is_apres_vente" widget="boolean_toggle" string="Après-vente"
+                                           decoration-warning="is_apres_vente"/>
+                                    <field name="date_prelevement" invisible="not is_preleve" optional="hide"/>
                                     <field name="numero_cheque" optional="show"/>
                                     <field name="date_paiement" optional="show"/>
-                                    <field name="banque_name" optional="show"/>
+                                    <field name="banque_name" optional="hide"/>
                                     <field name="note" optional="hide"/>
                                     <field name="currency_id" column_invisible="1"/>
                                 </tree>
@@ -395,7 +370,7 @@
                             </div>
                             
                             <group col="2">
-                                <group string="🟢 Paiement Avant-vente (60%)">
+                                <group string="🟢 Paiement Producteurs (100%)">
                                     <div role="status"
                                          t-attf-class="alert mb-2 #{avant_vente_paye and 'alert-success' or 'alert-secondary'}">
                                         <field name="avant_vente_paye" invisible="1"/>
@@ -417,27 +392,11 @@
                                            invisible="not payment_request_avant_vente_id"
                                            string="Demande associée"/>
                                 </group>
-                                <group string="🟡 Paiement Après-vente (40%)">
-                                    <div role="status"
-                                         t-attf-class="alert mb-2 #{apres_vente_paye and 'alert-success' or 'alert-secondary'}">
-                                        <field name="apres_vente_paye" invisible="1"/>
-                                        <span invisible="not apres_vente_paye">
-                                            <i class="fa fa-check-circle text-success"/> Payé
-                                        </span>
-                                        <span invisible="apres_vente_paye">
-                                            <i class="fa fa-clock-o"/> En attente
-                                        </span>
+                                <group string="ℹ️ Informations DUS">
+                                    <div class="alert alert-info mb-2">
+                                        <i class="fa fa-info-circle"/> Le DUS (Droit Unique de Sortie) est géré 
+                                        directement sur l'Ordre de Transit après la vente.
                                     </div>
-                                    <field name="montant_apres_vente" readonly="1" 
-                                           class="fw-bold fs-5 text-warning"/>
-                                    <field name="date_paiement_apres_vente_prevue"
-                                           string="Date prévue"/>
-                                    <field name="date_paiement_apres_vente" readonly="1"
-                                           invisible="not apres_vente_paye"
-                                           string="Date effective"/>
-                                    <field name="payment_request_apres_vente_id" readonly="1"
-                                           invisible="not payment_request_apres_vente_id"
-                                           string="Demande associée"/>
                                 </group>
                             </group>
                             
@@ -491,16 +450,13 @@
                 <separator/>
                 <filter string="Brouillon" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="Validées" name="validated" domain="[('state', '=', 'validated')]"/>
-                <filter string="Partiellement payées" name="partial_paid" domain="[('state', '=', 'partial_paid')]"/>
                 <filter string="Payées" name="paid" domain="[('state', '=', 'paid')]"/>
                 <separator/>
                 <filter string="Sans OT" name="no_ot" domain="[('transit_order_id', '=', False)]"/>
                 <filter string="Avec OT" name="has_ot" domain="[('transit_order_id', '!=', False)]"/>
                 <separator/>
-                <filter string="Avant-vente non payé" name="avant_vente_pending" 
-                        domain="[('avant_vente_paye', '=', False), ('state', 'in', ('validated', 'partial_paid'))]"/>
-                <filter string="Après-vente non payé" name="apres_vente_pending" 
-                        domain="[('apres_vente_paye', '=', False), ('avant_vente_paye', '=', True)]"/>
+                <filter string="Non payées (validées)" name="avant_vente_pending" 
+                        domain="[('avant_vente_paye', '=', False), ('state', '=', 'validated')]"/>
                 <separator/>
                 <filter string="Port San Pedro" name="san_pedro" domain="[('port_embarquement', '=', 'san_pedro')]"/>
                 <filter string="Port Abidjan" name="abidjan" domain="[('port_embarquement', '=', 'abidjan')]"/>
@@ -539,10 +495,9 @@
                 <field name="total_paye"/>
                 <field name="paiement_progress"/>
                 <field name="avant_vente_paye"/>
-                <field name="apres_vente_paye"/>
                 <field name="state"/>
                 <progressbar field="state" 
-                             colors='{"draft": "secondary", "validated": "primary", "partial_paid": "warning", "paid": "success", "cancelled": "muted"}'/>
+                             colors='{"draft": "secondary", "validated": "primary", "paid": "success", "cancelled": "muted"}'/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_card oe_kanban_global_click">
@@ -558,7 +513,7 @@
                                         </span>
                                     </div>
                                     <field name="state" widget="label_selection" 
-                                           options="{'classes': {'draft': 'secondary', 'validated': 'primary', 'partial_paid': 'warning', 'paid': 'success', 'cancelled': 'dark'}}"/>
+                                           options="{'classes': {'draft': 'secondary', 'validated': 'primary', 'paid': 'success', 'cancelled': 'dark'}}"/>
                                 </div>
                                 <div class="o_kanban_record_body">
                                     <div class="mb-1">
@@ -587,17 +542,10 @@
                                     <div class="oe_kanban_bottom_left">
                                         <span t-if="record.avant_vente_paye.raw_value" 
                                               class="badge bg-success me-1">
-                                            <i class="fa fa-check"/> Avant-vente
+                                            <i class="fa fa-check"/> Payé
                                         </span>
                                         <span t-else="" class="badge bg-secondary me-1">
-                                            <i class="fa fa-clock-o"/> Avant-vente
-                                        </span>
-                                        <span t-if="record.apres_vente_paye.raw_value" 
-                                              class="badge bg-success">
-                                            <i class="fa fa-check"/> Après-vente
-                                        </span>
-                                        <span t-else="" class="badge bg-secondary">
-                                            <i class="fa fa-clock-o"/> Après-vente
+                                            <i class="fa fa-clock-o"/> En attente
                                         </span>
                                     </div>
                                 </div>
@@ -656,6 +604,40 @@
         </field>
     </record>
 
+    <!-- Action pour Formules à payer (Comptable) -->
+    <record id="action_potting_formule_to_pay" model="ir.actions.act_window">
+        <field name="name">Formules à Payer</field>
+        <field name="res_model">potting.formule</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="potting_formule_view_search"/>
+        <field name="domain">[('state', '=', 'validated')]</field>
+        <field name="context">{'search_default_to_pay': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                🎉 Aucune formule en attente de paiement !
+            </p>
+            <p>
+                Les formules validées apparaîtront ici.
+                Cliquez sur une formule pour effectuer le paiement.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action pour Formules Payées (historique) -->
+    <record id="action_potting_formule_paid" model="ir.actions.act_window">
+        <field name="name">Formules Payées</field>
+        <field name="res_model">potting.formule</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="potting_formule_view_search"/>
+        <field name="domain">[('state', '=', 'paid')]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune formule entièrement payée
+            </p>
+        </field>
+    </record>
+
     <!-- ====================================================================
          TAXE SUR FORMULE - VUES
          ==================================================================== -->
@@ -692,13 +674,18 @@
         <field name="arch" type="xml">
             <tree string="Types de Taxes CCC" editable="bottom">
                 <field name="sequence" widget="handle"/>
-                <field name="code"/>
+                <field name="code" decoration-bf="1"/>
                 <field name="name"/>
-                <field name="categorie"/>
+                <field name="categorie" widget="badge"
+                       decoration-info="categorie == 'redevance'"
+                       decoration-warning="categorie == 'taxe'"
+                       decoration-success="categorie == 'soutien'"/>
                 <field name="taux_par_kg" string="Taux/Kg"/>
                 <field name="taux_pourcentage" string="Taux %"/>
-                <field name="is_preleve_default"/>
-                <field name="active"/>
+                <field name="is_preleve_default" widget="boolean_toggle"/>
+                <field name="is_apres_vente" widget="boolean_toggle" string="Après-vente"
+                       decoration-warning="is_apres_vente"/>
+                <field name="active" widget="boolean_toggle"/>
             </tree>
         </field>
     </record>
@@ -710,6 +697,8 @@
         <field name="arch" type="xml">
             <form string="Type de Taxe CCC">
                 <sheet>
+                    <widget name="web_ribbon" title="Archivé" bg_color="bg-secondary" invisible="active"/>
+                    <widget name="web_ribbon" title="Après-vente" bg_color="bg-warning" invisible="not is_apres_vente"/>
                     <div class="oe_title">
                         <label for="name"/>
                         <h1>
@@ -717,24 +706,27 @@
                         </h1>
                     </div>
                     <group>
-                        <group string="Identification">
-                            <field name="code" placeholder="CCC, FIMR, DIUS..."/>
-                            <field name="categorie"/>
+                        <group string="🏷️ Identification">
+                            <field name="code" placeholder="CCC, FIMR, DUS..."/>
+                            <field name="categorie" widget="radio" options="{'horizontal': true}"/>
                             <field name="sequence"/>
-                            <field name="active"/>
+                            <field name="active" widget="boolean_toggle"/>
                         </group>
-                        <group string="Taux par défaut">
+                        <group string="💰 Taux par défaut">
                             <field name="taux_par_kg" 
                                    invisible="categorie == 'taxe'"
                                    placeholder="1.245"/>
                             <field name="taux_pourcentage" 
                                    invisible="categorie == 'redevance'"
                                    placeholder="5.0"/>
-                            <field name="is_preleve_default"/>
+                            <field name="is_preleve_default" widget="boolean_toggle"
+                                   help="Si coché, cette taxe sera automatiquement marquée comme prélevée"/>
+                            <field name="is_apres_vente" widget="boolean_toggle"
+                                   help="Si coché, cette taxe est payée après la vente de l'OT (ex: DUS)"/>
                         </group>
                     </group>
                     <group>
-                        <field name="description" placeholder="Description détaillée..."/>
+                        <field name="description" placeholder="Description détaillée de cette taxe..."/>
                     </group>
                     <field name="company_id" invisible="1"/>
                 </sheet>

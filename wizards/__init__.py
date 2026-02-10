@@ -15,3 +15,4 @@ from . import potting_formule_payment_wizard
 from . import potting_forwarding_invoice_reject_wizard
 from . import potting_ot_payment_wizards
 from . import potting_cv_tonnage_transfer_wizard
+from . import potting_quick_delivery_wizard

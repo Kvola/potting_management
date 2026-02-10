@@ -473,8 +473,8 @@
 </tr>
 </tbody>
 </table>
-<h3 id="systeme-de-paiement-en-deux-temps">💳 Système de paiement en deux temps</h3>
-<p>Les formules CCC prévoient un paiement en deux phases :</p>
+<h3 id="systeme-de-paiement-simplifie">💳 Système de paiement simplifié</h3>
+<p>Le paiement aux producteurs est effectué en une seule fois :</p>
 <table>
 <thead>
 <tr>
@@ -486,19 +486,14 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>Avant-vente</strong></td>
-<td>60%</td>
-<td>Avant embarquement</td>
-<td>Avance versée aux producteurs</td>
-</tr>
-<tr>
-<td><strong>Après-vente</strong></td>
-<td>40%</td>
-<td>Après embarquement</td>
-<td>Solde après réalisation de la vente</td>
+<td><strong>Paiement producteurs</strong></td>
+<td>100%</td>
+<td>À la validation</td>
+<td>Totalité versée aux producteurs</td>
 </tr>
 </tbody>
 </table>
+<blockquote><p><strong>Note</strong> : Le <strong>DUS (Droit Unique de Sortie)</strong> est géré séparément sur l'Ordre de Transit (OT) après la vente.</p></blockquote>
 <hr />
 <h2 id="3-roles-et-permissions">3. Rôles et Permissions</h2>
 <h3 id="groupes-dutilisateurs">📊 Groupes d'utilisateurs</h3>
@@ -836,8 +831,6 @@
 <li><strong>Prix au kg</strong> : Prix effectif FCFA/kg</li>
 <li><strong>Tonnage</strong> : Quantité couverte</li>
 <li>Détail des taxes (section dédiée)</li>
-<li>Configuration du paiement :</li>
-<li><strong>Pourcentage avant-vente</strong> : Défaut 60%</li>
 <li>Cliquer sur <strong>Enregistrer</strong></li>
 <li>Cliquer sur <strong>Valider</strong> pour activer la formule</li>
 </ol>
@@ -919,16 +912,11 @@
 <tr>
 <td><strong>Validée</strong></td>
 <td>Formule active</td>
-<td>Lier à un OT</td>
-</tr>
-<tr>
-<td><strong>Paiement partiel</strong></td>
-<td>Avant-vente payé</td>
-<td>Enregistrer après-vente</td>
+<td>Enregistrer paiement, Lier à un OT</td>
 </tr>
 <tr>
 <td><strong>Payée</strong></td>
-<td>Tous paiements effectués</td>
+<td>Paiement producteurs effectué</td>
 <td>Consultation</td>
 </tr>
 <tr>
@@ -939,21 +927,16 @@
 </tbody>
 </table>
 <h3 id="gestion-des-paiements">💳 Gestion des paiements</h3>
-<h4 id="paiement-avant-vente-60">Paiement avant-vente (60%)</h4>
+<h4 id="paiement-aux-producteurs-100">Paiement aux producteurs (100%)</h4>
 <ol>
 <li>Ouvrir la formule validée</li>
-<li>Cliquer sur <strong>Enregistrer paiement avant-vente</strong></li>
+<li>Cliquer sur <strong>Enregistrer le paiement</strong></li>
 <li>Sélectionner le mode de paiement (chèque, virement)</li>
 <li>Renseigner les informations bancaires</li>
 <li>Valider</li>
 </ol>
-<h4 id="paiement-apres-vente-40">Paiement après-vente (40%)</h4>
-<ol>
-<li>Ouvrir la formule en "Paiement partiel"</li>
-<li>Cliquer sur <strong>Enregistrer paiement après-vente</strong></li>
-<li>Compléter les informations</li>
-<li>Valider</li>
-</ol>
+<p>La formule passe automatiquement à l'état <strong>Payée</strong>.</p>
+<blockquote><p><strong>DUS</strong> : Le Droit Unique de Sortie est géré sur l'Ordre de Transit après la vente.</p></blockquote>
 <hr />
 <h2 id="7-ordres-de-transit-ot">7. Ordres de Transit (OT)</h2>
 <h3 id="presentation_3">📄 Présentation</h3>
@@ -1825,11 +1808,11 @@ Content-Type: application/json
 <h4 id="formules">Formules</h4>
 <p><strong>Q : Je ne peux pas lier une formule à mon OT ?</strong></p>
 <blockquote>
-<p>✅ La formule doit être à l'état "Validée" et ne pas être déjà liée à un autre OT.</p>
+<p>✅ La formule doit être à l'état "Validée" ou "Payée" et ne pas être déjà liée à un autre OT.</p>
 </blockquote>
-<p><strong>Q : Comment enregistrer un paiement partiel ?</strong></p>
+<p><strong>Q : Comment enregistrer le paiement aux producteurs ?</strong></p>
 <blockquote>
-<p>✅ Utilisez les boutons "Paiement avant-vente" puis "Paiement après-vente" dans l'ordre.</p>
+<p>✅ Ouvrez la formule validée et cliquez sur "Enregistrer le paiement". Le paiement est effectué à 100%.</p>
 </blockquote>
 <h4 id="ot-et-lots">OT et Lots</h4>
 <p><strong>Q : Les lots ne se génèrent pas ?</strong></p>

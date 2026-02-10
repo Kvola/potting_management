@@ -12,9 +12,8 @@ class PottingFormule(models.Model):
     le prix et les conditions de paiement pour les producteurs. Elle peut
     être attachée à un Ordre de Transit (OT).
     
-    Les paiements se font en 2 temps:
-    - Paiement avant-vente: Avance versée avant la commercialisation
-    - Paiement après-vente: Solde versé après réalisation de la vente
+    Le paiement aux producteurs est effectué en une seule fois (100%).
+    Le DUS (Droit Unique de Sortie) est géré séparément sur l'OT après la vente.
     
     Certaines taxes/redevances sont prélevées directement sur la formule.
     """
@@ -40,10 +39,6 @@ class PottingFormule(models.Model):
          'Le coefficient de conversion doit être supérieur à 0!'),
         ('numero_fo1_uniq', 'unique(numero_fo1, company_id)', 
          'Le numéro FO1 doit être unique!'),
-        # Contrainte: apres_vente_paye ne peut pas être True si avant_vente_paye est False
-        ('apres_vente_requires_avant_vente', 
-         'CHECK(NOT (apres_vente_paye = TRUE AND avant_vente_paye = FALSE))',
-         'Le paiement après-vente nécessite que le paiement avant-vente soit effectué en premier!'),
     ]
 
     # =========================================================================
@@ -535,24 +530,24 @@ class PottingFormule(models.Model):
         currency_field='currency_id',
         compute='_compute_paiements',
         store=True,
-        help="Montant du premier paiement (avant commercialisation des produits)"
+        help="Montant du paiement producteurs (100%)"
     )
     
     pourcentage_avant_vente = fields.Float(
-        string="% Avant-vente",
-        default=60.0,
+        string="% Paiement",
+        default=100.0,
         tracking=True,
-        help="Pourcentage du montant net versé avant la vente"
+        help="Pourcentage du montant net versé aux producteurs (100% par défaut)"
     )
     
     date_paiement_avant_vente_prevue = fields.Date(
-        string="Date prévue (avant-vente)",
+        string="Date prévue (paiement)",
         tracking=True,
-        help="Date prévue pour le paiement avant-vente"
+        help="Date prévue pour le paiement aux producteurs"
     )
     
     date_paiement_avant_vente = fields.Date(
-        string="Date effective (avant-vente)",
+        string="Date effective (paiement)",
         tracking=True,
         help="Date effective du paiement avant-vente"
     )
@@ -569,53 +564,7 @@ class PottingFormule(models.Model):
         string="Demande paiement (avant-vente)",
         tracking=True,
         copy=False,
-        help="Demande de paiement par chèque pour le versement avant-vente"
-    )
-    
-    # =========================================================================
-    # CHAMPS - PAIEMENT APRÈS-VENTE
-    # =========================================================================
-    
-    montant_apres_vente = fields.Monetary(
-        string="Montant après-vente",
-        currency_field='currency_id',
-        compute='_compute_paiements',
-        store=True,
-        help="Montant du second paiement (après commercialisation des produits)"
-    )
-    
-    pourcentage_apres_vente = fields.Float(
-        string="% Après-vente",
-        compute='_compute_pourcentage_apres_vente',
-        store=True,
-        help="Pourcentage du montant net versé après la vente (= 100 - % avant-vente)"
-    )
-    
-    date_paiement_apres_vente_prevue = fields.Date(
-        string="Date prévue (après-vente)",
-        tracking=True,
-        help="Date prévue pour le paiement après-vente"
-    )
-    
-    date_paiement_apres_vente = fields.Date(
-        string="Date effective (après-vente)",
-        tracking=True,
-        help="Date effective du paiement après-vente"
-    )
-    
-    apres_vente_paye = fields.Boolean(
-        string="Après-vente payé",
-        default=False,
-        tracking=True,
-        help="Indique si le paiement après-vente a été effectué"
-    )
-    
-    payment_request_apres_vente_id = fields.Many2one(
-        'payment.request',
-        string="Demande paiement (après-vente)",
-        tracking=True,
-        copy=False,
-        help="Demande de paiement par chèque pour le versement après-vente"
+        help="Demande de paiement par chèque pour le versement aux producteurs"
     )
     
     # =========================================================================
@@ -651,7 +600,6 @@ class PottingFormule(models.Model):
     state = fields.Selection([
         ('draft', 'Brouillon'),
         ('validated', 'Validée'),
-        ('partial_paid', 'Partiellement payée'),
         ('paid', 'Entièrement payée'),
         ('cancelled', 'Annulée'),
     ], string="État",
@@ -722,35 +670,23 @@ class PottingFormule(models.Model):
             record.total_taxes_prelevees = sum(taxes_prelevees.mapped('montant'))
             record.total_taxes_a_payer = sum(taxes_a_payer.mapped('montant'))
     
-    @api.depends('pourcentage_avant_vente')
-    def _compute_pourcentage_apres_vente(self):
-        for record in self:
-            record.pourcentage_apres_vente = 100.0 - record.pourcentage_avant_vente
-    
-    @api.depends('montant_net', 'pourcentage_avant_vente', 'pourcentage_apres_vente')
+    @api.depends('montant_net')
     def _compute_paiements(self):
+        """Calcule le montant à payer aux producteurs (100% du montant net)"""
         for record in self:
-            if record.montant_net:
-                record.montant_avant_vente = record.montant_net * (record.pourcentage_avant_vente / 100)
-                record.montant_apres_vente = record.montant_net * (record.pourcentage_apres_vente / 100)
-            else:
-                record.montant_avant_vente = 0
-                record.montant_apres_vente = 0
+            record.montant_avant_vente = record.montant_net or 0
     
-    @api.depends('montant_net', 'avant_vente_paye', 'apres_vente_paye',
-                 'montant_avant_vente', 'montant_apres_vente')
+    @api.depends('montant_net', 'avant_vente_paye')
     def _compute_total_paye(self):
         for record in self:
-            total = 0
+            # Paiement unique = montant net si payé
             if record.avant_vente_paye:
-                total += record.montant_avant_vente
-            if record.apres_vente_paye:
-                total += record.montant_apres_vente
-            record.total_paye = total
-            record.reste_a_payer = record.montant_net - total
-            if record.montant_net > 0:
-                record.paiement_progress = (total / record.montant_net) * 100
+                record.total_paye = record.montant_net
+                record.reste_a_payer = 0
+                record.paiement_progress = 100.0
             else:
+                record.total_paye = 0
+                record.reste_a_payer = record.montant_net
                 record.paiement_progress = 0
     
     # =========================================================================
@@ -929,7 +865,32 @@ class PottingFormule(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code(
                     'potting.formule'
                 ) or _('Nouveau')
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        # Charger automatiquement les taxes actives pour chaque nouvelle formule
+        for record in records:
+            record._auto_load_taxes()
+        return records
+    
+    def _auto_load_taxes(self):
+        """Charger automatiquement toutes les taxes actives lors de la création"""
+        self.ensure_one()
+        if self.taxe_ids:
+            return  # Ne pas écraser les taxes si déjà présentes (ex: copie)
+        
+        taxe_types = self.env['potting.taxe.type'].search([('active', '=', True)])
+        for taxe_type in taxe_types:
+            self.env['potting.formule.taxe'].create({
+                'formule_id': self.id,
+                'taxe_type_id': taxe_type.id,
+                'name': taxe_type.name,
+                'code': taxe_type.code,
+                'categorie': taxe_type.categorie,
+                'taux_pourcentage': taxe_type.taux_pourcentage,
+                'taux_par_kg': taxe_type.taux_par_kg,
+                'is_preleve': taxe_type.is_preleve_default,
+                'is_apres_vente': taxe_type.is_apres_vente,
+                'sequence': taxe_type.sequence,
+            })
     
     def unlink(self):
         for record in self:
@@ -944,11 +905,32 @@ class PottingFormule(models.Model):
         return super().unlink()
     
     def write(self, vals):
+        # Détecter si on change les paiements ou la liaison OT
+        sync_producteurs = False
+        
+        # Si avant_vente_paye passe de False à True
+        if vals.get('avant_vente_paye', False) and not any(r.avant_vente_paye for r in self):
+            sync_producteurs = True
+        
         result = super().write(vals)
+        
         # Mettre à jour l'état en fonction des paiements
-        if 'avant_vente_paye' in vals or 'apres_vente_paye' in vals:
+        if 'avant_vente_paye' in vals:
             for record in self:
                 record._update_payment_state()
+        
+        # Synchronisation robuste vers l'OT
+        if sync_producteurs:
+            for record in self:
+                if record.avant_vente_paye:
+                    record._sync_avant_vente_to_ot()
+        
+        # Si on vient de lier un OT, vérifier si la formule était déjà payée
+        if 'transit_order_id' in vals and vals['transit_order_id']:
+            for record in self:
+                if record.avant_vente_paye:
+                    record._sync_avant_vente_to_ot()
+        
         return result
     
     # =========================================================================
@@ -972,7 +954,7 @@ class PottingFormule(models.Model):
                     "Impossible d'annuler cette formule. "
                     "Elle est liée à l'OT %s.", record.transit_order_id.name
                 ))
-            if record.avant_vente_paye or record.apres_vente_paye:
+            if record.avant_vente_paye:
                 raise UserError(_(
                     "Impossible d'annuler une formule avec des paiements effectués."
                 ))
@@ -987,22 +969,72 @@ class PottingFormule(models.Model):
     def _update_payment_state(self):
         """Met à jour l'état en fonction des paiements.
         
-        Logique métier:
-        - avant_vente_paye seul = partial_paid
-        - avant_vente_paye + apres_vente_paye = paid (complet)
-        - Le paiement avant-vente doit TOUJOURS être fait en premier
-        - Impossible d'avoir apres_vente_paye sans avant_vente_paye
+        Logique métier simplifiée (conforme aux pratiques CI):
+        - Paiement producteurs (avant_vente_paye) = paid (100%)
+        - Le paiement est unique, pas de découpage 60%/40%
+        - Le DUS est géré séparément sur l'OT après la vente
         """
         for record in self:
             if record.state in ('draft', 'cancelled'):
                 continue
-            if record.avant_vente_paye and record.apres_vente_paye:
+            if record.avant_vente_paye:
+                # Paiement producteurs effectué = Formule payée
                 record.state = 'paid'
-            elif record.avant_vente_paye:
-                # Seul le paiement avant-vente déclenche l'état partial_paid
-                record.state = 'partial_paid'
             else:
                 record.state = 'validated'
+    
+    def action_sync_payment_status(self):
+        """Synchroniser le statut de paiement avec les demandes de paiement liées.
+        
+        Cette action vérifie si les demandes de paiement liées sont validées
+        et met à jour le statut de la Formule en conséquence.
+        Utile si la synchronisation automatique n'a pas fonctionné.
+        """
+        self.ensure_one()
+        updated = False
+        messages = []
+        
+        # Vérifier paiement producteurs
+        if self.payment_request_avant_vente_id:
+            pr = self.payment_request_avant_vente_id
+            if pr.state == 'validated' and not self.avant_vente_paye:
+                self.write({
+                    'avant_vente_paye': True,
+                    'date_paiement_avant_vente': pr.validation_date.date() if pr.validation_date else fields.Date.today(),
+                })
+                updated = True
+                messages.append(_(
+                    "✅ Paiement producteurs synchronisé depuis la demande %s"
+                ) % pr.reference)
+        
+        # Note: Le paiement après-vente n'est plus utilisé (paiement unique aux producteurs)
+        
+        # Mettre à jour l'état
+        if updated:
+            self._update_payment_state()
+            for msg in messages:
+                self.message_post(body=msg, subtype_xmlid='mail.mt_note')
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Synchronisation réussie"),
+                    'message': '\n'.join(messages),
+                    'type': 'success',
+                    'sticky': False,
+                }
+            }
+        else:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Aucune mise à jour"),
+                    'message': _("Le paiement est déjà synchronisé ou aucune demande de paiement validée trouvée."),
+                    'type': 'warning',
+                    'sticky': False,
+                }
+            }
     
     # =========================================================================
     # MÉTHODES UTILITAIRES
@@ -1066,6 +1098,7 @@ class PottingFormule(models.Model):
                     'taux_pourcentage': taxe_type.taux_pourcentage,
                     'taux_par_kg': taxe_type.taux_par_kg,
                     'is_preleve': taxe_type.is_preleve_default,
+                    'is_apres_vente': taxe_type.is_apres_vente,
                     'sequence': taxe_type.sequence,
                 })
                 taxes_added += 1
@@ -1099,11 +1132,8 @@ class PottingFormule(models.Model):
         new_formule = self.copy({
             'state': 'draft',
             'avant_vente_paye': False,
-            'apres_vente_paye': False,
             'date_paiement_avant_vente': False,
-            'date_paiement_apres_vente': False,
             'payment_request_avant_vente_id': False,
-            'payment_request_apres_vente_id': False,
             'transit_order_id': False,
         })
         return {
@@ -1128,44 +1158,15 @@ class PottingFormule(models.Model):
         """Ouvrir le wizard de paiement de formule"""
         self.ensure_one()
         
-        if self.state not in ('validated', 'partial_paid'):
+        if self.state != 'validated':
             raise UserError(_("La formule doit être validée pour créer un paiement."))
         
-        # Déterminer le type de paiement par défaut
-        if not self.avant_vente_paye:
-            default_type = 'avant_vente'
-        elif not self.apres_vente_paye:
-            default_type = 'apres_vente'
-        else:
-            raise UserError(_("Cette formule a déjà été entièrement payée."))
-        
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Paiement Formule par Chèque'),
-            'res_model': 'potting.formule.payment.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_formule_id': self.id,
-                'default_payment_type': default_type,
-            },
-        }
-    
-    def action_create_payment_request_avant_vente(self):
-        """Créer une demande de paiement pour le versement avant-vente via wizard"""
-        self.ensure_one()
-        if self.state not in ('validated', 'partial_paid'):
-            raise UserError(_("La formule doit être validée pour créer un paiement."))
         if self.avant_vente_paye:
-            raise UserError(_("Le paiement avant-vente a déjà été effectué."))
-        if self.payment_request_avant_vente_id:
-            raise UserError(_(
-                "Une demande de paiement existe déjà pour le versement avant-vente."
-            ))
+            raise UserError(_("Cette formule a déjà été payée."))
         
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Paiement Avant-Vente'),
+            'name': _('Paiement Producteurs'),
             'res_model': 'potting.formule.payment.wizard',
             'view_mode': 'form',
             'target': 'new',
@@ -1175,29 +1176,27 @@ class PottingFormule(models.Model):
             },
         }
     
-    def action_create_payment_request_apres_vente(self):
-        """Créer une demande de paiement pour le versement après-vente via wizard"""
+    def action_create_payment_request_avant_vente(self):
+        """Créer une demande de paiement producteurs via wizard"""
         self.ensure_one()
-        if self.state not in ('validated', 'partial_paid'):
+        if self.state != 'validated':
             raise UserError(_("La formule doit être validée pour créer un paiement."))
-        if not self.avant_vente_paye:
-            raise UserError(_("Le paiement avant-vente doit être effectué en premier."))
-        if self.apres_vente_paye:
-            raise UserError(_("Le paiement après-vente a déjà été effectué."))
-        if self.payment_request_apres_vente_id:
+        if self.avant_vente_paye:
+            raise UserError(_("Le paiement a déjà été effectué."))
+        if self.payment_request_avant_vente_id:
             raise UserError(_(
-                "Une demande de paiement existe déjà pour le versement après-vente."
+                "Une demande de paiement existe déjà pour cette formule."
             ))
         
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Paiement Après-Vente'),
+            'name': _('Paiement Producteurs'),
             'res_model': 'potting.formule.payment.wizard',
             'view_mode': 'form',
             'target': 'new',
             'context': {
                 'default_formule_id': self.id,
-                'default_payment_type': 'apres_vente',
+                'default_payment_type': 'avant_vente',
             },
         }
 
@@ -1276,41 +1275,65 @@ class PottingFormule(models.Model):
         return payment_request
     
     def action_mark_avant_vente_paid(self):
-        """Marquer le paiement avant-vente comme effectué et synchroniser avec l'OT"""
+        """Marquer le paiement avant-vente comme effectué et synchroniser avec l'OT.
+        
+        Cette méthode:
+        1. Marque l'avant-vente comme payé sur la Formule
+        2. Synchronise automatiquement avec l'OT lié (taxes_paid = True)
+        3. Met à jour l'état de l'OT si nécessaire
+        4. Log un message dans le chatter des deux documents
+        """
         for record in self:
             record.avant_vente_paye = True
             record.date_paiement_avant_vente = date.today()
             record._update_payment_state()
             
-            # Synchroniser avec l'OT lié
-            if record.transit_order_id:
-                record.transit_order_id.write({
-                    'taxes_paid': True,
-                    'taxes_payment_date': date.today(),
-                })
-                # Mettre à jour l'état de l'OT si nécessaire
-                if record.transit_order_id.state in ('draft', 'formule_linked'):
-                    record.transit_order_id.state = 'taxes_paid'
-                record.transit_order_id.message_post(
-                    body=_("Taxes payées via la Formule %s") % record.name,
-                    subject=_("Taxes payées"),
-                    subtype_xmlid='mail.mt_comment'
-                )
+            # Synchronisation robuste avec l'OT lié
+            record._sync_avant_vente_to_ot()
     
-    def action_mark_apres_vente_paid(self):
-        """Marquer le paiement après-vente comme effectué.
+    def _sync_avant_vente_to_ot(self):
+        """Synchronise le paiement avant-vente vers l'OT lié de façon robuste.
         
-        Le paiement avant-vente doit OBLIGATOIREMENT être fait en premier.
+        Cette méthode est appelée automatiquement quand avant_vente_paye devient True.
+        Elle peut aussi être appelée manuellement depuis l'OT.
         """
-        for record in self:
-            if not record.avant_vente_paye:
-                raise UserError(_(
-                    "Impossible de marquer le paiement après-vente comme effectué.\n"
-                    "Le paiement avant-vente de la Formule %s doit être fait en premier."
-                ) % record.name)
-            record.apres_vente_paye = True
-            record.date_paiement_apres_vente = date.today()
-            record._update_payment_state()
+        self.ensure_one()
+        if not self.transit_order_id:
+            return
+        
+        ot = self.transit_order_id
+        if ot.taxes_paid:
+            # Déjà synchronisé
+            return
+        
+        # Synchroniser les données
+        update_vals = {
+            'taxes_paid': True,
+            'taxes_payment_date': self.date_paiement_avant_vente or date.today(),
+        }
+        
+        # Lier la demande de paiement si elle existe
+        if self.payment_request_avant_vente_id and not ot.taxes_payment_request_id:
+            update_vals['taxes_payment_request_id'] = self.payment_request_avant_vente_id.id
+        
+        ot.write(update_vals)
+        
+        # Mettre à jour l'état de l'OT si nécessaire
+        if ot.state in ('draft', 'formule_linked'):
+            ot.state = 'taxes_paid'
+        
+        # Log dans le chatter
+        ot.message_post(
+            body=_("✅ <strong>Taxes payées automatiquement</strong><br/>"
+                   "Synchronisé depuis la Formule <a href=\"#id=%s&model=potting.formule\">%s</a><br/>"
+                   "Montant avant-vente: %s %s") % (
+                self.id, self.name, 
+                '{:,.0f}'.format(self.montant_avant_vente).replace(',', ' '),
+                self.currency_id.symbol or 'FCFA'
+            ),
+            subject=_("Taxes payées"),
+            subtype_xmlid='mail.mt_comment'
+        )
     
     # =========================================================================
     # ACTIONS DE VUE
@@ -1336,8 +1359,6 @@ class PottingFormule(models.Model):
         payment_ids = []
         if self.payment_request_avant_vente_id:
             payment_ids.append(self.payment_request_avant_vente_id.id)
-        if self.payment_request_apres_vente_id:
-            payment_ids.append(self.payment_request_apres_vente_id.id)
         
         if not payment_ids:
             raise UserError(_("Aucune demande de paiement liée à cette formule."))
@@ -1462,6 +1483,12 @@ class PottingFormuleTaxe(models.Model):
         help="Indique si cette taxe est prélevée directement sur la formule"
     )
     
+    is_apres_vente = fields.Boolean(
+        string="Après-vente",
+        default=False,
+        help="Si coché, cette taxe est payée après la vente de l'OT (ex: DUS)"
+    )
+    
     date_prelevement = fields.Date(
         string="Date prélèvement",
         help="Date du prélèvement de la taxe"
@@ -1542,6 +1569,12 @@ class PottingTaxeType(models.Model):
     
     Permet de définir les taxes standards avec leurs taux par défaut
     pour faciliter la saisie des formules.
+    
+    Flux de paiement:
+    - Taxes AVANT-VENTE (is_apres_vente=False): payées avec le 1er paiement
+      (Redevances CCC, FIMR, Sacherie, Taxe d'enregistrement, Soutien)
+    - Taxe APRÈS-VENTE (is_apres_vente=True): payée après vente de l'OT
+      (DUS - Droit Unique de Sortie)
     """
     _name = 'potting.taxe.type'
     _description = 'Type de Taxe/Redevance CCC'
@@ -1588,6 +1621,13 @@ class PottingTaxeType(models.Model):
         string="Prélevé par défaut",
         default=False,
         help="Si coché, cette taxe sera marquée comme prélevée par défaut"
+    )
+    
+    is_apres_vente = fields.Boolean(
+        string="Payé après-vente",
+        default=False,
+        help="Si coché, cette taxe est payée APRÈS la vente de l'OT (ex: DUS). "
+             "Sinon, elle est payée AVANT la vente (paiement avant-vente)."
     )
     
     description = fields.Text(

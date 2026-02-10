@@ -38,7 +38,8 @@
           * Taxes (%): Taxe d'enregistrement (5%), DIUS (14,6%)
           * Soutien/Reversement producteurs
         - Gestion des paiements par chèques multiples
-        - Paiements en 2 temps (avant-vente / après-vente)
+        - Paiement producteurs 100% à la validation
+        - DUS géré séparément sur l'OT après vente
         - Intégration avec le module de paiements par chèques
     """,
     'author': 'ICP',
@@ -75,6 +76,7 @@
         'wizards/potting_forwarding_invoice_reject_wizard_views.xml',
         'wizards/potting_ot_payment_wizards_views.xml',
         'wizards/potting_cv_tonnage_transfer_wizard_views.xml',
+        'wizards/potting_quick_delivery_wizard_views.xml',
         # Views - CV et Formules (avant les contrats qui les référencent)
         'views/potting_confirmation_vente_views.xml',
         'views/potting_confirmation_vente_transfer_views.xml',
@@ -87,6 +89,7 @@
         'views/potting_transit_order_export_views.xml',
         'views/potting_lot_views.xml',
         'views/potting_container_views.xml',
+        'views/potting_shipping_company_views.xml',
         'views/potting_delivery_note_views.xml',
         'views/potting_consignee_views.xml',
         'views/potting_forwarding_agent_views.xml',

@@ -147,12 +147,12 @@
         <field name="groups_id" eval="[(4, ref('potting_management.group_potting_ceo_agent'))]"/>
     </record>
 
-    <!-- Menu item pour accès rapide -->
+    <!-- Menu item pour accès rapide - Réservé aux Agents Exportation -->
     <menuitem id="menu_potting_quick_production" 
               name="⚡ Production Rapide" 
               parent="potting_management.menu_potting_root"
               action="action_potting_quick_production_wizard"
               sequence="2"
-              groups="potting_management.group_potting_ceo_agent,potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
+              groups="potting_management.group_potting_ceo_agent"/>
 
 </odoo>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Quick Delivery Wizard Form View -->
+    <record id="potting_quick_delivery_wizard_view_form" model="ir.ui.view">
+        <field name="name">potting.quick.delivery.wizard.form</field>
+        <field name="model">potting.quick.delivery.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Livraison Rapide">
+                <group>
+                    <group string="Sélection de l'OT" col="1">
+                        <field name="available_ot_ids" invisible="1"/>
+                        <field name="transit_order_id" 
+                               options="{'no_create': True, 'no_open': True}"
+                               placeholder="Sélectionnez un OT à livrer..."/>
+                    </group>
+                </group>
+                
+                <!-- OT Details (shown when OT selected) -->
+                <group invisible="not transit_order_id" string="Détails de l'OT">
+                    <group>
+                        <field name="customer_id"/>
+                        <field name="consignee_id"/>
+                        <field name="product_type"/>
+                    </group>
+                    <group>
+                        <field name="tonnage"/>
+                        <field name="lot_count"/>
+                        <field name="delivery_status" widget="badge" 
+                               decoration-success="delivery_status == 'full'"
+                               decoration-warning="delivery_status == 'partial'"
+                               decoration-danger="delivery_status == 'none'"/>
+                    </group>
+                </group>
+                
+                <!-- Shipping Stats -->
+                <group invisible="not transit_order_id" string="Statut d'expédition">
+                    <group>
+                        <field name="shipped_lot_count"/>
+                        <field name="shipped_tonnage"/>
+                    </group>
+                    <group>
+                        <field name="pending_delivery_count" 
+                               decoration-warning="pending_delivery_count > 0"
+                               decoration-success="pending_delivery_count == 0"/>
+                    </group>
+                </group>
+                
+                <!-- Alert if no pending lots -->
+                <div class="alert alert-info" role="status"
+                     invisible="not transit_order_id or pending_delivery_count > 0">
+                    <i class="fa fa-info-circle me-2" title="Information"/>
+                    <strong>Tous les lots expédiés de cet OT ont déjà été livrés.</strong>
+                </div>
+                
+                <footer>
+                    <button name="action_open_delivery_wizard" 
+                            type="object" 
+                            string="Créer Bon de Livraison" 
+                            class="btn-primary"
+                            invisible="not transit_order_id"/>
+                    <button name="action_view_delivery_notes" 
+                            type="object" 
+                            string="Voir les BL" 
+                            class="btn-secondary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open Quick Delivery Wizard -->
+    <record id="action_potting_quick_delivery_wizard" model="ir.actions.act_window">
+        <field name="name">Livraison Rapide</field>
+        <field name="res_model">potting.quick.delivery.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="groups_id" eval="[(4, ref('group_potting_ot_manager'))]"/>
+    </record>
+</odoo>

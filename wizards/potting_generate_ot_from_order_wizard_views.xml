@@ -59,24 +59,32 @@
                                         title="Désélectionner toutes les formules"/>
                                 <span class="text-muted ms-3">
                                     <i class="fa fa-info-circle me-1" title="Info"/>
-                                    Formules disponibles: validées et non liées à un OT
+                                    Formules disponibles: validées/payées et non liées à un OT
                                 </span>
                             </div>
                         </div>
                         
                         <field name="formule_ids" nolabel="1" colspan="2"
-                               domain="[('state', 'in', ['validated', 'partial_paid']), ('transit_order_id', '=', False), ('company_id', '=', company_id)]"
+                               widget="many2many_tags"
+                               domain="[('state', 'in', ['validated', 'paid']), ('transit_order_id', '=', False), ('company_id', '=', company_id)]"
+                               options="{'no_create': True, 'no_create_edit': True}"
+                               placeholder="Sélectionnez les Formules à utiliser..."/>
+                    </group>
+                    
+                    <!-- Liste des formules sélectionnées (lecture seule) -->
+                    <group string="📦 Formules sélectionnées" invisible="formule_count == 0">
+                        <field name="formule_ids" nolabel="1" colspan="2" readonly="1"
                                options="{'no_create': True, 'no_create_edit': True}">
-                            <tree string="Formules" editable="bottom" create="false" delete="true">
-                                <field name="name" string="N° Formule" readonly="1"/>
-                                <field name="reference_ccc" string="Réf. CCC" readonly="1"/>
-                                <field name="product_type" string="Produit" readonly="1"/>
-                                <field name="tonnage" string="Tonnage (T)" readonly="1" sum="Total"/>
-                                <field name="prix_tonnage" string="Prix/T" readonly="1"/>
+                            <tree string="Formules" create="false" delete="false">
+                                <field name="name" string="N° Formule"/>
+                                <field name="reference_ccc" string="Réf. CCC"/>
+                                <field name="product_type" string="Produit"/>
+                                <field name="tonnage" string="Tonnage (T)" sum="Total"/>
+                                <field name="prix_tonnage" string="Prix/T"/>
                                 <field name="state" string="État" widget="badge" 
-                                       decoration-success="state == 'validated'"
-                                       decoration-info="state == 'partial_paid'" readonly="1"/>
-                                <field name="confirmation_vente_id" string="CV" readonly="1"/>
+                                       decoration-success="state == 'paid'" 
+                                       decoration-info="state == 'validated'"/>
+                                <field name="confirmation_vente_id" string="CV"/>
                             </tree>
                         </field>
                     </group>

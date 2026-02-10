@@ -59,6 +59,15 @@ class PottingContainer(models.Model):
         digits='Product Unit of Measure'
     )
     
+    shipping_company_id = fields.Many2one(
+        'potting.shipping.company',
+        string="Compagnie maritime",
+        tracking=True,
+        index=True,
+        ondelete='set null',
+        help="Compagnie maritime propriétaire du conteneur"
+    )
+    
     max_payload = fields.Float(
         string="Charge utile max (kg)",
         tracking=True,
@@ -167,7 +176,16 @@ class PottingContainer(models.Model):
         ('loading', 'En chargement'),
         ('loaded', 'Chargé'),
         ('shipped', 'Expédié'),
+        ('delivered', 'Livré'),
     ], string="État", default='available', tracking=True, index=True, copy=False)
+    
+    # Compteur de voyages
+    voyage_count = fields.Integer(
+        string="Nombre de voyages",
+        default=0,
+        tracking=True,
+        help="Nombre de fois que ce conteneur a été utilisé"
+    )
     
     note = fields.Text(string="Notes")
     
@@ -331,6 +349,77 @@ class PottingContainer(models.Model):
             container.state = 'loading'
             container.message_post(body=_("Conteneur réouvert pour chargement additionnel."))
 
+    def action_mark_delivered(self):
+        """Mark container as delivered at destination"""
+        for container in self:
+            if container.state != 'shipped':
+                raise UserError(_("Seuls les conteneurs expédiés peuvent être marqués comme livrés."))
+            container.state = 'delivered'
+            container.message_post(body=_(
+                "✅ Conteneur livré à destination.\n"
+                "• Navire: %s\n"
+                "• Port: %s\n"
+                "• Tonnage: %.2f T (%d lots)"
+            ) % (
+                container.vessel_name or '-',
+                container.port_discharge or '-',
+                container.total_tonnage,
+                container.lot_count
+            ))
+
+    def action_release(self):
+        """Release container for a new voyage - reset voyage data but keep history"""
+        for container in self:
+            if container.state != 'delivered':
+                raise UserError(_("Seuls les conteneurs livrés peuvent être libérés pour un nouveau voyage."))
+            
+            # Sauvegarder le résumé du voyage dans le chatter
+            voyage_summary = _(
+                "🚢 Voyage #%d terminé:\n"
+                "• Navire: %s\n"
+                "• Scellé: %s\n"
+                "• Réservation: %s\n"
+                "• B/L: %s\n"
+                "• Départ: %s → Arrivée: %s\n"
+                "• Trajet: %s → %s\n"
+                "• Tonnage: %.2f T (%d lots)\n"
+                "• Lots: %s"
+            ) % (
+                container.voyage_count + 1,
+                container.vessel_name or '-',
+                container.seal_number or '-',
+                container.booking_number or '-',
+                container.bill_of_lading or '-',
+                container.date_departure or '-',
+                container.date_arrival or '-',
+                container.port_loading or '-',
+                container.port_discharge or '-',
+                container.total_tonnage,
+                container.lot_count,
+                ', '.join(container.lot_ids.mapped('name')) or '-'
+            )
+            
+            # Réinitialiser pour nouveau voyage (les lots gardent leur container_id pour l'historique)
+            container.write({
+                'state': 'available',
+                'voyage_count': container.voyage_count + 1,
+                'seal_number': False,
+                'vessel_id': False,
+                'booking_number': False,
+                'bill_of_lading': False,
+                'date_potting': False,
+                'date_departure': False,
+                'date_arrival': False,
+                'port_loading': False,
+                'port_discharge': False,
+                'shipping_line': False,
+            })
+            
+            container.message_post(body=voyage_summary)
+            container.message_post(body=_(
+                "🔄 Conteneur libéré et disponible pour un nouveau voyage."
+            ))
+
     def action_view_lots(self):
         self.ensure_one()
         action = {
@@ -403,3 +492,15 @@ class PottingContainer(models.Model):
         if container_type:
             domain.append(('container_type', '=', container_type))
         return self.search(domain)
+
+    def mark_delivered_from_transit_order(self, transit_order=None):
+        """Mark containers as delivered when linked transit orders are fully delivered.
+        Called automatically from transit order when delivery_status changes to 'fully_delivered'.
+        """
+        for container in self:
+            if container.state == 'shipped':
+                container.state = 'delivered'
+                msg = _("✅ Conteneur marqué comme livré automatiquement.")
+                if transit_order:
+                    msg += _("\n(Suite à la livraison complète de l'OT %s)") % transit_order.name
+                container.message_post(body=msg)

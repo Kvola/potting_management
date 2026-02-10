@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- ================================================================
+         DASHBOARD PRINCIPAL UNIFIÉ - Vue d'ensemble intelligente
+         Simple, clair, actionnable
+         ================================================================ -->
+    <t t-name="potting_management.MainDashboard">
+        <div class="o_potting_dashboard">
+            <!-- Header compact -->
+            <div class="dashboard-header mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">
+                            <i class="fa fa-dashboard me-2 text-primary"/>Tableau de bord
+                        </h2>
+                        <small class="text-muted">Vue d'ensemble des exportations</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" t-on-click="refresh" title="Actualiser">
+                            <i class="fa fa-refresh"/>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campagne active (compact) -->
+            <t t-if="state.campaign">
+                <div class="card bg-gradient-primary text-white mb-3">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="opacity-75">📅 Campagne active</small>
+                                <h5 class="mb-0"><t t-esc="state.campaign.name"/></h5>
+                            </div>
+                            <div class="d-flex gap-4 text-center">
+                                <div>
+                                    <div class="fs-5 fw-bold"><t t-esc="state.campaign.ot_count"/></div>
+                                    <small class="opacity-75">OT</small>
+                                </div>
+                                <div>
+                                    <div class="fs-5 fw-bold"><t t-esc="formatNumber(state.campaign.tonnage, 0)"/> T</div>
+                                    <small class="opacity-75">Tonnage</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+
+            <!-- ========== ALERTES URGENTES ========== -->
+            <t t-if="state.alerts.total > 0">
+                <div class="row g-2 mb-3">
+                    <t t-if="state.alerts.ot_to_validate > 0">
+                        <div class="col-md-3 col-6">
+                            <div class="alert alert-warning mb-0 py-2 cursor-pointer d-flex align-items-center" 
+                                 role="alert" t-on-click="openOTToValidate">
+                                <i class="fa fa-exclamation-triangle me-2"/>
+                                <div>
+                                    <strong><t t-esc="state.alerts.ot_to_validate"/></strong>
+                                    <small class="d-block">OT à valider</small>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-if="state.alerts.invoices_pending > 0">
+                        <div class="col-md-3 col-6">
+                            <div class="alert alert-info mb-0 py-2 cursor-pointer d-flex align-items-center" 
+                                 role="alert" t-on-click="openInvoicesPending">
+                                <i class="fa fa-file-text me-2"/>
+                                <div>
+                                    <strong><t t-esc="state.alerts.invoices_pending"/></strong>
+                                    <small class="d-block">Factures en attente</small>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-if="state.alerts.lots_production > 0">
+                        <div class="col-md-3 col-6">
+                            <div class="alert alert-primary mb-0 py-2 cursor-pointer d-flex align-items-center" 
+                                 role="alert" t-on-click="openLotsProduction">
+                                <i class="fa fa-industry me-2"/>
+                                <div>
+                                    <strong><t t-esc="state.alerts.lots_production"/></strong>
+                                    <small class="d-block">Lots en production</small>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-if="state.alerts.formules_unpaid > 0">
+                        <div class="col-md-3 col-6">
+                            <div class="alert alert-danger mb-0 py-2 cursor-pointer d-flex align-items-center" 
+                                 role="alert" t-on-click="openFormulesUnpaid">
+                                <i class="fa fa-money me-2"/>
+                                <div>
+                                    <strong><t t-esc="state.alerts.formules_unpaid"/></strong>
+                                    <small class="d-block">FO impayées</small>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </t>
+
+            <!-- ========== KPIs PRINCIPAUX ========== -->
+            <div class="row g-3 mb-4">
+                <!-- Contrats -->
+                <div class="col-md-3 col-6">
+                    <div class="card h-100 cursor-pointer hover-shadow" t-on-click="openContracts">
+                        <div class="card-body text-center">
+                            <div class="text-primary mb-1">
+                                <i class="fa fa-file-text-o fa-2x"/>
+                            </div>
+                            <div class="fs-3 fw-bold text-primary"><t t-esc="state.kpis.contracts"/></div>
+                            <small class="text-muted">Contrats actifs</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- OT -->
+                <div class="col-md-3 col-6">
+                    <div class="card h-100 cursor-pointer hover-shadow" t-on-click="openTransitOrders">
+                        <div class="card-body text-center">
+                            <div class="text-info mb-1">
+                                <i class="fa fa-truck fa-2x"/>
+                            </div>
+                            <div class="fs-3 fw-bold text-info"><t t-esc="state.kpis.transit_orders"/></div>
+                            <small class="text-muted">Ordres de Transit</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tonnage -->
+                <div class="col-md-3 col-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="text-success mb-1">
+                                <i class="fa fa-balance-scale fa-2x"/>
+                            </div>
+                            <div class="fs-3 fw-bold text-success"><t t-esc="formatNumber(state.kpis.tonnage_shipped, 0)"/></div>
+                            <small class="text-muted">Tonnes expédiées</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- Montant -->
+                <div class="col-md-3 col-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="text-warning mb-1">
+                                <i class="fa fa-money fa-2x"/>
+                            </div>
+                            <div class="fs-4 fw-bold text-warning">
+                                <t t-esc="formatCurrency(state.kpis.total_amount)"/>
+                            </div>
+                            <small class="text-muted">Valeur totale (FCFA)</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== PROGRESSION GLOBALE ========== -->
+            <div class="card mb-4">
+                <div class="card-header py-2 bg-light">
+                    <strong><i class="fa fa-line-chart me-2"/>Progression</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Tonnage utilisé</span>
+                                <span class="fw-bold"><t t-esc="formatNumber(state.progress.percentage, 1)"/>%</span>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-success" 
+                                     t-attf-style="width: #{Math.min(state.progress.percentage, 100)}%">
+                                    <t t-esc="formatNumber(state.progress.used, 0)"/> T
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1 small text-muted">
+                                <span>0 T</span>
+                                <span><t t-esc="formatNumber(state.progress.total, 0)"/> T contracté</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="fw-bold text-primary"><t t-esc="formatNumber(state.progress.total, 0)"/></div>
+                                    <small class="text-muted">Contracté (T)</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-warning"><t t-esc="formatNumber(state.progress.used, 0)"/></div>
+                                    <small class="text-muted">Utilisé (T)</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-success"><t t-esc="formatNumber(state.progress.remaining, 0)"/></div>
+                                    <small class="text-muted">Disponible (T)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== ÉTAT DES OT PAR STATUT ========== -->
+            <div class="card mb-4">
+                <div class="card-header py-2 bg-light">
+                    <strong><i class="fa fa-truck me-2"/>État des Ordres de Transit</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col">
+                            <div class="text-center p-2 rounded bg-light cursor-pointer" 
+                                 t-on-click="() => this.openOTs('draft')">
+                                <div class="fs-4 fw-bold text-secondary"><t t-esc="state.ot_states.draft"/></div>
+                                <small>Brouillon</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="text-center p-2 rounded bg-info bg-opacity-10 cursor-pointer" 
+                                 t-on-click="() => this.openOTs('confirmed')">
+                                <div class="fs-4 fw-bold text-info"><t t-esc="state.ot_states.confirmed"/></div>
+                                <small>Confirmé</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="text-center p-2 rounded bg-primary bg-opacity-10 cursor-pointer" 
+                                 t-on-click="() => this.openOTs('in_progress')">
+                                <div class="fs-4 fw-bold text-primary"><t t-esc="state.ot_states.in_progress"/></div>
+                                <small>En cours</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="text-center p-2 rounded bg-warning bg-opacity-10 cursor-pointer" 
+                                 t-on-click="() => this.openOTs('ready_validation')">
+                                <div class="fs-4 fw-bold text-warning"><t t-esc="state.ot_states.ready_validation"/></div>
+                                <small>À valider</small>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="text-center p-2 rounded bg-success bg-opacity-10 cursor-pointer" 
+                                 t-on-click="() => this.openOTs('done')">
+                                <div class="fs-4 fw-bold text-success"><t t-esc="state.ot_states.done"/></div>
+                                <small>Terminé</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== RACCOURCIS RAPIDES ========== -->
+            <div class="card">
+                <div class="card-header py-2 bg-light">
+                    <strong><i class="fa fa-bolt me-2"/>Actions rapides</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-outline-primary w-100" t-on-click="createContract">
+                                <i class="fa fa-plus me-1"/>Nouveau contrat
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-outline-info w-100" t-on-click="createOT">
+                                <i class="fa fa-truck me-1"/>Nouvel OT
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-outline-success w-100" t-on-click="addProduction">
+                                <i class="fa fa-industry me-1"/>Production rapide
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <button class="btn btn-outline-secondary w-100" t-on-click="openReports">
+                                <i class="fa fa-file-pdf-o me-1"/>Rapports
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

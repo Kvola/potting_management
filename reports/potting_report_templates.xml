@@ -52,14 +52,14 @@
                 <h4 class="mt32">Liste des Lots</h4>
                 <table class="table table-sm table-bordered">
                     <thead>
-                        <tr>
-                            <th>N° Lot</th>
-                            <th>Tonnage cible (T)</th>
-                            <th>Tonnage actuel (T)</th>
-                            <th>Remplissage (%)</th>
-                            <th>Conteneur</th>
-                            <th>Date empotage</th>
-                            <th>État</th>
+                        <tr style="background-color: #1F4E79 !important;">
+                            <th style="color: white !important;">N° Lot</th>
+                            <th style="color: white !important;">Tonnage cible (T)</th>
+                            <th style="color: white !important;">Tonnage actuel (T)</th>
+                            <th style="color: white !important;">Remplissage (%)</th>
+                            <th style="color: white !important;">Conteneur</th>
+                            <th style="color: white !important;">Date empotage</th>
+                            <th style="color: white !important;">État</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -126,15 +126,15 @@
                 <h4 class="mt32">Ordres de Transit</h4>
                 <table class="table table-sm table-bordered">
                     <thead>
-                        <tr>
-                            <th>N° OT</th>
-                            <th>Destinataire</th>
-                            <th>Produit</th>
-                            <th>Tonnage (T)</th>
-                            <th>Navire</th>
-                            <th>Port (POD)</th>
-                            <th>Progression</th>
-                            <th>État</th>
+                        <tr style="background-color: #1F4E79;">
+                            <th style="color: white !important;">N° OT</th>
+                            <th style="color: white !important;">Destinataire</th>
+                            <th style="color: white !important;">Produit</th>
+                            <th style="color: white !important;">Tonnage (T)</th>
+                            <th style="color: white !important;">Navire</th>
+                            <th style="color: white !important;">Port (POD)</th>
+                            <th style="color: white !important;">Progression</th>
+                            <th style="color: white !important;">État</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -201,7 +201,7 @@
                         font-weight: bold;
                         text-align: center;
                         color: #1F4E79;
-                        margin-bottom: 4px;
+                        margin-bottom: 12px;
                         text-transform: uppercase;
                         letter-spacing: 1px;
                     }
@@ -255,8 +255,8 @@
                         font-size: 8pt;
                     }
                     .ot-table th {
-                        background: #1F4E79;
-                        color: white;
+                        background: #1F4E79 !important;
+                        color: white !important;
                         font-weight: bold;
                         padding: 5px 3px;
                         text-align: center;
@@ -375,23 +375,23 @@
                          ══════════════════════════════════════════════════════════════ -->
                     <table class="ot-table">
                         <thead>
-                            <tr>
-                                <th style="width: 3%;">N°</th>
-                                <th style="width: 6%;">OT</th>
-                                <th style="width: 5%;">Lot</th>
-                                <th style="width: 10%;">Client</th>
-                                <th style="width: 8%;">Destinataire</th>
-                                <th style="width: 7%;">N° Contrat</th>
-                                <th style="width: 6%;">N° BL</th>
-                                <th style="width: 10%;">Conteneur</th>
-                                <th style="width: 8%;">Navire</th>
-                                <th style="width: 6%;">Booking</th>
-                                <th style="width: 7%;">Destination</th>
-                                <th style="width: 4%;">ETA</th>
-                                <th style="width: 4%;">ETD</th>
-                                <th style="width: 5%;">Empot.</th>
-                                <th style="width: 5%;">Fin Prod</th>
-                                <th style="width: 6%;">Qté (Kg)</th>
+                            <tr style="background-color: #1F4E79 !important;">
+                                <th style="width: 3%; background-color: #1F4E79 !important; color: white !important;">N°</th>
+                                <th style="width: 6%; background-color: #1F4E79 !important; color: white !important;">OT</th>
+                                <th style="width: 5%; background-color: #1F4E79 !important; color: white !important;">Lot</th>
+                                <th style="width: 10%; background-color: #1F4E79 !important; color: white !important;">Client</th>
+                                <th style="width: 8%; background-color: #1F4E79 !important; color: white !important;">Destinataire</th>
+                                <th style="width: 7%; background-color: #1F4E79 !important; color: white !important;">N° Contrat</th>
+                                <th style="width: 6%; background-color: #1F4E79 !important; color: white !important;">N° BL</th>
+                                <th style="width: 10%; background-color: #1F4E79 !important; color: white !important;">Conteneur</th>
+                                <th style="width: 8%; background-color: #1F4E79 !important; color: white !important;">Navire</th>
+                                <th style="width: 6%; background-color: #1F4E79 !important; color: white !important;">Booking</th>
+                                <th style="width: 7%; background-color: #1F4E79 !important; color: white !important;">Destination</th>
+                                <th style="width: 4%; background-color: #1F4E79 !important; color: white !important;">ETA</th>
+                                <th style="width: 4%; background-color: #1F4E79 !important; color: white !important;">ETD</th>
+                                <th style="width: 5%; background-color: #1F4E79 !important; color: white !important;">Empot.</th>
+                                <th style="width: 5%; background-color: #1F4E79 !important; color: white !important;">Fin Prod</th>
+                                <th style="width: 6%; background-color: #1F4E79 !important; color: white !important;">Qté (Kg)</th>
                             </tr>
                         </thead>
                         <tbody>

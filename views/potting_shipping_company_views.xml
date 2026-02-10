@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================================================================
+         SHIPPING COMPANY VIEWS
+         ================================================================ -->
+
+    <!-- Form View -->
+    <record id="potting_shipping_company_view_form" model="ir.ui.view">
+        <field name="name">potting.shipping.company.form</field>
+        <field name="model">potting.shipping.company</field>
+        <field name="arch" type="xml">
+            <form string="Compagnie Maritime">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_vessels" type="object" 
+                                class="oe_stat_button" icon="fa-ship">
+                            <field name="vessel_count" widget="statinfo" string="Navires"/>
+                        </button>
+                        <button name="action_view_containers" type="object" 
+                                class="oe_stat_button" icon="fa-cube">
+                            <field name="container_count" widget="statinfo" string="Conteneurs"/>
+                        </button>
+                        <button name="action_view_available_containers" type="object" 
+                                class="oe_stat_button" icon="fa-check-circle"
+                                invisible="container_available_count == 0">
+                            <field name="container_available_count" widget="statinfo" string="Disponibles"/>
+                        </button>
+                    </div>
+                    <field name="logo" widget="image" class="oe_avatar" options="{'size': [90, 90]}"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Nom de la compagnie maritime"/>
+                        </h1>
+                        <div class="o_row">
+                            <field name="code" placeholder="Code (ex: MSC)"/>
+                        </div>
+                    </div>
+                    <group>
+                        <group string="Informations générales">
+                            <field name="active" widget="boolean_toggle"/>
+                            <field name="website" widget="url"/>
+                        </group>
+                        <group string="Statistiques">
+                            <field name="total_capacity"/>
+                            <field name="container_in_use_count"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Contact" name="contact">
+                            <group>
+                                <group string="Adresse">
+                                    <field name="street"/>
+                                    <field name="street2"/>
+                                    <field name="city"/>
+                                    <field name="country_id"/>
+                                </group>
+                                <group string="Communication">
+                                    <field name="phone" widget="phone"/>
+                                    <field name="email" widget="email"/>
+                                </group>
+                            </group>
+                            <group string="Contact local" col="3">
+                                <field name="local_contact_name"/>
+                                <field name="local_contact_phone" widget="phone"/>
+                                <field name="local_contact_email" widget="email"/>
+                            </group>
+                        </page>
+                        <page string="Navires" name="vessels">
+                            <field name="vessel_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="active"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Conteneurs" name="containers">
+                            <field name="container_ids" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="container_type"/>
+                                    <field name="max_capacity"/>
+                                    <field name="state" widget="badge" 
+                                           decoration-success="state == 'available'"
+                                           decoration-warning="state in ('loading', 'loaded')"
+                                           decoration-info="state == 'shipped'"
+                                           decoration-primary="state == 'delivered'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="note" placeholder="Notes internes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- List View -->
+    <record id="potting_shipping_company_view_tree" model="ir.ui.view">
+        <field name="name">potting.shipping.company.tree</field>
+        <field name="model">potting.shipping.company</field>
+        <field name="arch" type="xml">
+            <tree string="Compagnies Maritimes">
+                <field name="code" optional="show"/>
+                <field name="name"/>
+                <field name="phone" optional="show"/>
+                <field name="email" optional="show"/>
+                <field name="local_contact_name" optional="hide"/>
+                <field name="vessel_count" string="Navires"/>
+                <field name="container_count" string="Conteneurs"/>
+                <field name="container_available_count" string="Disponibles" 
+                       decoration-success="container_available_count > 0"/>
+                <field name="total_capacity" string="Capacité (T)"/>
+                <field name="active" column_invisible="True"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="potting_shipping_company_view_kanban" model="ir.ui.view">
+        <field name="name">potting.shipping.company.kanban</field>
+        <field name="model">potting.shipping.company</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="logo"/>
+                <field name="vessel_count"/>
+                <field name="container_count"/>
+                <field name="container_available_count"/>
+                <field name="total_capacity"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_image">
+                                <t t-if="record.logo.raw_value">
+                                    <img t-att-src="kanban_image('potting.shipping.company', 'logo', record.id.raw_value)" 
+                                         alt="Logo" class="o_image_64_contain"/>
+                                </t>
+                                <t t-else="">
+                                    <span class="fa fa-ship fa-3x text-primary" title="Compagnie Maritime"/>
+                                </t>
+                            </div>
+                            <div class="oe_kanban_details">
+                                <strong class="o_kanban_record_title">
+                                    <field name="name"/>
+                                </strong>
+                                <div t-if="record.code.value" class="text-muted">
+                                    <small><field name="code"/></small>
+                                </div>
+                                <div class="o_kanban_tags_section mt-2">
+                                    <span class="badge bg-primary me-1" title="Navires">
+                                        <i class="fa fa-ship me-1"/>
+                                        <field name="vessel_count"/>
+                                    </span>
+                                    <span class="badge bg-info me-1" title="Conteneurs">
+                                        <i class="fa fa-cube me-1"/>
+                                        <field name="container_count"/>
+                                    </span>
+                                    <span class="badge bg-success" title="Disponibles">
+                                        <i class="fa fa-check me-1"/>
+                                        <field name="container_available_count"/>
+                                    </span>
+                                </div>
+                                <div class="mt-1 text-muted">
+                                    <small>Capacité: <field name="total_capacity"/> T</small>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="potting_shipping_company_view_search" model="ir.ui.view">
+        <field name="name">potting.shipping.company.search</field>
+        <field name="model">potting.shipping.company</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher Compagnie Maritime">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="local_contact_name"/>
+                <filter name="filter_active" string="Actives" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactives" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="filter_has_available" string="Avec conteneurs disponibles" 
+                        domain="[('container_available_count', '>', 0)]"/>
+                <group expand="0" string="Grouper par">
+                    <filter name="group_country" string="Pays" context="{'group_by': 'country_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_potting_shipping_company" model="ir.actions.act_window">
+        <field name="name">Compagnies Maritimes</field>
+        <field name="res_model">potting.shipping.company</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="context">{'search_default_filter_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créez votre première compagnie maritime
+            </p>
+            <p>
+                Gérez les compagnies maritimes (armateurs) et associez-leur leurs navires et conteneurs.
+            </p>
+        </field>
+    </record>
+</odoo>

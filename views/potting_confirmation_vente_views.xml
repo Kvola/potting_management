@@ -42,7 +42,6 @@
                        decoration-bf="1"/>
                 <field name="tonnage_progress" widget="progressbar" optional="show" string="Progression"/>
                 <field name="prix_tonnage" widget="monetary" string="Prix/T" optional="hide"/>
-                <field name="destination_country_id" optional="show" string="Destination"/>
                 <field name="customer_order_count" string="Contrats" optional="hide"
                        decoration-info="customer_order_count > 0"/>
                 <field name="formule_count" string="Formules" optional="show"
@@ -219,15 +218,7 @@
                     </group>
                     
                     <group col="2">
-                        <group string="🌍 Destination Export">
-                            <field name="destination_country_id" 
-                                   options="{'no_create': True}"
-                                   readonly="state != 'draft'"
-                                   placeholder="Sélectionner le pays..."/>
-                            <field name="destination_port" readonly="state != 'draft'"
-                                   placeholder="Ex: Rotterdam, Anvers..."/>
-                        </group>
-                        <group string="🏢 Société">
+                        <group string=" Société">
                             <field name="is_expired" invisible="1"/>
                             <field name="company_id" groups="base.group_multi_company"
                                    readonly="state != 'draft'"/>
@@ -235,32 +226,8 @@
                     </group>
                     
                     <notebook>
-                        <page string=" Notes" name="notes">
+                        <page string="📝 Notes" name="notes">
                             <field name="note" placeholder="Notes et observations..."/>
-                        </page>
-                        <page string="📄 Facture Transitaire" name="forwarding_invoice">
-                            <group>
-                                <group string="📎 Document joint">
-                                    <field name="forwarding_agent_invoice" 
-                                           filename="forwarding_agent_invoice_filename"
-                                           widget="binary"/>
-                                    <field name="forwarding_agent_invoice_filename" invisible="1"/>
-                                </group>
-                            </group>
-                            <!-- Prévisualisation du PDF -->
-                            <div class="o_invoice_preview mt-3" 
-                                 style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: white;"
-                                 invisible="not forwarding_agent_invoice">
-                                <field name="forwarding_agent_invoice" 
-                                       invisible="not forwarding_agent_invoice"
-                                       widget="pdf_viewer"
-                                       filename="forwarding_agent_invoice_filename"
-                                       nolabel="1"/>
-                            </div>
-                            <div invisible="forwarding_agent_invoice" class="alert alert-info mt-3" role="alert">
-                                <i class="fa fa-info-circle me-2"/>
-                                Aucune facture transitaire jointe. Cliquez sur le champ ci-dessus pour téléverser un fichier (PDF ou image).
-                            </div>
                         </page>
                     </notebook>
                 </sheet>
@@ -282,7 +249,6 @@
                 <field name="name"/>
                 <field name="reference_ccc"/>
                 <field name="campaign_id"/>
-                <field name="destination_country_id"/>
                 <separator/>
                 <filter string="Brouillon" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="Actives" name="active" domain="[('state', '=', 'active')]"/>
@@ -302,7 +268,6 @@
                     <filter string="État" name="group_state" context="{'group_by': 'state'}"/>
                     <filter string="Campagne" name="group_campaign" context="{'group_by': 'campaign_id'}"/>
                     <filter string="Type produit" name="group_product" context="{'group_by': 'product_type'}"/>
-                    <filter string="Destination" name="group_destination" context="{'group_by': 'destination_country_id'}"/>
                     <filter string="Date émission" name="group_date" context="{'group_by': 'date_emission:month'}"/>
                 </group>
             </search>

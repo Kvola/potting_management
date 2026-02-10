@@ -72,6 +72,8 @@
                         <strong>Compte soldé</strong> - Tous les paiements sont à jour.
                     </div>
                     
+                    <field name="has_amount_to_refund" invisible="1"/>
+                    
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_transit_orders" 
                                 type="object" 
@@ -80,6 +82,15 @@
                             <div class="o_stat_info">
                                 <field name="transit_order_count" class="o_stat_value"/>
                                 <span class="o_stat_text">Ordres Transit</span>
+                            </div>
+                        </button>
+                        <button name="action_view_invoices" 
+                                type="object" 
+                                class="oe_stat_button" 
+                                icon="fa-file-text-o">
+                            <div class="o_stat_info">
+                                <field name="invoice_count" class="o_stat_value"/>
+                                <span class="o_stat_text">Factures</span>
                             </div>
                         </button>
                         <button name="action_view_transit_orders" 
@@ -126,7 +137,7 @@
                         <group string="📞 Contact">
                             <field name="phone" widget="phone" placeholder="+225 XX XX XX XX XX"/>
                             <field name="email" widget="email" placeholder="contact@transitaire.com"/>
-                            <field name="address" placeholder="Adresse complète..."/>
+                            <field name="address" placeholder="Adresse complète..." readonly="1"/>
                         </group>
                         <group string="⚙️ Configuration">
                             <field name="default_bank_account_id" 
@@ -143,6 +154,17 @@
                         </group>
                     </group>
                     
+                    <!-- Alerte montant à reverser -->
+                    <div class="alert alert-warning mb-3" role="alert" 
+                         invisible="not has_amount_to_refund">
+                        <i class="fa fa-exchange"/> 
+                        <strong>Montant à reverser par le transitaire :</strong> 
+                        <field name="amount_to_refund" class="fw-bold"/> FCFA
+                        <p class="mb-0 mt-2 small text-muted">
+                            Ce montant correspond à un trop-perçu (avances ou paiements excédentaires).
+                        </p>
+                    </div>
+                    
                     <!-- Dashboard financier -->
                     <group string="💰 Tableau de bord financier" col="4">
                         <div class="o_kanban_primary_bottom" colspan="4">
@@ -151,26 +173,64 @@
                         </div>
                         <group>
                             <field name="total_invoiced" widget="monetary" 
-                                   string="Total facturé" class="text-info"/>
+                                   string="Total facturé" class="text-info" readonly="1"/>
                         </group>
                         <group>
                             <field name="total_advances" widget="monetary" 
-                                   string="Avances versées" class="text-warning"/>
+                                   string="Avances versées" class="text-warning" readonly="1"/>
                         </group>
                         <group>
                             <field name="total_paid" widget="monetary" 
-                                   string="Total payé" class="text-success fw-bold"/>
+                                   string="Total payé" class="text-success fw-bold" readonly="1"/>
                         </group>
                         <group>
                             <field name="balance_due" widget="monetary" 
                                    string="Reste à payer"
                                    decoration-danger="balance_due > 0"
                                    decoration-success="balance_due &lt;= 0"
-                                   class="fw-bold fs-5"/>
+                                   class="fw-bold fs-5" readonly="1"/>
                         </group>
                     </group>
+                    
+                    <!-- Section factures -->
+                    <group string="📄 Factures transitaire" col="4" invisible="invoice_count == 0">
+                        <group>
+                            <field name="invoice_count" readonly="1" string="Total factures"/>
+                        </group>
+                        <group>
+                            <field name="total_invoice_amount" widget="monetary" readonly="1" string="Montant total"/>
+                        </group>
+                        <group>
+                            <field name="pending_invoice_count" readonly="1" string="En attente paiement"
+                                   decoration-warning="pending_invoice_count > 0"/>
+                        </group>
+                        <group>
+                            <field name="total_pending_invoice_amount" widget="monetary" readonly="1" 
+                                   string="Montant en attente"
+                                   decoration-danger="total_pending_invoice_amount > 0"
+                                   class="fw-bold"/>
+                        </group>
+                    </group>
+                    
                     <notebook>
-                        <page string="Paiements" name="payments">
+                        <page string="📄 Factures" name="invoices">
+                            <field name="invoice_ids" readonly="1">
+                                <tree string="Factures transitaire" decoration-success="state == 'paid'"
+                                      decoration-warning="state == 'validated'"
+                                      decoration-info="state == 'submitted'">
+                                    <field name="name"/>
+                                    <field name="invoice_number"/>
+                                    <field name="invoice_date"/>
+                                    <field name="amount_total" sum="Total"/>
+                                    <field name="state" widget="badge"/>
+                                </tree>
+                            </field>
+                            <div class="text-end mt-2">
+                                <button name="action_view_invoices" type="object" 
+                                        string="📄 Voir toutes les factures" class="btn-link"/>
+                            </div>
+                        </page>
+                        <page string="💳 Paiements" name="payments">
                             <field name="payment_line_ids">
                                 <tree editable="bottom" create="1">
                                     <field name="name" readonly="1"/>
@@ -187,7 +247,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Comptes Bancaires" name="banks">
+                        <page string="🏦 Comptes Bancaires" name="banks">
                             <field name="bank_account_ids">
                                 <tree>
                                     <field name="bank_id"/>
@@ -195,7 +255,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Notes" name="notes">
+                        <page string="📝 Notes" name="notes">
                             <field name="notes" placeholder="Notes..."/>
                         </page>
                     </notebook>

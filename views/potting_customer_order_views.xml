@@ -44,18 +44,15 @@
                 <header>
                     <button name="action_open_create_ot_wizard" type="object" string="➕ Ajouter des OT" class="btn-success" invisible="state in ('done', 'cancelled')" groups="potting_management.group_potting_shipping,potting_management.group_potting_manager"/>
                     <button name="action_open_generate_ot_wizard" type="object" string="🚀 Générer OT auto" class="btn-info" invisible="state in ('done', 'cancelled')" groups="potting_management.group_potting_shipping,potting_management.group_potting_manager" title="Générer automatiquement plusieurs OT en fonction du tonnage total"/>
-                    <button name="action_confirm" type="object" string="Confirmer" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_start" type="object" string="Démarrer" class="btn-primary" invisible="state != 'confirmed'"/>
-                    <button name="action_done" type="object" string="Terminer" class="btn-primary" invisible="state != 'in_progress'"/>
-                    <button name="action_cancel" type="object" string="Annuler" invisible="state in ('done', 'cancelled')"/>
-                    <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state in ('draft', 'done')" groups="potting_management.group_potting_manager" confirm="Êtes-vous sûr de vouloir remettre cette commande en brouillon ? Les OT associés seront également remis en brouillon."/>
+                    <button name="action_confirm" type="object" string="✅ Confirmer" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_start" type="object" string="🏭 Démarrer" class="btn-primary" invisible="state != 'confirmed'"/>
+                    <button name="action_done" type="object" string="🏁 Terminer" class="btn-success" invisible="state != 'in_progress'"/>
+                    <button name="action_cancel" type="object" string="❌ Annuler" class="btn-outline-danger" invisible="state in ('done', 'cancelled')"/>
+                    <button name="action_draft" type="object" string="↩️ Brouillon" class="btn-outline-secondary" invisible="state in ('draft', 'done')" groups="potting_management.group_potting_manager" confirm="Êtes-vous sûr de vouloir remettre cette commande en brouillon ? Les OT associés seront également remis en brouillon."/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,in_progress,done"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_confirmations_vente" type="object" class="oe_stat_button" icon="fa-file-text-o">
-                            <field name="confirmation_vente_count" widget="statinfo" string="CV"/>
-                        </button>
                         <button name="action_view_transit_orders" type="object" class="oe_stat_button" icon="fa-truck">
                             <field name="transit_order_count" widget="statinfo" string="Ordres de Transit"/>
                         </button>
@@ -80,14 +77,6 @@
                         </group>
                         <group string="📋 Contrat">
                             <field name="contract_number"/>
-                            <field name="confirmation_vente_ids" 
-                                   widget="many2many_tags"
-                                   options="{'no_create': True, 'color_field': 'state'}"
-                                   readonly="state not in ('draft', 'confirmed')"/>
-                            <field name="cv_references" readonly="1" invisible="not confirmation_vente_ids"/>
-                            <field name="cv_tonnage_restant_total" readonly="1" 
-                                   invisible="not confirmation_vente_ids"
-                                   decoration-danger="cv_tonnage_restant_total &lt;= 0"/>
                             <field name="user_id" widget="many2one_avatar_user"/>
                             <label for="contract_tonnage"/>
                             <div class="o_row">

@@ -14,9 +14,12 @@
                   sample="1">
                 <field name="name" decoration-bf="1"/>
                 <field name="company_id" column_invisible="1"/>
+                <field name="bl_external_number" optional="show" string="N° BL Maritime"/>
                 <field name="transit_order_id"/>
                 <field name="customer_id"/>
                 <field name="consignee_id"/>
+                <field name="shipping_company_id" optional="show"/>
+                <field name="container_count" optional="show"/>
                 <field name="product_type" widget="badge" 
                        decoration-info="product_type == 'cocoa_mass'"
                        decoration-warning="product_type == 'cocoa_butter'"
@@ -63,6 +66,12 @@
                         <button name="action_view_lots" type="object" class="oe_stat_button" icon="fa-cubes">
                             <field name="lot_count" widget="statinfo" string="Lots"/>
                         </button>
+                        <button name="action_view_containers" type="object" class="oe_stat_button" icon="fa-truck">
+                            <field name="container_count" widget="statinfo" string="Conteneurs"/>
+                        </button>
+                        <button name="action_view_attachments" type="object" class="oe_stat_button" icon="fa-paperclip">
+                            <field name="bl_attachment_count" widget="statinfo" string="Documents"/>
+                        </button>
                     </div>
                     <widget name="web_ribbon" title="Livré" bg_color="bg-success" invisible="state != 'delivered'"/>
                     <widget name="web_ribbon" title="Annulé" bg_color="bg-danger" invisible="state != 'cancelled'"/>
@@ -83,17 +92,25 @@
                             <field name="customer_id" readonly="1"/>
                             <field name="consignee_id" readonly="1"/>
                         </group>
-                        <group string="📦 Produit">
-                            <field name="product_type" readonly="1"/>
-                            <field name="product_id" readonly="1"/>
-                            <field name="total_tonnage" widget="float" class="fw-bold text-primary"/>
-                            <field name="total_units" class="fw-bold"/>
+                        <group string="🚢 Bill of Lading (Compagnie maritime)">
+                            <field name="bl_external_number" placeholder="Ex: MSCUXXX123456"/>
+                            <field name="shipping_company_id" options="{'no_create': True}"/>
+                            <field name="vessel_id" readonly="1"/>
+                            <field name="date_shipment"/>
+                            <field name="port_of_loading"/>
+                            <field name="port_of_discharge"/>
+                        </group>
+                        <group string="📦 Cargaison">
+                            <field name="shipped_weight"/>
+                            <field name="number_of_bags"/>
+                            <field name="total_tonnage" widget="float" class="fw-bold text-primary" readonly="1"/>
+                            <field name="total_units" class="fw-bold" readonly="1"/>
                         </group>
                     </group>
                     <group>
                         <group string="🚚 Livraison">
                             <field name="date_delivery"/>
-                            <field name="bl_number"/>
+                            <field name="bl_number" string="Référence interne"/>
                             <field name="bl_date"/>
                             <field name="contract_number"/>
                             <field name="destination"/>
@@ -108,7 +125,20 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Lots" name="lots">
+                        <page string="📦 Conteneurs" name="containers">
+                            <field name="container_ids" readonly="state != 'draft'">
+                                <tree string="Conteneurs" create="0" delete="0">
+                                    <field name="name"/>
+                                    <field name="container_type"/>
+                                    <field name="seal_number"/>
+                                    <field name="shipping_company_id"/>
+                                    <field name="total_tonnage" sum="Total"/>
+                                    <field name="lot_count"/>
+                                    <field name="state" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="📄 Lots" name="lots">
                             <field name="lot_ids" readonly="state != 'draft'"
                                    domain="[('transit_order_id', '=', transit_order_id)]"
                                    widget="many2many_tags" invisible="1"/>
@@ -130,6 +160,18 @@
                         </page>
                         <page string="Notes" name="notes">
                             <field name="note" placeholder="Ajoutez des notes ici..."/>
+                        </page>
+                        <page string="📎 Documents BL" name="documents">
+                            <group>
+                                <group>
+                                    <field name="bl_attachment_ids" widget="many2many_binary" 
+                                           string="Scans du BL original (PDF)"/>
+                                </group>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                <strong>💡 Conseil:</strong> Téléchargez ici les scans PDF du Bill of Lading 
+                                original reçu de la compagnie maritime.
+                            </div>
                         </page>
                         <page string="Historique" name="history">
                             <group>
@@ -212,9 +254,11 @@
         <field name="arch" type="xml">
             <search string="Bons de Livraison">
                 <field name="name"/>
+                <field name="bl_external_number" string="N° BL Maritime"/>
                 <field name="transit_order_id"/>
                 <field name="customer_id"/>
                 <field name="consignee_id"/>
+                <field name="shipping_company_id"/>
                 <field name="bl_number"/>
                 <field name="destination"/>
                 <separator/>

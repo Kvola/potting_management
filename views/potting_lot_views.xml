@@ -58,11 +58,11 @@
         <field name="arch" type="xml">
             <form string="Lot">
                 <header>
-                    <button name="action_start_production" type="object" string="Démarrer production" invisible="state != 'draft'" groups="potting_management.group_potting_ceo_agent"/>
-                    <button name="action_mark_ready" type="object" string="Prêt pour empotage" invisible="state != 'in_production' or not is_full" class="btn-primary" groups="potting_management.group_potting_ceo_agent"/>
-                    <button name="action_force_ready" type="object" string="Forcer prêt" invisible="state != 'in_production' or is_full" groups="potting_management.group_potting_manager" confirm="Forcer ce lot comme prêt alors qu'il n'est pas plein ?"/>
-                    <button name="action_pot" type="object" string="Empoter" invisible="state != 'ready'" class="btn-success" groups="potting_management.group_potting_ceo_agent"/>
-                    <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state in ('draft', 'potted')" groups="potting_management.group_potting_manager" confirm="Êtes-vous sûr de vouloir remettre ce lot en brouillon ?"/>
+                    <button name="action_start_production" type="object" string="🏭 Démarrer production" class="btn-info" invisible="state != 'draft'" groups="potting_management.group_potting_ceo_agent"/>
+                    <button name="action_mark_ready" type="object" string="✅ Prêt pour empotage" invisible="state != 'in_production' or not is_full" class="btn-primary" groups="potting_management.group_potting_ceo_agent"/>
+                    <button name="action_force_ready" type="object" string="⚠️ Forcer prêt" class="btn-warning" invisible="state != 'in_production' or is_full" groups="potting_management.group_potting_manager" confirm="Forcer ce lot comme prêt alors qu'il n'est pas plein ?"/>
+                    <button name="action_pot" type="object" string="📦 Empoter" invisible="state != 'ready'" class="btn-success" groups="potting_management.group_potting_ceo_agent"/>
+                    <button name="action_draft" type="object" string="↩️ Brouillon" class="btn-outline-secondary" invisible="state in ('draft', 'potted')" groups="potting_management.group_potting_manager" confirm="Êtes-vous sûr de vouloir remettre ce lot en brouillon ?"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,in_production,ready,potted"/>
                 </header>
                 <sheet>

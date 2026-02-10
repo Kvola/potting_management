@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- ================================================================
+         DASHBOARD OPÉRATIONS - Production, OT, Lots
+         Unifie: OT Manager, CEO Agent, Shipping dashboards
+         ================================================================ -->
+    <t t-name="potting_management.OperationsDashboard">
+        <div class="o_potting_dashboard">
+            <!-- Header -->
+            <div class="dashboard-header mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">
+                            <i class="fa fa-industry me-2 text-primary"/>Opérations
+                        </h2>
+                        <small class="text-muted">Production, OT et Lots</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" t-on-click="addQuickProduction">
+                            <i class="fa fa-bolt me-1"/>Production rapide
+                        </button>
+                        <button class="btn btn-success btn-sm" t-on-click="createDeliveryNote">
+                            <i class="fa fa-truck me-1"/>Créer BL
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" t-on-click="createOT">
+                            <i class="fa fa-plus me-1"/>Nouvel OT
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== RÉSUMÉ PRODUCTION ========== -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-gradient-primary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <small class="opacity-75">Production totale</small>
+                                    <h3 class="mb-0"><t t-esc="formatNumber(state.production.total, 0)"/> T</h3>
+                                </div>
+                                <i class="fa fa-cubes fa-2x opacity-50"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-gradient-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <small class="opacity-75">Tonnage empoté</small>
+                                    <h3 class="mb-0"><t t-esc="formatNumber(state.production.potted, 0)"/> T</h3>
+                                </div>
+                                <i class="fa fa-archive fa-2x opacity-50"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-gradient-warning text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <small class="opacity-75">Production du jour</small>
+                                    <h3 class="mb-0"><t t-esc="formatNumber(state.production.today, 2)"/> T</h3>
+                                </div>
+                                <i class="fa fa-calendar-check-o fa-2x opacity-50"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== ORDRES DE TRANSIT ========== -->
+            <div class="card mb-4">
+                <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                    <strong><i class="fa fa-truck me-2"/>Ordres de Transit</strong>
+                    <button class="btn btn-sm btn-link" t-on-click="openAllOT">Voir tout →</button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6 col-md-2">
+                            <div class="text-center p-2 border rounded cursor-pointer" 
+                                 t-on-click="() => this.openOTs('draft')">
+                                <div class="fs-4 fw-bold text-secondary"><t t-esc="state.ot.draft"/></div>
+                                <small class="text-muted">Brouillon</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="text-center p-2 border rounded cursor-pointer border-info" 
+                                 t-on-click="() => this.openOTs('confirmed')">
+                                <div class="fs-4 fw-bold text-info"><t t-esc="state.ot.confirmed"/></div>
+                                <small class="text-muted">Confirmé</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="text-center p-2 border rounded cursor-pointer border-primary" 
+                                 t-on-click="() => this.openOTs('lots_generated')">
+                                <div class="fs-4 fw-bold text-primary"><t t-esc="state.ot.lots_generated"/></div>
+                                <small class="text-muted">Lots générés</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="text-center p-2 border rounded cursor-pointer border-warning" 
+                                 t-on-click="() => this.openOTs('in_progress')">
+                                <div class="fs-4 fw-bold text-warning"><t t-esc="state.ot.in_progress"/></div>
+                                <small class="text-muted">En cours</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="text-center p-2 border rounded cursor-pointer border-success" 
+                                 t-on-click="() => this.openOTs('ready_validation')">
+                                <div class="fs-4 fw-bold text-success"><t t-esc="state.ot.ready_validation"/></div>
+                                <small class="text-muted">À valider</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="text-center p-2 border rounded cursor-pointer" 
+                                 t-on-click="() => this.openOTs('done')">
+                                <div class="fs-4 fw-bold"><t t-esc="state.ot.done"/></div>
+                                <small class="text-muted">Terminé</small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Barre de progression OT -->
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-secondary" t-attf-style="width: #{state.ot_percent.draft}%" title="Brouillon"/>
+                        <div class="progress-bar bg-info" t-attf-style="width: #{state.ot_percent.confirmed}%" title="Confirmé"/>
+                        <div class="progress-bar bg-primary" t-attf-style="width: #{state.ot_percent.lots_generated}%" title="Lots générés"/>
+                        <div class="progress-bar bg-warning" t-attf-style="width: #{state.ot_percent.in_progress}%" title="En cours"/>
+                        <div class="progress-bar bg-success" t-attf-style="width: #{state.ot_percent.done}%" title="Terminé"/>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== LOTS ========== -->
+            <div class="card mb-4">
+                <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                    <strong><i class="fa fa-cubes me-2"/>Lots</strong>
+                    <button class="btn btn-sm btn-link" t-on-click="openAllLots">Voir tout →</button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
+                            <div class="text-center p-3 border rounded cursor-pointer" 
+                                 t-on-click="() => this.openLots('draft')">
+                                <div class="fs-3 fw-bold text-secondary"><t t-esc="state.lots.draft"/></div>
+                                <small class="text-muted">Brouillon</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-center p-3 border rounded cursor-pointer border-warning" 
+                                 t-on-click="() => this.openLots('in_production')">
+                                <div class="fs-3 fw-bold text-warning"><t t-esc="state.lots.in_production"/></div>
+                                <small class="text-muted">En production</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-center p-3 border rounded cursor-pointer border-info" 
+                                 t-on-click="() => this.openLots('produced')">
+                                <div class="fs-3 fw-bold text-info"><t t-esc="state.lots.produced"/></div>
+                                <small class="text-muted">Produit</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-center p-3 border rounded cursor-pointer border-success" 
+                                 t-on-click="() => this.openLots('potted')">
+                                <div class="fs-3 fw-bold text-success"><t t-esc="state.lots.potted"/></div>
+                                <small class="text-muted">Empoté</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== FORMULES (FO) ========== -->
+            <div class="card">
+                <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                    <strong><i class="fa fa-file-text me-2"/>Formules (FO)</strong>
+                    <button class="btn btn-sm btn-link" t-on-click="openAllFormules">Voir tout →</button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-2 border rounded">
+                                <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                                    <i class="fa fa-file-text fa-lg text-primary"/>
+                                </div>
+                                <div>
+                                    <div class="fs-4 fw-bold"><t t-esc="state.formules.total"/></div>
+                                    <small class="text-muted">Formules actives</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-2 border rounded border-success cursor-pointer"
+                                 t-on-click="openFormulesPaid">
+                                <div class="bg-success bg-opacity-10 p-2 rounded me-3">
+                                    <i class="fa fa-check-circle fa-lg text-success"/>
+                                </div>
+                                <div>
+                                    <div class="fs-4 fw-bold text-success"><t t-esc="state.formules.paid"/></div>
+                                    <small class="text-muted">Entièrement payées</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-2 border rounded border-warning cursor-pointer"
+                                 t-on-click="openFormulesUnpaid">
+                                <div class="bg-warning bg-opacity-10 p-2 rounded me-3">
+                                    <i class="fa fa-clock-o fa-lg text-warning"/>
+                                </div>
+                                <div>
+                                    <div class="fs-4 fw-bold text-warning"><t t-esc="state.formules.unpaid"/></div>
+                                    <small class="text-muted">En attente paiement</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

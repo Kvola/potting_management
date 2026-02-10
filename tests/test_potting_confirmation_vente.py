@@ -63,12 +63,10 @@ class TestPottingConfirmationVente(TransactionCase):
         self.assertEqual(cv.state, 'draft')
         self.assertIn('CV/', cv.name)
     
-    def test_02_create_cv_with_destination(self):
-        """Test création avec destination"""
-        country_fr = self.env['res.country'].search([('code', '=', 'FR')], limit=1)
-        
+    def test_02_create_cv_complete(self):
+        """Test création CV complète"""
         cv = self.env['potting.confirmation.vente'].create({
-            'reference_ccc': 'CV-DEST-001',
+            'reference_ccc': 'CV-COMPLETE-001',
             'campaign_id': self.campaign.id,
             'date_emission': date.today(),
             'date_start': date.today(),
@@ -76,13 +74,10 @@ class TestPottingConfirmationVente(TransactionCase):
             'tonnage_autorise': 300.0,
             'prix_tonnage': 1600000,
             'product_type': 'cocoa_mass',
-            'destination_country_id': country_fr.id if country_fr else False,
-            'destination_port': 'Le Havre',
         })
         
         self.assertTrue(cv.id)
-        if country_fr:
-            self.assertEqual(cv.destination_country_id.code, 'FR')
+        self.assertEqual(cv.state, 'draft')
     
     # =========================================================================
     # TESTS DE CONTRAINTES

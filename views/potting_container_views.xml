@@ -10,6 +10,7 @@
                   decoration-warning="state == 'loading'" 
                   decoration-primary="state == 'loaded'" 
                   decoration-success="state == 'shipped'"
+                  decoration-muted="state == 'delivered'"
                   multi_edit="1"
                   sample="1">
                 <field name="name" decoration-bf="1"/>
@@ -18,9 +19,11 @@
                        decoration-primary="container_type == '40'"
                        decoration-success="container_type == '40hc'"/>
                 <field name="seal_number" optional="show"/>
+                <field name="shipping_company_id" optional="show"/>
                 <field name="lot_count" string="Lots"/>
                 <field name="total_tonnage" sum="Total" decoration-bf="1" class="text-primary"/>
                 <field name="vessel_id" string="Navire" optional="show"/>
+                <field name="voyage_count" string="Voyages" optional="show"/>
                 <field name="booking_number" optional="hide"/>
                 <field name="port_loading" optional="show"/>
                 <field name="port_discharge" optional="show"/>
@@ -30,7 +33,8 @@
                        decoration-info="state == 'available'" 
                        decoration-warning="state == 'loading'" 
                        decoration-primary="state == 'loaded'" 
-                       decoration-success="state == 'shipped'"/>
+                       decoration-success="state == 'shipped'"
+                       decoration-muted="state == 'delivered'"/>
             </tree>
         </field>
     </record>
@@ -44,8 +48,11 @@
                 <header>
                     <button name="action_start_loading" type="object" string="Commencer chargement" invisible="state != 'available'" class="btn-primary"/>
                     <button name="action_finish_loading" type="object" string="Terminer chargement" invisible="state != 'loading'" class="btn-primary"/>
+                    <button name="action_reopen" type="object" string="Réouvrir" invisible="state != 'loaded'" class="btn-secondary"/>
                     <button name="action_ship" type="object" string="Expédier" invisible="state != 'loaded'" class="btn-success"/>
-                    <field name="state" widget="statusbar" statusbar_visible="available,loading,loaded,shipped"/>
+                    <button name="action_mark_delivered" type="object" string="Confirmer livraison" invisible="state != 'shipped'" class="btn-info"/>
+                    <button name="action_release" type="object" string="Libérer pour nouveau voyage" invisible="state != 'delivered'" class="btn-warning" confirm="Voulez-vous libérer ce conteneur pour un nouveau voyage ? L'historique sera conservé."/>
+                    <field name="state" widget="statusbar" statusbar_visible="available,loading,loaded,shipped,delivered"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -57,6 +64,7 @@
                         </button>
                     </div>
                     <widget name="web_ribbon" title="Expédié" bg_color="bg-success" invisible="state != 'shipped'"/>
+                    <widget name="web_ribbon" title="Livré" bg_color="bg-secondary" invisible="state != 'delivered'"/>
                     <widget name="web_ribbon" title="Chargé" bg_color="bg-primary" invisible="state != 'loaded'"/>
                     <div class="oe_title">
                         <label for="name" string="Numéro de conteneur"/>
@@ -75,12 +83,14 @@
                         <group string="⚖️ Chargement">
                             <field name="lot_count" readonly="1"/>
                             <field name="total_tonnage" widget="float" class="fw-bold text-primary" readonly="1"/>
+                            <field name="voyage_count" readonly="1"/>
                             <field name="date_potting" widget="date"/>
                         </group>
                     </group>
                     <group>
                         <group string="🚢 Transport">
-                            <field name="vessel_id" options="{'no_create_edit': True}"/>
+                            <field name="shipping_company_id" options="{'no_create_edit': True}"/>
+                            <field name="vessel_id" options="{'no_create_edit': True}" domain="[('shipping_company_id', '=', shipping_company_id)]"/>
                             <field name="booking_number" placeholder="N° Booking..."/>
                             <field name="date_departure" widget="date"/>
                         </group>
@@ -147,7 +157,7 @@
                                         <i class="fa fa-archive me-1 text-primary"/> <field name="name"/>
                                     </strong>
                                 </div>
-                                <field name="state" widget="label_selection" options="{'classes': {'available': 'info', 'loading': 'warning', 'loaded': 'primary', 'shipped': 'success'}}"/>
+                                <field name="state" widget="label_selection" options="{'classes': {'available': 'info', 'loading': 'warning', 'loaded': 'primary', 'shipped': 'success', 'delivered': 'secondary'}}"/>
                             </div>
                             <div class="o_kanban_record_body">
                                 <div class="mb-1">
@@ -183,6 +193,7 @@
                 <field name="name"/>
                 <field name="seal_number"/>
                 <field name="vessel_id"/>
+                <field name="shipping_company_id"/>
                 <field name="booking_number"/>
                 <field name="port_loading"/>
                 <field name="port_discharge"/>
@@ -191,12 +202,14 @@
                 <filter string="En chargement" name="loading" domain="[('state', '=', 'loading')]"/>
                 <filter string="Chargé" name="loaded" domain="[('state', '=', 'loaded')]"/>
                 <filter string="Expédié" name="shipped" domain="[('state', '=', 'shipped')]"/>
+                <filter string="Livré" name="delivered" domain="[('state', '=', 'delivered')]"/>
                 <separator/>
                 <filter string="20'" name="20ft" domain="[('container_type', '=', '20')]"/>
                 <filter string="40'" name="40ft" domain="[('container_type', 'in', ('40', '40hc'))]"/>
                 <group expand="0" string="Grouper par">
                     <filter string="Type" name="type" context="{'group_by': 'container_type'}"/>
                     <filter string="Navire" name="vessel" context="{'group_by': 'vessel_id'}"/>
+                    <filter string="Compagnie" name="company" context="{'group_by': 'shipping_company_id'}"/>
                     <filter string="Port déchargement" name="pod" context="{'group_by': 'port_discharge'}"/>
                     <filter string="Date départ" name="departure" context="{'group_by': 'date_departure'}"/>
                     <filter string="État" name="state" context="{'group_by': 'state'}"/>

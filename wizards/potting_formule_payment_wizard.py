@@ -47,15 +47,15 @@ class PottingFormulePaymentWizard(models.TransientModel):
     )
     
     # =========================================================================
-    # CHAMPS - TYPE DE PAIEMENT
+    # CHAMPS - TYPE DE PAIEMENT (simplifié - paiement unique aux producteurs)
     # =========================================================================
     
     payment_type = fields.Selection([
-        ('avant_vente', 'Paiement Avant-Vente'),
-        ('apres_vente', 'Paiement Après-Vente'),
+        ('avant_vente', 'Paiement Producteurs'),
     ], string="Type de paiement",
        required=True,
-       help="Avant-vente: avance avant commercialisation | Après-vente: solde après vente OT"
+       default='avant_vente',
+       help="Paiement aux producteurs (100% du prix bord champ)"
     )
     
     # =========================================================================
@@ -63,27 +63,14 @@ class PottingFormulePaymentWizard(models.TransientModel):
     # =========================================================================
     
     avant_vente_paye = fields.Boolean(
-        string="Avant-vente déjà payé",
+        string="Producteurs déjà payés",
         related='formule_id.avant_vente_paye',
         readonly=True
     )
     
-    apres_vente_paye = fields.Boolean(
-        string="Après-vente déjà payé",
-        related='formule_id.apres_vente_paye',
-        readonly=True
-    )
-    
     montant_avant_vente = fields.Monetary(
-        string="Montant avant-vente",
-        related='formule_id.montant_avant_vente',
-        readonly=True,
-        currency_field='currency_id'
-    )
-    
-    montant_apres_vente = fields.Monetary(
-        string="Montant après-vente",
-        related='formule_id.montant_apres_vente',
+        string="Montant producteurs",
+        related='formule_id.montant_net',  # Montant total = montant net (100%)
         readonly=True,
         currency_field='currency_id'
     )
@@ -196,22 +183,17 @@ class PottingFormulePaymentWizard(models.TransientModel):
     def _onchange_formule(self):
         """Initialiser les valeurs depuis la formule"""
         if self.formule_id:
-            # Déterminer le type de paiement par défaut
+            # Paiement unique aux producteurs (100%)
             if not self.formule_id.avant_vente_paye:
                 self.payment_type = 'avant_vente'
-                self.amount = self.formule_id.montant_avant_vente
-            elif not self.formule_id.apres_vente_paye:
-                self.payment_type = 'apres_vente'
-                self.amount = self.formule_id.montant_apres_vente
+                self.amount = self.formule_id.montant_net  # Montant total
     
     @api.onchange('payment_type')
     def _onchange_payment_type(self):
         """Mettre à jour le montant selon le type de paiement"""
         if self.formule_id and self.payment_type:
-            if self.payment_type == 'avant_vente':
-                self.amount = self.formule_id.montant_avant_vente
-            else:
-                self.amount = self.formule_id.montant_apres_vente
+            # Toujours montant total (100%)
+            self.amount = self.formule_id.montant_net
     
     @api.onchange('bank_id')
     def _onchange_bank_id(self):
@@ -246,15 +228,7 @@ class PottingFormulePaymentWizard(models.TransientModel):
         for wizard in self:
             if wizard.payment_type == 'avant_vente' and wizard.formule_id.avant_vente_paye:
                 raise ValidationError(_(
-                    "Le paiement avant-vente a déjà été effectué pour cette formule."
-                ))
-            if wizard.payment_type == 'apres_vente' and wizard.formule_id.apres_vente_paye:
-                raise ValidationError(_(
-                    "Le paiement après-vente a déjà été effectué pour cette formule."
-                ))
-            if wizard.payment_type == 'apres_vente' and not wizard.formule_id.avant_vente_paye:
-                raise ValidationError(_(
-                    "Le paiement avant-vente doit être effectué avant le paiement après-vente."
+                    "Le paiement aux producteurs a déjà été effectué pour cette formule."
                 ))
 
     # =========================================================================
@@ -265,15 +239,7 @@ class PottingFormulePaymentWizard(models.TransientModel):
         """Créer la demande de paiement avec le chèque"""
         self.ensure_one()
         
-        # Vérifier que le paiement après-vente a une facture client OT
-        if self.payment_type == 'apres_vente':
-            if not self.formule_id.transit_order_id:
-                raise UserError(_(
-                    "La formule doit être liée à un Ordre de Transit pour le paiement après-vente."
-                ))
-            # Optionnel: vérifier qu'une facture client existe pour l'OT
-            # if not self.formule_id.transit_order_id.invoice_ids:
-            #     raise UserError(_("Une facture client doit être créée pour l'OT avant le paiement après-vente."))
+        # Note: Plus de vérification après-vente car le paiement est unique
         
         # Créer ou récupérer la demande de paiement
         if self.create_new_request or not self.existing_payment_request_id:
@@ -388,7 +354,7 @@ class PottingFormulePaymentWizard(models.TransientModel):
             'check_date': self.check_date,
             'check_number': self.check_number,
             'number_generation_method': 'manual',
-            'memo': _("Formule %s - %s") % (self.formule_id.name, payment_type_label),
+            'memo': _("Formule %s - Paiement Producteurs") % self.formule_id.name,
         }
         
         check = self.env['payment.request.check'].create(check_vals)
@@ -396,11 +362,7 @@ class PottingFormulePaymentWizard(models.TransientModel):
     
     def _link_payment_to_formule(self, payment_request):
         """Lier la demande de paiement à la formule"""
-        if self.payment_type == 'avant_vente':
-            self.formule_id.write({
-                'payment_request_avant_vente_id': payment_request.id,
-            })
-        else:
-            self.formule_id.write({
-                'payment_request_apres_vente_id': payment_request.id,
-            })
+        # Paiement unique aux producteurs
+        self.formule_id.write({
+            'payment_request_avant_vente_id': payment_request.id,
+        })
