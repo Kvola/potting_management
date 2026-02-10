@@ -694,9 +694,11 @@ class ResConfigSettings(models.TransientModel):
     def _compute_current_campaign_id(self):
         """Calcule la campagne actuellement en cours."""
         current_campaign = self.env['potting.campaign'].get_current_campaign()
+        ICP = self.env['ir.config_parameter'].sudo()
+        official_price = float(ICP.get_param('potting_management.official_cocoa_price', '0') or 0)
         for record in self:
             record.potting_current_campaign_id = current_campaign.id if current_campaign else False
-            record.potting_current_campaign_price = current_campaign.official_cocoa_price if current_campaign else 0.0
+            record.potting_current_campaign_price = official_price
 
     @api.model
     def get_default_cc_partners(self):
