@@ -1486,12 +1486,40 @@ class PottingTransitOrder(models.Model):
             'state': 'sold',
         })
         
-        self.message_post(
-            body=_("OT vendu par %s") % self.env.user.name,
-            subject=_("OT Vendu"),
-            subtype_xmlid='mail.mt_comment'
-        )
-        return True
+        # Créer automatiquement la facture client si pas encore créée
+        invoice_action = False
+        if not self.has_customer_invoice and self.remaining_to_invoice > 0:
+            try:
+                invoice_action = self._create_invoice(tonnage=self.remaining_to_invoice)
+                self.message_post(
+                    body=_(
+                        "💰 OT vendu par %s\n\n"
+                        "✅ Facture client créée automatiquement en %s (devise du client).\n"
+                        "La conversion en XOF sera faite automatiquement pour la comptabilité."
+                    ) % (self.env.user.name, self.currency_id.name if self.currency_id else 'devise par défaut'),
+                    subject=_("OT Vendu - Facture créée"),
+                    subtype_xmlid='mail.mt_comment'
+                )
+            except Exception as e:
+                # Si la création de facture échoue, continuer mais avertir
+                self.message_post(
+                    body=_(
+                        "💰 OT vendu par %s\n\n"
+                        "⚠️ La facture client n'a pas pu être créée automatiquement:\n%s\n\n"
+                        "Veuillez créer la facture manuellement."
+                    ) % (self.env.user.name, str(e)),
+                    subject=_("OT Vendu - Facture à créer"),
+                    subtype_xmlid='mail.mt_comment'
+                )
+        else:
+            self.message_post(
+                body=_("💰 OT vendu par %s") % self.env.user.name,
+                subject=_("OT Vendu"),
+                subtype_xmlid='mail.mt_comment'
+            )
+        
+        # Retourner l'action de la facture si créée, sinon True
+        return invoice_action if invoice_action else True
     
     def action_send_to_customer(self):
         """Marquer l'OT comme envoyé au client.
@@ -1991,9 +2019,14 @@ class PottingTransitOrder(models.Model):
             ref = f"OT {self.name}"
         
         # Préparer les valeurs de la facture
+        # Utiliser la devise du client (généralement EUR) pour la facture client
+        # Cela permet la conversion automatique en XOF (FCFA) pour la comptabilité locale
+        customer_currency = self.currency_id  # Devise du contrat client (EUR généralement)
+        
         invoice_vals = {
             'move_type': 'out_invoice',
             'partner_id': self.customer_id.id,
+            'currency_id': customer_currency.id if customer_currency else False,
             'invoice_date': fields.Date.context_today(self),
             'invoice_origin': origin,
             'ref': ref,
