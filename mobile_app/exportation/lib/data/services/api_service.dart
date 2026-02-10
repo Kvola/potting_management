@@ -190,20 +190,6 @@ class ApiService {
     int limit = 50,
     bool forceRefresh = false,
   }) async {
-    final cacheKey = 'unsold_transit_orders_${productType ?? 'all'}_${customerId ?? 'all'}';
-
-    // Vérifier le cache si pas de refresh forcé
-    if (!forceRefresh) {
-      final cached = await _cacheManager.get<Map<String, dynamic>>(cacheKey);
-      if (cached != null) {
-        try {
-          return UnsoldTransitOrdersResponse.fromJson(cached, null);
-        } catch (_) {
-          // Cache invalide, ignorer
-        }
-      }
-    }
-
     try {
       final queryParams = <String, dynamic>{
         'limit': limit.toString(),
@@ -227,9 +213,6 @@ class ApiService {
         data['data'] as Map<String, dynamic>,
         data['meta'] as Map<String, dynamic>?,
       );
-
-      // Mettre en cache
-      await _cacheManager.set(cacheKey, result.toJson());
 
       return result;
     } catch (e) {

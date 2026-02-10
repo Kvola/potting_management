@@ -67,11 +67,11 @@
                             confirm="Voulez-vous valider cette formule ? Elle sera prête pour le paiement."
                             groups="potting_management.group_potting_formule_manager,potting_management.group_potting_manager"/>
                     <button name="action_create_payment_request_avant_vente" type="object" 
-                            string="💳 Payer Producteurs" 
+                            string="💳 Premier paiement parafiscalité" 
                             class="btn-success" 
                             invisible="state != 'validated' or avant_vente_paye"
                             groups="potting_management.group_potting_accountant,potting_management.group_potting_formule_manager,potting_management.group_potting_manager"
-                            title="Payer les producteurs (100% du prix bord champ)"/>
+                            title="Premier paiement parafiscalité (Redevances CCC, FIMR, Sacherie, Taxe d'enregistrement)"/>
                     <!-- Bouton Paiement Après-vente supprimé - Non conforme aux pratiques CI -->
                     <button name="action_sync_payment_status" type="object" 
                             string="🔄 Synchroniser paiements" 
@@ -370,7 +370,7 @@
                             </div>
                             
                             <group col="2">
-                                <group string="🟢 Paiement Producteurs (100%)">
+                                <group string="🟢 Premier paiement parafiscalité (100%)">
                                     <div role="status"
                                          t-attf-class="alert mb-2 #{avant_vente_paye and 'alert-success' or 'alert-secondary'}">
                                         <field name="avant_vente_paye" invisible="1"/>
@@ -392,10 +392,10 @@
                                            invisible="not payment_request_avant_vente_id"
                                            string="Demande associée"/>
                                 </group>
-                                <group string="ℹ️ Informations DUS">
-                                    <div class="alert alert-info mb-2">
-                                        <i class="fa fa-info-circle"/> Le DUS (Droit Unique de Sortie) est géré 
-                                        directement sur l'Ordre de Transit après la vente.
+                                <group string="🟠 Second paiement parafiscalité (DUS)">
+                                    <div class="alert alert-warning mb-2">
+                                        <i class="fa fa-info-circle"/> Le DUS (Droit Unique de Sortie) est payé 
+                                        après la vente, directement sur l'Ordre de Transit.
                                     </div>
                                 </group>
                             </group>
