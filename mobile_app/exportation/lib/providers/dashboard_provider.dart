@@ -120,3 +120,115 @@ final deliveryStatusProvider = Provider<DeliveryStatusStats?>((ref) {
 final topCustomersProvider = Provider<List<TopCustomer>>((ref) {
   return ref.watch(dashboardProvider).dashboard?.topCustomers ?? [];
 });
+
+// ==================== OTS NON VENDUS ====================
+
+/// État des OTs non vendus
+class UnsoldTransitOrdersState {
+  final bool isLoading;
+  final bool isRefreshing;
+  final UnsoldTransitOrdersResponse? data;
+  final String? errorMessage;
+  final DateTime? lastUpdate;
+
+  const UnsoldTransitOrdersState({
+    this.isLoading = false,
+    this.isRefreshing = false,
+    this.data,
+    this.errorMessage,
+    this.lastUpdate,
+  });
+
+  UnsoldTransitOrdersState copyWith({
+    bool? isLoading,
+    bool? isRefreshing,
+    UnsoldTransitOrdersResponse? data,
+    String? errorMessage,
+    DateTime? lastUpdate,
+  }) {
+    return UnsoldTransitOrdersState(
+      isLoading: isLoading ?? this.isLoading,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
+      data: data ?? this.data,
+      errorMessage: errorMessage,
+      lastUpdate: lastUpdate ?? this.lastUpdate,
+    );
+  }
+
+  bool get hasData => data != null;
+  bool get hasError => errorMessage != null;
+}
+
+/// Notifier pour les OTs non vendus
+class UnsoldTransitOrdersNotifier extends StateNotifier<UnsoldTransitOrdersState> {
+  final ApiService _apiService;
+
+  UnsoldTransitOrdersNotifier(this._apiService) : super(const UnsoldTransitOrdersState());
+
+  /// Charger les OTs non vendus
+  Future<void> loadUnsoldTransitOrders({
+    String? productType,
+    int? customerId,
+    int limit = 50,
+    bool forceRefresh = false,
+  }) async {
+    if (state.isLoading) return;
+
+    state = state.copyWith(
+      isLoading: !state.hasData,
+      isRefreshing: state.hasData,
+      errorMessage: null,
+    );
+
+    try {
+      final data = await _apiService.getUnsoldTransitOrders(
+        productType: productType,
+        customerId: customerId,
+        limit: limit,
+        forceRefresh: forceRefresh,
+      );
+
+      state = UnsoldTransitOrdersState(
+        data: data,
+        lastUpdate: DateTime.now(),
+      );
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        isRefreshing: false,
+        errorMessage: e.message,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        isRefreshing: false,
+        errorMessage: 'Erreur lors du chargement des OTs non vendus',
+      );
+    }
+  }
+
+  /// Rafraîchir les OTs non vendus
+  Future<void> refresh() async {
+    await loadUnsoldTransitOrders(forceRefresh: true);
+  }
+
+  /// Effacer l'erreur
+  void clearError() {
+    state = state.copyWith(errorMessage: null);
+  }
+}
+
+/// Provider pour les OTs non vendus
+final unsoldTransitOrdersProvider = StateNotifierProvider<UnsoldTransitOrdersNotifier, UnsoldTransitOrdersState>((ref) {
+  return UnsoldTransitOrdersNotifier(ApiService());
+});
+
+/// Provider pour le résumé des OTs non vendus
+final unsoldTransitOrdersSummaryProvider = Provider<UnsoldSummary?>((ref) {
+  return ref.watch(unsoldTransitOrdersProvider).data?.summary;
+});
+
+/// Provider pour la liste des OTs non vendus
+final unsoldTransitOrdersListProvider = Provider<List<UnsoldTransitOrder>>((ref) {
+  return ref.watch(unsoldTransitOrdersProvider).data?.transitOrders ?? [];
+});

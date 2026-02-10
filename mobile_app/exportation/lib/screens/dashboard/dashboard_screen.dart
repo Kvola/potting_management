@@ -8,12 +8,27 @@ import '../../providers/providers.dart';
 import '../../widgets/widgets.dart';
 
 /// Écran du tableau de bord
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Charger les OTs non vendus au démarrage
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(unsoldTransitOrdersProvider.notifier).loadUnsoldTransitOrders();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardProvider);
+    final unsoldState = ref.watch(unsoldTransitOrdersProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -23,18 +38,24 @@ class DashboardScreen extends ConsumerWidget {
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () {
               ref.read(dashboardProvider.notifier).refresh();
+              ref.read(unsoldTransitOrdersProvider.notifier).refresh();
             },
           ),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(dashboardProvider.notifier).refresh(),
-        child: _buildBody(context, ref, dashboardState),
+        onRefresh: () async {
+          await Future.wait([
+            ref.read(dashboardProvider.notifier).refresh(),
+            ref.read(unsoldTransitOrdersProvider.notifier).refresh(),
+          ]);
+        },
+        child: _buildBody(context, dashboardState, unsoldState),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, WidgetRef ref, DashboardState state) {
+  Widget _buildBody(BuildContext context, DashboardState state, UnsoldTransitOrdersState unsoldState) {
     if (state.isLoading && !state.hasData) {
       return const Center(child: LoadingIndicator());
     }
@@ -89,6 +110,10 @@ class DashboardScreen extends ConsumerWidget {
           _buildTopCustomers(context, dashboard.topCustomers),
           const SizedBox(height: 24),
         ],
+
+        // OTs Non Vendus (Vue PDG)
+        _buildUnsoldTransitOrders(context, unsoldState),
+        const SizedBox(height: 24),
 
         // Dernière mise à jour
         if (state.lastUpdate != null)
@@ -510,6 +535,298 @@ class DashboardScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildUnsoldTransitOrders(BuildContext context, UnsoldTransitOrdersState state) {
+    if (state.isLoading && !state.hasData) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Text(
+                'OTs Non Vendus',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              const CircularProgressIndicator(),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final data = state.data;
+    if (data == null || data.transitOrders.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'OTs Non Vendus',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const Icon(Icons.inventory_2_outlined, color: AppColors.success),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Center(
+                child: Text(
+                  'Tous les OTs ont été vendus',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final summary = data.summary;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // En-tête avec résumé
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'OTs Non Vendus',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${summary.totalCount} OT${summary.totalCount > 1 ? 's' : ''}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.warning,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            
+            // Résumé tonnage
+            Row(
+              children: [
+                const Icon(Icons.scale_rounded, size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 6),
+                Text(
+                  '${summary.currentTonnage.toStringAsFixed(1)} / ${summary.totalTonnage.toStringAsFixed(1)} T',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
+                const Spacer(),
+                if (summary.totalValue > 0) ...[
+                  const Icon(Icons.euro_rounded, size: 16, color: AppColors.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatCurrency(summary.totalValue),
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  ),
+                ],
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            
+            // Liste des OTs avec leurs lots
+            ...data.transitOrders.take(5).map((ot) => _buildUnsoldOTItem(context, ot)),
+            
+            // Voir plus si plus de 5
+            if (data.transitOrders.length > 5) ...[
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  '+ ${data.transitOrders.length - 5} autres OTs',
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnsoldOTItem(BuildContext context, UnsoldTransitOrder ot) {
+    Color stateColor;
+    switch (ot.state) {
+      case 'ready_validation':
+        stateColor = AppColors.success;
+        break;
+      case 'in_progress':
+        stateColor = AppColors.primary;
+        break;
+      case 'lots_generated':
+        stateColor = AppColors.secondary;
+        break;
+      default:
+        stateColor = AppColors.textSecondary;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Ligne principale OT
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: stateColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  ot.stateLabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: stateColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  ot.name,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                '${ot.progressPercentage.toStringAsFixed(0)}%',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: _getProgressColor(ot.progressPercentage),
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          
+          // Info client et tonnage
+          Row(
+            children: [
+              const Icon(Icons.business_rounded, size: 14, color: AppColors.textHint),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  ot.customer,
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                '${ot.currentTonnage.toStringAsFixed(1)} / ${ot.tonnage.toStringAsFixed(1)} T',
+                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          
+          // Barre de progression
+          const SizedBox(height: 6),
+          LinearProgressIndicator(
+            value: ot.progressPercentage / 100,
+            backgroundColor: AppColors.border,
+            valueColor: AlwaysStoppedAnimation(_getProgressColor(ot.progressPercentage)),
+          ),
+          
+          // Lots (s'il y en a)
+          if (ot.lots.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: ot.lots.take(4).map((lot) => _buildLotChip(lot)).toList(),
+            ),
+            if (ot.lots.length > 4)
+              Padding(
+                padding: const EdgeInsets.only(left: 4, top: 4),
+                child: Text(
+                  '+${ot.lots.length - 4} lots',
+                  style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                ),
+              ),
+          ],
+          
+          const SizedBox(height: 8),
+          const Divider(height: 1),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLotChip(UnsoldLot lot) {
+    final color = lot.isFull ? AppColors.success : AppColors.textSecondary;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            lot.isFull ? Icons.check_circle : Icons.pending,
+            size: 12,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            lot.name,
+            style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '${lot.progress.toStringAsFixed(0)}%',
+            style: TextStyle(fontSize: 10, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatCurrency(double amount) {
+    if (amount >= 1000000) {
+      return '${(amount / 1000000).toStringAsFixed(1)}M';
+    }
+    if (amount >= 1000) {
+      return '${(amount / 1000).toStringAsFixed(0)}K';
+    }
+    return amount.toStringAsFixed(0);
   }
 
   Widget _buildLastUpdate(BuildContext context, DateTime lastUpdate) {

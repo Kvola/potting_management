@@ -554,6 +554,131 @@ class PottingMobileAPIController(http.Controller):
             }
         )
 
+    @http.route('/api/v1/potting/dashboard/unsold-transit-orders', type='http', auth='none', methods=['GET'], csrf=False, cors='*')
+    @api_exception_handler
+    @rate_limit(max_requests=60, window_seconds=60)
+    @require_auth
+    def api_unsold_transit_orders(self, **kwargs):
+        """
+        Liste des OTs non vendus avec leurs lots - Vue PDG.
+        
+        Retourne les OTs qui ne sont pas encore dans l'état 'sold' ou 'sent_to_customer'
+        avec les informations essentielles pour le PDG.
+        
+        Query params:
+        - product_type: Filtrer par type de produit
+        - customer_id: Filtrer par client
+        - limit: Nombre max (défaut: 50)
+        
+        Returns:
+        {
+            "success": true,
+            "data": {
+                "summary": {...},
+                "transit_orders": [...]
+            }
+        }
+        """
+        user = request.api_user
+        TransitOrder = request.env['potting.transit.order'].sudo()
+        
+        # Domaine pour OTs non vendus (avant sold et sent_to_customer)
+        domain = [
+            ('state', 'not in', ['sold', 'sent_to_customer', 'done', 'cancelled'])
+        ]
+        
+        # Filtres optionnels
+        product_type = kwargs.get('product_type')
+        if product_type and product_type in ['cocoa_mass', 'cocoa_butter', 'cocoa_cake', 'cocoa_powder']:
+            domain.append(('product_type', '=', product_type))
+        
+        customer_id = kwargs.get('customer_id')
+        if customer_id:
+            try:
+                domain.append(('customer_id', '=', int(customer_id)))
+            except (ValueError, TypeError):
+                pass
+        
+        limit = min(int(kwargs.get('limit', 50)), 100)
+        
+        # Récupérer les OTs
+        transit_orders = TransitOrder.search(domain, order='date_created desc', limit=limit)
+        
+        # Calculer le résumé
+        total_tonnage = sum(transit_orders.mapped('tonnage'))
+        current_tonnage = sum(transit_orders.mapped('current_tonnage'))
+        total_value = sum(transit_orders.mapped('total_amount')) if hasattr(transit_orders, 'total_amount') else 0
+        
+        # Statistiques par état
+        by_state = {}
+        for ot in transit_orders:
+            state = ot.state
+            if state not in by_state:
+                by_state[state] = {'count': 0, 'tonnage': 0}
+            by_state[state]['count'] += 1
+            by_state[state]['tonnage'] += ot.tonnage
+        
+        # Formater les OTs avec leurs lots
+        items = []
+        for ot in transit_orders:
+            ot_data = {
+                'id': ot.id,
+                'name': ot.name,
+                'reference': ot.ot_reference or '',
+                'customer': ot.customer_id.name if ot.customer_id else '',
+                'consignee': ot.consignee_id.name if ot.consignee_id else '',
+                'product_type': ot.product_type,
+                'product_type_label': dict(ot._fields['product_type'].selection).get(ot.product_type, ''),
+                'tonnage': round(ot.tonnage, 3),
+                'current_tonnage': round(ot.current_tonnage, 3),
+                'progress_percentage': round(ot.progress_percentage, 1),
+                'state': ot.state,
+                'state_label': dict(ot._fields['state'].selection).get(ot.state, ''),
+                'unit_price': ot.unit_price or 0,
+                'currency': ot.currency_id.name if ot.currency_id else 'EUR',
+                'total_amount': round(ot.total_amount, 2) if hasattr(ot, 'total_amount') else round(ot.tonnage * (ot.unit_price or 0), 2),
+                'taxes_paid': ot.taxes_paid,
+                'formule_state': ot.formule_state if hasattr(ot, 'formule_state') else None,
+                'date_created': ot.date_created.isoformat() if ot.date_created else None,
+                'lot_count': ot.lot_count,
+                'delivery_note_count': len(ot.delivery_note_ids) if hasattr(ot, 'delivery_note_ids') else 0,
+                'lots': []
+            }
+            
+            # Ajouter les lots
+            if ot.lot_ids:
+                for lot in ot.lot_ids[:10]:  # Limiter à 10 lots par OT
+                    ot_data['lots'].append({
+                        'id': lot.id,
+                        'name': lot.name,
+                        'target_tonnage': round(lot.target_tonnage, 3),
+                        'current_tonnage': round(lot.current_tonnage, 3),
+                        'progress': round((lot.current_tonnage / lot.target_tonnage * 100) if lot.target_tonnage else 0, 1),
+                        'state': lot.state,
+                        'state_label': dict(lot._fields['state'].selection).get(lot.state, ''),
+                        'container_number': lot.container_number if hasattr(lot, 'container_number') else '',
+                    })
+            
+            items.append(ot_data)
+        
+        log_api_call('/dashboard/unsold-transit-orders', user_id=user.id, success=True)
+        
+        return api_response(
+            data={
+                'summary': {
+                    'total_count': len(transit_orders),
+                    'total_tonnage': round(total_tonnage, 2),
+                    'current_tonnage': round(current_tonnage, 2),
+                    'total_value': round(total_value, 2),
+                    'by_state': by_state,
+                },
+                'transit_orders': items
+            },
+            meta={
+                'generated_at': datetime.now().isoformat()
+            }
+        )
+
     @http.route('/api/v1/potting/dashboard/orders', type='http', auth='none', methods=['GET'], csrf=False, cors='*')
     @api_exception_handler
     @rate_limit(max_requests=60, window_seconds=60)

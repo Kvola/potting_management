@@ -183,6 +183,63 @@ class ApiService {
     }
   }
 
+  /// Récupérer les OTs non vendus avec leurs lots (Vue PDG)
+  Future<UnsoldTransitOrdersResponse> getUnsoldTransitOrders({
+    String? productType,
+    int? customerId,
+    int limit = 50,
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = 'unsold_transit_orders_${productType ?? 'all'}_${customerId ?? 'all'}';
+
+    // Vérifier le cache si pas de refresh forcé
+    if (!forceRefresh) {
+      final cached = await _cacheManager.get<Map<String, dynamic>>(cacheKey);
+      if (cached != null) {
+        try {
+          return UnsoldTransitOrdersResponse.fromJson(cached, null);
+        } catch (_) {
+          // Cache invalide, ignorer
+        }
+      }
+    }
+
+    try {
+      final queryParams = <String, dynamic>{
+        'limit': limit.toString(),
+      };
+      
+      if (productType != null) queryParams['product_type'] = productType;
+      if (customerId != null) queryParams['customer_id'] = customerId.toString();
+
+      final response = await _httpService.get(
+        AppConfig.unsoldTransitOrdersEndpoint,
+        queryParameters: queryParams,
+      );
+
+      final data = _parseResponse(response.data);
+      
+      if (data['success'] != true) {
+        throw _handleApiError(data);
+      }
+
+      final result = UnsoldTransitOrdersResponse.fromJson(
+        data['data'] as Map<String, dynamic>,
+        data['meta'] as Map<String, dynamic>?,
+      );
+
+      // Mettre en cache
+      await _cacheManager.set(cacheKey, result.toJson());
+
+      return result;
+    } catch (e) {
+      _logger.e('Erreur getUnsoldTransitOrders: $e');
+      
+      if (e is ApiException) rethrow;
+      throw ApiException.serverError(e.toString());
+    }
+  }
+
   // ==================== RAPPORTS ====================
 
   /// Récupérer le résumé du rapport

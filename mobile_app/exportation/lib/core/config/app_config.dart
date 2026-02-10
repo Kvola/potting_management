@@ -102,6 +102,7 @@ class AppConfig {
   // Dashboard
   static const String dashboardEndpoint = '$apiPrefix/dashboard';
   static const String transitOrdersEndpoint = '$apiPrefix/dashboard/transit-orders';
+  static const String unsoldTransitOrdersEndpoint = '$apiPrefix/dashboard/unsold-transit-orders';
   static const String customerOrdersEndpoint = '$apiPrefix/dashboard/orders';
   
   // Rapports
