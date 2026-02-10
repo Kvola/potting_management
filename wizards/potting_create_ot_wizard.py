@@ -224,13 +224,21 @@ class PottingCreateOTWizard(models.TransientModel):
                 "La Formule %s est déjà liée à l'OT %s."
             ) % (self.formule_id.display_name, self.formule_id.transit_order_id.name))
         
+        # Déterminer le type de produit (priorité: wizard > formule)
+        product_type = self.product_type or self.formule_id.product_type
+        if not product_type:
+            raise ValidationError(_(
+                "Le type de produit est obligatoire.\n"
+                "La Formule %s n'a pas de type de produit défini."
+            ) % self.formule_id.name)
+        
         # Créer l'OT
         ot_vals = {
             'formule_id': self.formule_id.id,
             'customer_order_id': self.customer_order_id.id,
             'campaign_id': self.campaign_id.id,
             'consignee_id': self.consignee_id.id,
-            'product_type': self.product_type,
+            'product_type': product_type,
             'product_id': self.product_id.id if self.product_id else False,
             'tonnage': self.tonnage,
             'vessel_id': self.vessel_id.id if self.vessel_id else False,
@@ -252,7 +260,7 @@ class PottingCreateOTWizard(models.TransientModel):
                 ot.name,
                 self.formule_id.name,
                 self.tonnage,
-                dict(self._fields['product_type'].selection).get(self.product_type)
+                dict(self._fields['product_type'].selection).get(product_type)
             ),
             message_type='notification'
         )
@@ -283,13 +291,21 @@ class PottingCreateOTWizard(models.TransientModel):
                 "La Formule %s est déjà liée à l'OT %s."
             ) % (self.formule_id.display_name, self.formule_id.transit_order_id.name))
         
+        # Déterminer le type de produit (priorité: wizard > formule)
+        product_type = self.product_type or self.formule_id.product_type
+        if not product_type:
+            raise ValidationError(_(
+                "Le type de produit est obligatoire.\n"
+                "La Formule %s n'a pas de type de produit défini."
+            ) % self.formule_id.name)
+        
         # Créer l'OT
         ot_vals = {
             'formule_id': self.formule_id.id,
             'customer_order_id': self.customer_order_id.id,
             'campaign_id': self.campaign_id.id,
             'consignee_id': self.consignee_id.id,
-            'product_type': self.product_type,
+            'product_type': product_type,
             'product_id': self.product_id.id if self.product_id else False,
             'tonnage': self.tonnage,
             'vessel_id': self.vessel_id.id if self.vessel_id else False,
@@ -346,13 +362,21 @@ class PottingCreateOTWizard(models.TransientModel):
                 "La Formule %s est déjà liée à l'OT %s."
             ) % (self.formule_id.display_name, self.formule_id.transit_order_id.name))
         
+        # Déterminer le type de produit (priorité: wizard > formule)
+        product_type = self.product_type or self.formule_id.product_type
+        if not product_type:
+            raise ValidationError(_(
+                "Le type de produit est obligatoire.\n"
+                "La Formule %s n'a pas de type de produit défini."
+            ) % self.formule_id.name)
+        
         # Créer l'OT
         ot_vals = {
             'formule_id': self.formule_id.id,
             'customer_order_id': self.customer_order_id.id,
             'campaign_id': self.campaign_id.id,
             'consignee_id': self.consignee_id.id,
-            'product_type': self.product_type,
+            'product_type': product_type,
             'product_id': self.product_id.id if self.product_id else False,
             'tonnage': self.tonnage,
             'vessel_id': self.vessel_id.id if self.vessel_id else False,
