@@ -527,10 +527,26 @@ class PottingDeliveryNote(models.Model):
             note.message_post(body=_("✅ Bon de livraison confirmé par %s.") % self.env.user.name)
 
     def action_deliver(self):
-        """Mark the delivery note as delivered."""
+        """Mark the delivery note as delivered.
+        
+        Requires:
+        - BL must be in 'confirmed' state
+        - Invoice must exist (is_invoiced = True)
+        """
         for note in self:
             if note.state != 'confirmed':
                 raise UserError(_("Seuls les BL confirmés peuvent être marqués comme livrés."))
+            
+            # Vérification de la facture - condition obligatoire pour l'export
+            if not note.is_invoiced:
+                raise UserError(_(
+                    "⚠️ Impossible de marquer comme livré !\n\n"
+                    "La facture client est obligatoire avant l'envoi de la marchandise.\n\n"
+                    "Actions requises :\n"
+                    "1. Créer la facture client depuis l'OT ou ce BL\n"
+                    "2. Lier la facture à ce bon de livraison\n\n"
+                    "BL : %s"
+                ) % note.name)
             
             note.write({
                 'state': 'delivered',
