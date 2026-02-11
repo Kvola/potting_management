@@ -85,14 +85,6 @@
             <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
         </record>
 
-        <!-- Groupe obsolète conservé pour compatibilité -->
-        <record id="group_potting_cv_formule" model="res.groups">
-            <field name="name">Responsable CV/Formules (obsolète)</field>
-            <field name="comment">OBSOLETE - Remplacé par Agent CCC et Gestionnaire Formules</field>
-            <field name="category_id" ref="module_category_potting"/>
-            <field name="implied_ids" eval="[(4, ref('group_potting_agent_ccc')), (4, ref('group_potting_formule_manager'))]"/>
-        </record>
-
         <!-- ================================================================
              RÈGLES D'ACCÈS (Record Rules)
              ================================================================ -->

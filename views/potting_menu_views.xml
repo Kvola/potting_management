@@ -10,17 +10,7 @@
         <field name="tag">potting_main_dashboard</field>
     </record>
 
-    <!-- Dashboard Opérations (Production, OT, Lots) -->
-    <record id="action_potting_dashboard_operations" model="ir.actions.client">
-        <field name="name">🏭 Opérations</field>
-        <field name="tag">potting_operations_dashboard</field>
-    </record>
 
-    <!-- Dashboard Finances (Factures, Paiements, Taxes) -->
-    <record id="action_potting_dashboard_finances" model="ir.actions.client">
-        <field name="name">💰 Finances</field>
-        <field name="tag">potting_finances_dashboard</field>
-    </record>
 
     <!-- ================================================================
          MENU PRINCIPAL - Structure simplifiée et logique
@@ -74,12 +64,7 @@
               sequence="20"
               groups="potting_management.group_potting_ot_manager,potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
 
-    <menuitem id="menu_potting_operations_dashboard" 
-              name="📊 Vue d'ensemble" 
-              parent="menu_potting_operations" 
-              action="action_potting_dashboard_operations"
-              sequence="1"
-              groups="potting_management.group_potting_ot_manager,potting_management.group_potting_ceo_agent,potting_management.group_potting_manager"/>
+
 
     <menuitem id="menu_potting_transit_order" 
               name="🚚 Ordres de Transit (OT)" 
@@ -162,12 +147,7 @@
               sequence="40"
               groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
 
-    <menuitem id="menu_potting_finances_dashboard" 
-              name="📊 Vue d'ensemble" 
-              parent="menu_potting_finances" 
-              action="action_potting_dashboard_finances"
-              sequence="1"
-              groups="potting_management.group_potting_accountant,potting_management.group_potting_manager"/>
+
 
     <menuitem id="menu_potting_fwd_invoice_to_validate" 
               name="⏳ Factures à Valider" 
@@ -285,47 +265,4 @@
               sequence="100"
               groups="potting_management.group_potting_manager"/>
 
-    <!-- ================================================================
-         ACTIONS OBSOLÈTES - Conservées pour rétrocompatibilité
-         ================================================================ -->
-    <record id="action_potting_dashboard_user" model="ir.actions.client">
-        <field name="name">🏠 Tableau de bord</field>
-        <field name="tag">potting_main_dashboard</field>
-    </record>
-    <record id="action_potting_dashboard_commercial" model="ir.actions.client">
-        <field name="name">💼 Tableau de bord</field>
-        <field name="tag">potting_main_dashboard</field>
-    </record>
-    <record id="action_potting_dashboard_agent_ccc" model="ir.actions.client">
-        <field name="name">📋 Tableau de bord</field>
-        <field name="tag">potting_main_dashboard</field>
-    </record>
-    <record id="action_potting_dashboard_ot_manager" model="ir.actions.client">
-        <field name="name">🚚 Tableau de bord</field>
-        <field name="tag">potting_operations_dashboard</field>
-    </record>
-    <record id="action_potting_dashboard_formule_manager" model="ir.actions.client">
-        <field name="name">📊 Tableau de bord</field>
-        <field name="tag">potting_operations_dashboard</field>
-    </record>
-    <record id="action_potting_dashboard_cv_formule" model="ir.actions.client">
-        <field name="name">📜 Tableau de bord</field>
-        <field name="tag">potting_operations_dashboard</field>
-    </record>
-    <record id="action_potting_dashboard_shipping" model="ir.actions.client">
-        <field name="name">🚢 Tableau de bord</field>
-        <field name="tag">potting_operations_dashboard</field>
-    </record>
-    <record id="action_potting_dashboard_ceo_agent" model="ir.actions.client">
-        <field name="name">📦 Tableau de bord</field>
-        <field name="tag">potting_operations_dashboard</field>
-    </record>
-    <record id="action_potting_dashboard_accountant" model="ir.actions.client">
-        <field name="name">💰 Tableau de bord</field>
-        <field name="tag">potting_finances_dashboard</field>
-    </record>
-    <record id="action_potting_dashboard_manager" model="ir.actions.client">
-        <field name="name">📊 Tableau de bord Responsable</field>
-        <field name="tag">potting_main_dashboard</field>
-    </record>
 </odoo>

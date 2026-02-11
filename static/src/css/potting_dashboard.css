@@ -1,426 +1,418 @@
 /* ====================================
-   POTTING DASHBOARD - PROFESSIONAL STYLE
+   POTTING DASHBOARD - UNIFIED STYLE
+   Light/Dark Mode with CSS Variables
    ==================================== */
 
-/* Main Dashboard Container - Scrollable */
+/* ====== CSS VARIABLES (Light Mode - default) ====== */
 .o_potting_dashboard {
-    background-color: #f5f6f8;
+    --dash-bg: #f5f6f8;
+    --dash-card-bg: #ffffff;
+    --dash-card-border: #e9ecef;
+    --dash-card-hover-border: #ced4da;
+    --dash-card-active-border: #adb5bd;
+    --dash-header-bg: #f8f9fa;
+    --dash-header-border: #e9ecef;
+    --dash-header-color: #495057;
+    --dash-text: #212529;
+    --dash-text-muted: #6c757d;
+    --dash-text-secondary: #495057;
+    --dash-border: #dee2e6;
+    --dash-progress-bg: #e9ecef;
+    --dash-scrollbar-track: #e9ecef;
+    --dash-scrollbar-thumb: #adb5bd;
+    --dash-scrollbar-hover: #868e96;
+    --dash-hover-overlay: rgba(0, 0, 0, 0.03);
+    --dash-shadow: rgba(0, 0, 0, 0.06);
+    --dash-alert-shadow: rgba(0, 0, 0, 0.08);
+    --dash-campaign-bg: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+
+    /* Product colors — high contrast pairs */
+    --product-masse-bg: #e8d5c4;
+    --product-masse-color: #6d4c2a;
+    --product-masse-icon: #8b5e34;
+    --product-beurre-bg: #fff3cd;
+    --product-beurre-color: #856404;
+    --product-beurre-icon: #a07800;
+    --product-cake-bg: #f5d0d0;
+    --product-cake-color: #842029;
+    --product-cake-icon: #a52834;
+    --product-poudre-bg: #d4edda;
+    --product-poudre-color: #155724;
+    --product-poudre-icon: #1e7e34;
+
+    /* Semantic colors */
+    --dash-primary: #2980b9;
+    --dash-primary-light: #e3f2fd;
+    --dash-success: #27ae60;
+    --dash-success-light: #e8f5e9;
+    --dash-warning: #e67e22;
+    --dash-warning-light: #fff8e1;
+    --dash-info: #3498db;
+    --dash-info-light: #e1f5fe;
+    --dash-danger: #c0392b;
+    --dash-danger-light: #fce4ec;
+
+    /* Bg opacity variants */
+    --dash-bg-light: #f8f9fa;
+    --dash-bg-success-10: rgba(39, 174, 96, 0.1);
+    --dash-bg-warning-10: rgba(230, 126, 34, 0.1);
+    --dash-bg-danger-10: rgba(192, 57, 43, 0.1);
+}
+
+/* ====== DARK MODE VARIABLES ====== */
+.o_potting_dashboard.dark-mode {
+    --dash-bg: #1a1d23;
+    --dash-card-bg: #22262d;
+    --dash-card-border: #333840;
+    --dash-card-hover-border: #444c56;
+    --dash-card-active-border: #555e68;
+    --dash-header-bg: #272b33;
+    --dash-header-border: #333840;
+    --dash-header-color: #c9d1d9;
+    --dash-text: #e6edf3;
+    --dash-text-muted: #8b949e;
+    --dash-text-secondary: #c9d1d9;
+    --dash-border: #333840;
+    --dash-progress-bg: #333840;
+    --dash-scrollbar-track: #2d333b;
+    --dash-scrollbar-thumb: #444c56;
+    --dash-scrollbar-hover: #555e68;
+    --dash-hover-overlay: rgba(255, 255, 255, 0.04);
+    --dash-shadow: rgba(0, 0, 0, 0.3);
+    --dash-alert-shadow: rgba(0, 0, 0, 0.4);
+    --dash-campaign-bg: linear-gradient(135deg, #22262d 0%, #1a2737 100%);
+
+    /* Product colors — bright on dark */
+    --product-masse-bg: #3d2e1e;
+    --product-masse-color: #e8c9a8;
+    --product-masse-icon: #d4a76a;
+    --product-beurre-bg: #3d3420;
+    --product-beurre-color: #ffd866;
+    --product-beurre-icon: #ffc933;
+    --product-cake-bg: #3d2020;
+    --product-cake-color: #ff8a8a;
+    --product-cake-icon: #ff6b6b;
+    --product-poudre-bg: #1e3d24;
+    --product-poudre-color: #76d48e;
+    --product-poudre-icon: #51c46b;
+
+    /* Semantic colors — brighter for dark bg */
+    --dash-primary: #58a6ff;
+    --dash-primary-light: #1a2737;
+    --dash-success: #3fb950;
+    --dash-success-light: #1a3024;
+    --dash-warning: #d29922;
+    --dash-warning-light: #342a15;
+    --dash-info: #58a6ff;
+    --dash-info-light: #1a2737;
+    --dash-danger: #f85149;
+    --dash-danger-light: #3d1a1a;
+
+    --dash-bg-light: #272b33;
+    --dash-bg-success-10: rgba(63, 185, 80, 0.15);
+    --dash-bg-warning-10: rgba(210, 153, 34, 0.15);
+    --dash-bg-danger-10: rgba(248, 81, 73, 0.15);
+}
+
+/* ====== Main Dashboard Container ====== */
+.o_potting_dashboard {
+    background-color: var(--dash-bg);
+    color: var(--dash-text);
     min-height: 100%;
     height: calc(100vh - 46px);
     overflow-y: auto;
     overflow-x: hidden;
     padding: 1.5rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Scrollbar Styling */
-.o_potting_dashboard::-webkit-scrollbar {
-    width: 8px;
-}
-
-.o_potting_dashboard::-webkit-scrollbar-track {
-    background: #e9ecef;
-    border-radius: 4px;
-}
-
-.o_potting_dashboard::-webkit-scrollbar-thumb {
-    background: #adb5bd;
-    border-radius: 4px;
-}
-
-.o_potting_dashboard::-webkit-scrollbar-thumb:hover {
-    background: #868e96;
-}
+/* Scrollbar */
+.o_potting_dashboard::-webkit-scrollbar { width: 8px; }
+.o_potting_dashboard::-webkit-scrollbar-track { background: var(--dash-scrollbar-track); border-radius: 4px; }
+.o_potting_dashboard::-webkit-scrollbar-thumb { background: var(--dash-scrollbar-thumb); border-radius: 4px; }
+.o_potting_dashboard::-webkit-scrollbar-thumb:hover { background: var(--dash-scrollbar-hover); }
 
 /* Header */
 .o_potting_dashboard .dashboard-header {
-    margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--dash-border);
+}
+.o_potting_dashboard .dashboard-header h2 {
+    color: var(--dash-text);
 }
 
-.o_potting_dashboard .dashboard-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #212529;
-    margin: 0;
-}
-
-.o_potting_dashboard .dashboard-subtitle {
-    font-size: 0.875rem;
-    color: #6c757d;
-    margin-top: 0.25rem;
-}
-
-/* Cards - Clean and Minimal */
-.o_potting_dashboard .card {
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    box-shadow: none;
-    background: #ffffff;
-    transition: border-color 0.15s ease;
-}
-
-.o_potting_dashboard .card:hover {
-    border-color: #ced4da;
-}
-
-.o_potting_dashboard .card.cursor-pointer:hover {
-    border-color: #adb5bd;
-}
-
-.o_potting_dashboard .cursor-pointer {
+/* ====== Dark Mode Toggle Button ====== */
+.o_potting_dashboard .dark-mode-toggle {
+    background: var(--dash-card-bg);
+    border: 1px solid var(--dash-card-border);
+    border-radius: 20px;
+    padding: 4px 12px;
     cursor: pointer;
-}
-
-/* Stat Cards */
-.o_potting_dashboard .stat-card {
-    text-align: center;
-    padding: 1.25rem 1rem;
-}
-
-.o_potting_dashboard .stat-value {
-    font-size: 2rem;
-    font-weight: 600;
-    line-height: 1.2;
-    margin-bottom: 0.25rem;
-}
-
-.o_potting_dashboard .stat-label {
-    font-size: 0.8125rem;
-    color: #6c757d;
-    font-weight: 500;
-}
-
-/* Color Variants - Subtle */
-.o_potting_dashboard .stat-value.text-draft { color: #6c757d; }
-.o_potting_dashboard .stat-value.text-warning { color: #e67e22; }
-.o_potting_dashboard .stat-value.text-info { color: #3498db; }
-.o_potting_dashboard .stat-value.text-success { color: #27ae60; }
-.o_potting_dashboard .stat-value.text-primary { color: #2980b9; }
-.o_potting_dashboard .stat-value.text-secondary { color: #6c757d; }
-
-/* Section Headers */
-.o_potting_dashboard .section-title {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 1rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 6px;
+    font-size: 0.8125rem;
+    color: var(--dash-text-muted);
+    transition: all 0.2s ease;
+}
+.o_potting_dashboard .dark-mode-toggle:hover {
+    border-color: var(--dash-primary);
+    color: var(--dash-primary);
+}
+.o_potting_dashboard .dark-mode-toggle i {
+    font-size: 1rem;
 }
 
-.o_potting_dashboard .section-title i {
-    color: #6c757d;
-    font-size: 0.875rem;
+/* ====== Cards ====== */
+.o_potting_dashboard .card {
+    border: 1px solid var(--dash-card-border);
+    border-radius: 8px;
+    box-shadow: none;
+    background: var(--dash-card-bg);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.3s ease;
 }
+.o_potting_dashboard .card:hover {
+    border-color: var(--dash-card-hover-border);
+}
+.o_potting_dashboard .card.cursor-pointer:hover,
+.o_potting_dashboard .hover-shadow:hover {
+    border-color: var(--dash-card-active-border);
+    box-shadow: 0 2px 8px var(--dash-shadow);
+}
+.o_potting_dashboard .cursor-pointer { cursor: pointer; }
 
-/* Card Headers - Minimal */
+/* Card Headers */
 .o_potting_dashboard .card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-    padding: 0.875rem 1rem;
-    font-weight: 600;
+    background-color: var(--dash-header-bg) !important;
+    border-bottom: 1px solid var(--dash-header-border);
+    padding: 0.75rem 1rem;
     font-size: 0.875rem;
-    color: #495057;
+    color: var(--dash-header-color);
+}
+.o_potting_dashboard .card-header strong {
+    color: var(--dash-text);
 }
 
-.o_potting_dashboard .card-header h6 {
-    margin: 0;
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-.o_potting_dashboard .card-header i {
-    color: #6c757d;
-}
-
-/* Tables - Clean */
-.o_potting_dashboard .table {
-    font-size: 0.8125rem;
-    margin-bottom: 0;
-}
-
-.o_potting_dashboard .table th {
-    font-weight: 600;
-    color: #495057;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-    border-top: none;
-    padding: 0.75rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-}
-
-.o_potting_dashboard .table td {
-    padding: 0.625rem 0.75rem;
-    vertical-align: middle;
-    border-color: #f1f3f4;
-}
-
-.o_potting_dashboard .table-hover tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-/* Progress Bars - Subtle */
-.o_potting_dashboard .progress {
-    height: 6px;
-    border-radius: 3px;
-    background-color: #e9ecef;
-    overflow: hidden;
-}
-
-.o_potting_dashboard .progress-bar {
-    border-radius: 3px;
-}
-
-.o_potting_dashboard .progress-bar.bg-success { background-color: #27ae60 !important; }
-.o_potting_dashboard .progress-bar.bg-warning { background-color: #e67e22 !important; }
-.o_potting_dashboard .progress-bar.bg-info { background-color: #3498db !important; }
-
-/* Progress with Text */
-.o_potting_dashboard .progress-lg {
-    height: 18px;
-    border-radius: 4px;
-}
-
-.o_potting_dashboard .progress-lg .progress-bar {
-    font-size: 0.6875rem;
-    font-weight: 500;
-    line-height: 18px;
-}
-
-/* Badges - Minimal */
-.o_potting_dashboard .badge {
-    font-weight: 500;
-    font-size: 0.6875rem;
-    padding: 0.35em 0.65em;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-}
-
-/* Badge colors with proper text contrast */
-.o_potting_dashboard .badge.bg-secondary,
-.o_potting_dashboard .badge.text-bg-secondary { 
-    background-color: #6c757d !important; 
-    color: #fff !important;
-}
-.o_potting_dashboard .badge.bg-info,
-.o_potting_dashboard .badge.text-bg-info { 
-    background-color: #3498db !important; 
-    color: #fff !important;
-}
-.o_potting_dashboard .badge.bg-warning,
-.o_potting_dashboard .badge.text-bg-warning { 
-    background-color: #e67e22 !important; 
-    color: #fff !important; 
-}
-.o_potting_dashboard .badge.bg-success,
-.o_potting_dashboard .badge.text-bg-success { 
-    background-color: #27ae60 !important; 
-    color: #fff !important;
-}
-.o_potting_dashboard .badge.bg-primary,
-.o_potting_dashboard .badge.text-bg-primary { 
-    background-color: #2980b9 !important; 
-    color: #fff !important;
-}
-.o_potting_dashboard .badge.bg-danger,
-.o_potting_dashboard .badge.text-bg-danger { 
-    background-color: #c0392b !important; 
-    color: #fff !important;
-}
-
-/* Buttons - Professional */
-.o_potting_dashboard .btn {
-    border-radius: 4px;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    border: none;
-    transition: background-color 0.15s ease, transform 0.1s ease;
-}
-
-.o_potting_dashboard .btn:active {
-    transform: scale(0.98);
-}
-
-.o_potting_dashboard .btn-primary {
-    background-color: #2980b9;
-}
-
-.o_potting_dashboard .btn-primary:hover {
-    background-color: #2472a4;
-}
-
-.o_potting_dashboard .btn-secondary {
-    background-color: #6c757d;
-}
-
-.o_potting_dashboard .btn-secondary:hover {
-    background-color: #5a6268;
-}
-
-.o_potting_dashboard .btn-success {
-    background-color: #27ae60;
-}
-
-.o_potting_dashboard .btn-success:hover {
-    background-color: #219a52;
-}
-
-.o_potting_dashboard .btn-sm {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-}
-
-/* Summary Card */
-.o_potting_dashboard .summary-card {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-}
-
-.o_potting_dashboard .summary-card .summary-value {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #212529;
-}
-
-/* Empty State */
-.o_potting_dashboard .empty-state {
-    padding: 2rem 1rem;
-    text-align: center;
-    color: #6c757d;
-}
-
-.o_potting_dashboard .empty-state i {
-    font-size: 2rem;
-    margin-bottom: 0.75rem;
-    color: #adb5bd;
-}
-
-.o_potting_dashboard .empty-state p {
-    margin: 0;
-    font-size: 0.875rem;
-}
-
-/* Accent Borders - Subtle */
-.o_potting_dashboard .border-accent-warning {
-    border-left: 3px solid #e67e22 !important;
-}
-
-.o_potting_dashboard .border-accent-info {
-    border-left: 3px solid #3498db !important;
-}
-
-.o_potting_dashboard .border-accent-success {
-    border-left: 3px solid #27ae60 !important;
-}
-
-.o_potting_dashboard .border-accent-primary {
-    border-left: 3px solid #2980b9 !important;
-}
-
-/* Product Stats */
-.o_potting_dashboard .product-stat {
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    padding: 1rem;
-    background: #fff;
-    transition: border-color 0.15s ease;
-}
-
-.o_potting_dashboard .product-stat:hover {
-    border-color: #ced4da;
-}
-
-.o_potting_dashboard .product-stat-label {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-}
-
-.o_potting_dashboard .product-stat-value {
-    font-size: 0.75rem;
-    color: #6c757d;
-}
-
-.o_potting_dashboard .product-stat-value strong {
-    color: #212529;
-    font-weight: 600;
-}
-
-/* Quick Actions */
-.o_potting_dashboard .quick-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+/* Card Body */
+.o_potting_dashboard .card-body {
+    color: var(--dash-text);
 }
 
 /* Campaign Banner */
 .o_potting_dashboard .campaign-banner {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-left: 4px solid #2980b9;
+    background: var(--dash-campaign-bg);
+    border-left: 4px solid var(--dash-primary);
+}
+.o_potting_dashboard .campaign-banner small.text-muted {
+    color: var(--dash-text-muted) !important;
 }
 
-/* Outline buttons */
-.o_potting_dashboard .btn-outline-primary {
-    color: #2980b9;
-    border: 1px solid #2980b9;
-    background: transparent;
+/* Alert cards */
+.o_potting_dashboard .alert {
+    border-radius: 6px;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+.o_potting_dashboard .alert:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px var(--dash-alert-shadow);
 }
 
-.o_potting_dashboard .btn-outline-primary:hover {
-    background: #2980b9;
-    color: #fff;
+/* Dark mode alert overrides */
+.o_potting_dashboard.dark-mode .alert-warning {
+    background-color: var(--dash-warning-light);
+    border-color: var(--dash-warning);
+    color: var(--dash-warning);
+}
+.o_potting_dashboard.dark-mode .alert-danger {
+    background-color: var(--dash-danger-light);
+    border-color: var(--dash-danger);
+    color: var(--dash-danger);
+}
+.o_potting_dashboard.dark-mode .alert-info {
+    background-color: var(--dash-info-light);
+    border-color: var(--dash-info);
+    color: var(--dash-info);
+}
+.o_potting_dashboard.dark-mode .alert-success {
+    background-color: var(--dash-success-light);
+    border-color: var(--dash-success);
+    color: var(--dash-success);
 }
 
-/* List group items */
-.o_potting_dashboard .list-group-item {
-    border-left: none;
-    border-right: none;
-    padding: 0.875rem 1rem;
+/* Pipeline stage */
+.o_potting_dashboard .pipeline-stage {
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.o_potting_dashboard .pipeline-stage:hover {
+    background-color: var(--dash-hover-overlay);
+    transform: translateY(-1px);
 }
 
-.o_potting_dashboard .list-group-item:first-child {
-    border-top: none;
+/* ====== Product Cards — Distinct Colors ====== */
+.o_potting_dashboard .product-card-cocoa_mass .product-icon {
+    background-color: var(--product-masse-bg) !important;
+}
+.o_potting_dashboard .product-card-cocoa_mass .product-icon i {
+    color: var(--product-masse-icon) !important;
+}
+.o_potting_dashboard .product-card-cocoa_mass .product-label {
+    color: var(--product-masse-color);
+    font-weight: 600;
 }
 
-.o_potting_dashboard .list-group-item:hover {
-    background-color: #f8f9fa;
+.o_potting_dashboard .product-card-cocoa_butter .product-icon {
+    background-color: var(--product-beurre-bg) !important;
+}
+.o_potting_dashboard .product-card-cocoa_butter .product-icon i {
+    color: var(--product-beurre-icon) !important;
+}
+.o_potting_dashboard .product-card-cocoa_butter .product-label {
+    color: var(--product-beurre-color);
+    font-weight: 600;
 }
 
-/* Text utilities */
-.o_potting_dashboard .text-truncate {
+.o_potting_dashboard .product-card-cocoa_cake .product-icon {
+    background-color: var(--product-cake-bg) !important;
+}
+.o_potting_dashboard .product-card-cocoa_cake .product-icon i {
+    color: var(--product-cake-icon) !important;
+}
+.o_potting_dashboard .product-card-cocoa_cake .product-label {
+    color: var(--product-cake-color);
+    font-weight: 600;
+}
+
+.o_potting_dashboard .product-card-cocoa_powder .product-icon {
+    background-color: var(--product-poudre-bg) !important;
+}
+.o_potting_dashboard .product-card-cocoa_powder .product-icon i {
+    color: var(--product-poudre-icon) !important;
+}
+.o_potting_dashboard .product-card-cocoa_powder .product-label {
+    color: var(--product-poudre-color);
+    font-weight: 600;
+}
+
+/* Product icon box */
+.o_potting_dashboard .product-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 1.1rem;
+}
+
+/* ====== Progress Bars ====== */
+.o_potting_dashboard .progress {
+    height: 6px;
+    border-radius: 3px;
+    background-color: var(--dash-progress-bg);
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+}
+.o_potting_dashboard .progress-bar {
+    border-radius: 3px;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 22px;
+    transition: width 0.6s ease;
 }
 
-/* Responsive Adjustments */
+/* ====== Stat boxes ====== */
+.o_potting_dashboard .border.rounded {
+    border-color: var(--dash-card-border) !important;
+    background-color: var(--dash-card-bg);
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.o_potting_dashboard .border.rounded.cursor-pointer:hover {
+    background-color: var(--dash-hover-overlay);
+    transform: translateY(-1px);
+}
+/* Colorized borders in dark mode */
+.o_potting_dashboard.dark-mode .border-warning { border-color: var(--dash-warning) !important; }
+.o_potting_dashboard.dark-mode .border-info { border-color: var(--dash-info) !important; }
+.o_potting_dashboard.dark-mode .border-success { border-color: var(--dash-success) !important; }
+.o_potting_dashboard.dark-mode .border-danger { border-color: var(--dash-danger) !important; }
+.o_potting_dashboard.dark-mode .border-primary { border-color: var(--dash-primary) !important; }
+
+/* ====== Text Colors ====== */
+.o_potting_dashboard .text-primary { color: var(--dash-primary) !important; }
+.o_potting_dashboard .text-success { color: var(--dash-success) !important; }
+.o_potting_dashboard .text-warning { color: var(--dash-warning) !important; }
+.o_potting_dashboard .text-info { color: var(--dash-info) !important; }
+.o_potting_dashboard .text-danger { color: var(--dash-danger) !important; }
+.o_potting_dashboard .text-muted { color: var(--dash-text-muted) !important; }
+.o_potting_dashboard .text-secondary { color: var(--dash-text-muted) !important; }
+.o_potting_dashboard .fw-bold { color: inherit; }
+
+/* ====== Bg light overrides ====== */
+.o_potting_dashboard .bg-light {
+    background-color: var(--dash-bg-light) !important;
+}
+.o_potting_dashboard .bg-success.bg-opacity-10,
+.o_potting_dashboard .bg-opacity-10.bg-success {
+    background-color: var(--dash-bg-success-10) !important;
+}
+.o_potting_dashboard .bg-warning.bg-opacity-10,
+.o_potting_dashboard .bg-opacity-10.bg-warning {
+    background-color: var(--dash-bg-warning-10) !important;
+}
+.o_potting_dashboard .bg-danger.bg-opacity-10,
+.o_potting_dashboard .bg-opacity-10.bg-danger {
+    background-color: var(--dash-bg-danger-10) !important;
+}
+.o_potting_dashboard .bg-primary.bg-opacity-10 {
+    background-color: var(--dash-primary-light) !important;
+}
+
+/* ====== Buttons ====== */
+.o_potting_dashboard .btn {
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.o_potting_dashboard .btn:active {
+    transform: scale(0.98);
+}
+.o_potting_dashboard .btn-primary { background-color: var(--dash-primary); border-color: var(--dash-primary); color: #fff; }
+.o_potting_dashboard .btn-primary:hover { filter: brightness(0.9); }
+.o_potting_dashboard .btn-success { background-color: var(--dash-success); border-color: var(--dash-success); color: #fff; }
+.o_potting_dashboard .btn-success:hover { filter: brightness(0.9); }
+.o_potting_dashboard .btn-warning { background-color: var(--dash-warning); border-color: var(--dash-warning); color: #fff; }
+.o_potting_dashboard .btn-warning:hover { filter: brightness(0.9); }
+
+.o_potting_dashboard .btn-outline-primary { color: var(--dash-primary); border-color: var(--dash-primary); }
+.o_potting_dashboard .btn-outline-primary:hover { background: var(--dash-primary); color: #fff; }
+.o_potting_dashboard .btn-outline-success { color: var(--dash-success); border-color: var(--dash-success); }
+.o_potting_dashboard .btn-outline-success:hover { background: var(--dash-success); color: #fff; }
+.o_potting_dashboard .btn-outline-info { color: var(--dash-info); border-color: var(--dash-info); }
+.o_potting_dashboard .btn-outline-info:hover { background: var(--dash-info); color: #fff; }
+.o_potting_dashboard .btn-outline-warning { color: var(--dash-warning); border-color: var(--dash-warning); }
+.o_potting_dashboard .btn-outline-warning:hover { background: var(--dash-warning); color: #fff; }
+.o_potting_dashboard .btn-outline-secondary { color: var(--dash-text-muted); border-color: var(--dash-text-muted); }
+.o_potting_dashboard .btn-outline-secondary:hover { background: var(--dash-text-muted); color: #fff; }
+
+.o_potting_dashboard .btn-link {
+    color: var(--dash-primary);
+}
+.o_potting_dashboard .btn-link:hover {
+    color: var(--dash-primary);
+    filter: brightness(0.85);
+}
+
+/* ====== Border Top/Bottom overrides ====== */
+.o_potting_dashboard .border-top {
+    border-top-color: var(--dash-card-border) !important;
+}
+
+/* ====== Responsive ====== */
 @media (max-width: 768px) {
-    .o_potting_dashboard {
-        padding: 1rem;
-    }
-
-    .o_potting_dashboard .stat-value {
-        font-size: 1.5rem;
-    }
-
-    .o_potting_dashboard .dashboard-title {
-        font-size: 1.25rem;
-    }
-
-    .o_potting_dashboard .campaign-banner .row > div {
-        text-align: center !important;
-        margin-bottom: 0.5rem;
-    }
+    .o_potting_dashboard { padding: 1rem; }
+    .o_potting_dashboard .campaign-banner .row > div { text-align: center !important; margin-bottom: 0.5rem; }
+    .o_potting_dashboard .pipeline-stage { min-width: 60px !important; }
 }
 
 /* Fix for Odoo action container */
-.o_action_manager .o_potting_dashboard {
-    height: calc(100vh - 46px);
-}
+.o_action_manager .o_potting_dashboard { height: calc(100vh - 46px); }

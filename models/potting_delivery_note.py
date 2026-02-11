@@ -190,6 +190,54 @@ class PottingDeliveryNote(models.Model):
     )
     
     # -------------------------------------------------------------------------
+    # INFORMATIONS CONTRAT (auto-remplies depuis OT/Contrat)
+    # -------------------------------------------------------------------------
+    contract_number_display = fields.Char(
+        string="N° Contrat (Ref)",
+        related='customer_order_id.contract_number',
+        store=True,
+        readonly=True,
+        help="Numéro du contrat client (depuis la commande)"
+    )
+    
+    contract_tonnage = fields.Float(
+        string="Tonnage contrat (T)",
+        related='customer_order_id.contract_tonnage',
+        store=True,
+        readonly=True,
+    )
+    
+    contract_unit_price = fields.Monetary(
+        string="Prix unitaire contrat",
+        related='customer_order_id.unit_price',
+        store=True,
+        readonly=True,
+        currency_field='contract_currency_id',
+    )
+    
+    contract_currency_id = fields.Many2one(
+        'res.currency',
+        string="Devise contrat",
+        related='customer_order_id.currency_id',
+        store=True,
+        readonly=True,
+    )
+    
+    ot_tonnage = fields.Float(
+        string="Tonnage OT (T)",
+        related='transit_order_id.tonnage',
+        store=True,
+        readonly=True,
+    )
+    
+    ot_formule_reference = fields.Char(
+        string="Réf. Formule",
+        related='transit_order_id.formule_reference',
+        store=True,
+        readonly=True,
+    )
+    
+    # -------------------------------------------------------------------------
     # LOTS SELECTION
     # -------------------------------------------------------------------------
     lot_ids = fields.Many2many(
@@ -230,9 +278,9 @@ class PottingDeliveryNote(models.Model):
         'account.move',
         string="Facture",
         copy=False,
-        readonly=True,
         tracking=True,
-        help="Facture générée pour ce bon de livraison"
+        domain="[('move_type', '=', 'out_invoice'), ('potting_transit_order_id', '=', transit_order_id)]",
+        help="Facture générée ou liée manuellement à ce bon de livraison"
     )
     
     invoice_state = fields.Selection(
@@ -387,6 +435,27 @@ class PottingDeliveryNote(models.Model):
     def _compute_bl_attachment_count(self):
         for note in self:
             note.bl_attachment_count = len(note.bl_attachment_ids)
+
+    # -------------------------------------------------------------------------
+    # ONCHANGE - AUTO-REMPLISSAGE DEPUIS OT/CONTRAT
+    # -------------------------------------------------------------------------
+    @api.onchange('transit_order_id')
+    def _onchange_transit_order_id(self):
+        """Auto-remplir les informations du contrat et de l'OT lors de la sélection."""
+        if self.transit_order_id:
+            ot = self.transit_order_id
+            # Auto-remplir le numéro de contrat depuis la commande client
+            if ot.customer_order_id and ot.customer_order_id.contract_number:
+                self.contract_number = ot.customer_order_id.contract_number
+            # Auto-remplir la destination depuis le port de déchargement de l'OT
+            if ot.pod:
+                self.destination = ot.pod
+            # Auto-remplir le port de destination
+            if ot.pod and not self.port_of_discharge:
+                self.port_of_discharge = ot.pod
+            # Auto-remplir la compagnie maritime depuis le navire
+            if ot.vessel_id and ot.vessel_id.shipping_company_id and not self.shipping_company_id:
+                self.shipping_company_id = ot.vessel_id.shipping_company_id
 
     # -------------------------------------------------------------------------
     # CONSTRAINTS

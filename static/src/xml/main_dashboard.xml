@@ -1,279 +1,633 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <!-- ================================================================
-         DASHBOARD PRINCIPAL UNIFIÉ - Vue d'ensemble intelligente
-         Simple, clair, actionnable
-         ================================================================ -->
     <t t-name="potting_management.MainDashboard">
-        <div class="o_potting_dashboard">
-            <!-- Header compact -->
-            <div class="dashboard-header mb-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 class="mb-0">
-                            <i class="fa fa-dashboard me-2 text-primary"/>Tableau de bord
-                        </h2>
-                        <small class="text-muted">Vue d'ensemble des exportations</small>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary btn-sm" t-on-click="refresh" title="Actualiser">
-                            <i class="fa fa-refresh"/>
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <div t-attf-class="o_potting_dashboard #{state.darkMode ? 'dark-mode' : ''}">
 
-            <!-- Campagne active (compact) -->
-            <t t-if="state.campaign">
-                <div class="card bg-gradient-primary text-white mb-3">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <small class="opacity-75">📅 Campagne active</small>
-                                <h5 class="mb-0"><t t-esc="state.campaign.name"/></h5>
-                            </div>
-                            <div class="d-flex gap-4 text-center">
-                                <div>
-                                    <div class="fs-5 fw-bold"><t t-esc="state.campaign.ot_count"/></div>
-                                    <small class="opacity-75">OT</small>
-                                </div>
-                                <div>
-                                    <div class="fs-5 fw-bold"><t t-esc="formatNumber(state.campaign.tonnage, 0)"/> T</div>
-                                    <small class="opacity-75">Tonnage</small>
-                                </div>
-                            </div>
-                        </div>
+            <!-- ========== LOADING SPINNER ========== -->
+            <t t-if="state.loading">
+                <div class="d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                    <div class="text-center text-muted">
+                        <i class="fa fa-spinner fa-spin fa-3x mb-3"/>
+                        <p>Chargement du tableau de bord...</p>
                     </div>
                 </div>
             </t>
 
-            <!-- ========== ALERTES URGENTES ========== -->
-            <t t-if="state.alerts.total > 0">
-                <div class="row g-2 mb-3">
-                    <t t-if="state.alerts.ot_to_validate > 0">
-                        <div class="col-md-3 col-6">
-                            <div class="alert alert-warning mb-0 py-2 cursor-pointer d-flex align-items-center" 
-                                 role="alert" t-on-click="openOTToValidate">
-                                <i class="fa fa-exclamation-triangle me-2"/>
-                                <div>
-                                    <strong><t t-esc="state.alerts.ot_to_validate"/></strong>
-                                    <small class="d-block">OT à valider</small>
-                                </div>
-                            </div>
+            <t t-if="!state.loading">
+                <!-- ========== HEADER ========== -->
+                <div class="dashboard-header mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0"><i class="fa fa-dashboard me-2 text-primary"/>Tableau de bord</h2>
+                            <small class="text-muted" t-if="state.campaign">
+                                Campagne <strong t-esc="state.campaign.name"/>
+                            </small>
                         </div>
-                    </t>
-                    <t t-if="state.alerts.invoices_pending > 0">
-                        <div class="col-md-3 col-6">
-                            <div class="alert alert-info mb-0 py-2 cursor-pointer d-flex align-items-center" 
-                                 role="alert" t-on-click="openInvoicesPending">
-                                <i class="fa fa-file-text me-2"/>
-                                <div>
-                                    <strong><t t-esc="state.alerts.invoices_pending"/></strong>
-                                    <small class="d-block">Factures en attente</small>
-                                </div>
-                            </div>
+                        <div class="d-flex gap-2 align-items-center">
+                            <button class="dark-mode-toggle" t-on-click="toggleDarkMode"
+                                    t-att-title="state.darkMode ? 'Mode clair' : 'Mode sombre'">
+                                <i t-attf-class="fa #{state.darkMode ? 'fa-sun-o' : 'fa-moon-o'}"/>
+                                <span t-esc="state.darkMode ? 'Clair' : 'Sombre'"/>
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" t-on-click="refresh" title="Actualiser">
+                                <i class="fa fa-refresh me-1"/>Actualiser
+                            </button>
                         </div>
-                    </t>
-                    <t t-if="state.alerts.lots_production > 0">
-                        <div class="col-md-3 col-6">
-                            <div class="alert alert-primary mb-0 py-2 cursor-pointer d-flex align-items-center" 
-                                 role="alert" t-on-click="openLotsProduction">
-                                <i class="fa fa-industry me-2"/>
-                                <div>
-                                    <strong><t t-esc="state.alerts.lots_production"/></strong>
-                                    <small class="d-block">Lots en production</small>
-                                </div>
-                            </div>
-                        </div>
-                    </t>
-                    <t t-if="state.alerts.formules_unpaid > 0">
-                        <div class="col-md-3 col-6">
-                            <div class="alert alert-danger mb-0 py-2 cursor-pointer d-flex align-items-center" 
-                                 role="alert" t-on-click="openFormulesUnpaid">
-                                <i class="fa fa-money me-2"/>
-                                <div>
-                                    <strong><t t-esc="state.alerts.formules_unpaid"/></strong>
-                                    <small class="d-block">FO impayées</small>
-                                </div>
-                            </div>
-                        </div>
-                    </t>
+                    </div>
                 </div>
-            </t>
 
-            <!-- ========== KPIs PRINCIPAUX ========== -->
-            <div class="row g-3 mb-4">
-                <!-- Contrats -->
-                <div class="col-md-3 col-6">
-                    <div class="card h-100 cursor-pointer hover-shadow" t-on-click="openContracts">
-                        <div class="card-body text-center">
-                            <div class="text-primary mb-1">
-                                <i class="fa fa-file-text-o fa-2x"/>
-                            </div>
-                            <div class="fs-3 fw-bold text-primary"><t t-esc="state.kpis.contracts"/></div>
-                            <small class="text-muted">Contrats actifs</small>
-                        </div>
-                    </div>
-                </div>
-                <!-- OT -->
-                <div class="col-md-3 col-6">
-                    <div class="card h-100 cursor-pointer hover-shadow" t-on-click="openTransitOrders">
-                        <div class="card-body text-center">
-                            <div class="text-info mb-1">
-                                <i class="fa fa-truck fa-2x"/>
-                            </div>
-                            <div class="fs-3 fw-bold text-info"><t t-esc="state.kpis.transit_orders"/></div>
-                            <small class="text-muted">Ordres de Transit</small>
-                        </div>
-                    </div>
-                </div>
-                <!-- Tonnage -->
-                <div class="col-md-3 col-6">
-                    <div class="card h-100">
-                        <div class="card-body text-center">
-                            <div class="text-success mb-1">
-                                <i class="fa fa-balance-scale fa-2x"/>
-                            </div>
-                            <div class="fs-3 fw-bold text-success"><t t-esc="formatNumber(state.kpis.tonnage_shipped, 0)"/></div>
-                            <small class="text-muted">Tonnes expédiées</small>
-                        </div>
-                    </div>
-                </div>
-                <!-- Montant -->
-                <div class="col-md-3 col-6">
-                    <div class="card h-100">
-                        <div class="card-body text-center">
-                            <div class="text-warning mb-1">
-                                <i class="fa fa-money fa-2x"/>
-                            </div>
-                            <div class="fs-4 fw-bold text-warning">
-                                <t t-esc="formatCurrency(state.kpis.total_amount)"/>
-                            </div>
-                            <small class="text-muted">Valeur totale (FCFA)</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ========== PROGRESSION GLOBALE ========== -->
-            <div class="card mb-4">
-                <div class="card-header py-2 bg-light">
-                    <strong><i class="fa fa-line-chart me-2"/>Progression</strong>
-                </div>
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span>Tonnage utilisé</span>
-                                <span class="fw-bold"><t t-esc="formatNumber(state.progress.percentage, 1)"/>%</span>
-                            </div>
-                            <div class="progress" style="height: 20px;">
-                                <div class="progress-bar bg-success" 
-                                     t-attf-style="width: #{Math.min(state.progress.percentage, 100)}%">
-                                    <t t-esc="formatNumber(state.progress.used, 0)"/> T
+                <!-- ========== CAMPAGNE ACTIVE ========== -->
+                <t t-if="state.campaign">
+                    <div class="card campaign-banner mb-3">
+                        <div class="card-body py-2">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <small class="text-muted">Campagne active</small>
+                                    <h5 class="mb-0 text-primary"><t t-esc="state.campaign.name"/></h5>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="row text-center">
+                                        <div class="col cursor-pointer" t-on-click="openContracts">
+                                            <div class="fs-5 fw-bold text-primary"><t t-esc="state.campaign.customer_order_count"/></div>
+                                            <small class="text-muted">Contrats</small>
+                                        </div>
+                                        <div class="col cursor-pointer" t-on-click="openAllOT">
+                                            <div class="fs-5 fw-bold text-info"><t t-esc="state.campaign.transit_order_count"/></div>
+                                            <small class="text-muted">OT</small>
+                                        </div>
+                                        <div class="col">
+                                            <div class="fs-5 fw-bold text-success"><t t-esc="formatNumber(state.campaign.total_tonnage, 0)"/></div>
+                                            <small class="text-muted">Tonnage (T)</small>
+                                        </div>
+                                        <div class="col">
+                                            <div class="fs-5 fw-bold text-warning"><t t-esc="formatCurrency(state.campaign.total_amount)"/></div>
+                                            <small class="text-muted">Montant (FCFA)</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="d-flex justify-content-between mt-1 small text-muted">
-                                <span>0 T</span>
-                                <span><t t-esc="formatNumber(state.progress.total, 0)"/> T contracté</span>
+                        </div>
+                    </div>
+                </t>
+
+                <!-- ========== ALERTES URGENTES (adaptées au rôle) ========== -->
+                <t t-if="state.alerts.length > 0">
+                    <div class="row g-2 mb-3">
+                        <t t-foreach="state.alerts" t-as="alert" t-key="alert.label">
+                            <div class="col-md-3 col-6">
+                                <div t-attf-class="alert alert-#{alert.type} mb-0 py-2 cursor-pointer d-flex align-items-center"
+                                     role="alert" t-on-click="() => this.handleAlertClick(alert)">
+                                    <i t-attf-class="fa #{alert.icon} fa-lg me-2"/>
+                                    <div>
+                                        <strong t-esc="alert.count"/>
+                                        <small class="d-block" t-esc="alert.label"/>
+                                    </div>
+                                    <i class="fa fa-chevron-right ms-auto opacity-50"/>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+
+                <!-- ========== RÉPARTITION PAR PRODUIT ========== -->
+                <div class="row g-3 mb-4">
+                    <t t-foreach="Object.entries(state.products)" t-as="entry" t-key="entry[0]">
+                        <div class="col-md-3 col-6">
+                            <div t-attf-class="card h-100 cursor-pointer hover-shadow product-card-#{entry[0]}" t-on-click="() => this.openOTByProduct(entry[0])">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="product-icon rounded me-2">
+                                            <i t-attf-class="fa #{entry[1].icon}"/>
+                                        </div>
+                                        <strong class="product-label" t-esc="entry[1].label"/>
+                                    </div>
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="fw-bold"><t t-esc="entry[1].contracts"/></div>
+                                            <small class="text-muted" style="font-size: 0.7rem;">Contrats</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="fw-bold text-info"><t t-esc="entry[1].ot_count"/></div>
+                                            <small class="text-muted" style="font-size: 0.7rem;">OT</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="fw-bold text-success"><t t-esc="formatNumber(entry[1].tonnage, 0)"/></div>
+                                            <small class="text-muted" style="font-size: 0.7rem;">Tonnes</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                    </t>
+                </div>
+
+                <!-- ========== PROGRESSION GLOBALE ========== -->
+                <div class="card mb-4">
+                    <div class="card-header py-2 bg-light">
+                        <strong><i class="fa fa-line-chart me-2"/>Chaîne de valeur — Progression du tonnage</strong>
+                    </div>
+                    <div class="card-body">
+                        <!-- Barres en cascade -->
+                        <div class="row g-2 mb-3">
+                            <div class="col">
+                                <small class="text-muted d-block mb-1">Contracté</small>
+                                <div class="progress" style="height: 22px;">
+                                    <div class="progress-bar bg-primary" style="width: 100%">
+                                        <t t-esc="formatNumber(state.progress.contracted, 0)"/> T
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted d-block mb-1">Alloué OT</small>
+                                <div class="progress" style="height: 22px;">
+                                    <div class="progress-bar bg-info" t-attf-style="width: #{progressPercentages.allocated}%">
+                                        <t t-esc="formatNumber(state.progress.allocated_ot, 0)"/> T
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted d-block mb-1">Produit</small>
+                                <div class="progress" style="height: 22px;">
+                                    <div class="progress-bar bg-warning" t-attf-style="width: #{progressPercentages.produced}%">
+                                        <t t-esc="formatNumber(state.progress.produced, 0)"/> T
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted d-block mb-1">Empoté</small>
+                                <div class="progress" style="height: 22px;">
+                                    <div class="progress-bar bg-success" t-attf-style="width: #{progressPercentages.potted}%">
+                                        <t t-esc="formatNumber(state.progress.potted, 0)"/> T
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <small class="text-muted d-block mb-1">Livré</small>
+                                <div class="progress" style="height: 22px;">
+                                    <div class="progress-bar bg-dark" t-attf-style="width: #{progressPercentages.delivered}%">
+                                        <t t-esc="formatNumber(state.progress.delivered, 0)"/> T
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== SECTION COMMERCIAL ========== -->
+                <t t-if="showCommercial">
+                    <div class="card mb-4">
+                        <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="fa fa-briefcase me-2"/>Ventes &amp; Contrats</strong>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm" t-on-click="createContract">
+                                    <i class="fa fa-plus me-1"/>Nouveau contrat
+                                </button>
+                                <button class="btn btn-sm btn-link" t-on-click="openContracts">Voir tout →</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
                             <div class="row text-center">
-                                <div class="col-4">
-                                    <div class="fw-bold text-primary"><t t-esc="formatNumber(state.progress.total, 0)"/></div>
-                                    <small class="text-muted">Contracté (T)</small>
+                                <div class="col cursor-pointer" t-on-click="openContracts">
+                                    <div class="fs-3 fw-bold text-primary"><t t-esc="state.totals.contracts"/></div>
+                                    <small class="text-muted">Contrats actifs</small>
                                 </div>
-                                <div class="col-4">
-                                    <div class="fw-bold text-warning"><t t-esc="formatNumber(state.progress.used, 0)"/></div>
-                                    <small class="text-muted">Utilisé (T)</small>
+                                <div class="col">
+                                    <div class="fs-3 fw-bold text-success"><t t-esc="formatNumber(state.progress.contracted, 0)"/></div>
+                                    <small class="text-muted">Tonnage contracté (T)</small>
                                 </div>
-                                <div class="col-4">
-                                    <div class="fw-bold text-success"><t t-esc="formatNumber(state.progress.remaining, 0)"/></div>
-                                    <small class="text-muted">Disponible (T)</small>
+                                <div class="col cursor-pointer" t-on-click="openAllOT">
+                                    <div class="fs-3 fw-bold text-info"><t t-esc="state.totals.ot"/></div>
+                                    <small class="text-muted">OT générés</small>
+                                </div>
+                                <div class="col">
+                                    <div class="fs-3 fw-bold text-warning"><t t-esc="formatCurrency(state.totals.total_amount)"/></div>
+                                    <small class="text-muted">Valeur totale (FCFA)</small>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </t>
 
-            <!-- ========== ÉTAT DES OT PAR STATUT ========== -->
-            <div class="card mb-4">
-                <div class="card-header py-2 bg-light">
-                    <strong><i class="fa fa-truck me-2"/>État des Ordres de Transit</strong>
-                </div>
-                <div class="card-body">
-                    <div class="row g-2">
-                        <div class="col">
-                            <div class="text-center p-2 rounded bg-light cursor-pointer" 
-                                 t-on-click="() => this.openOTs('draft')">
-                                <div class="fs-4 fw-bold text-secondary"><t t-esc="state.ot_states.draft"/></div>
-                                <small>Brouillon</small>
+                <!-- ========== SECTION AGENT CCC (CV) ========== -->
+                <t t-if="showAgentCCC">
+                    <div class="card mb-4">
+                        <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="fa fa-certificate me-2"/>Confirmations de Vente (CV)</strong>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm" t-on-click="createCV">
+                                    <i class="fa fa-plus me-1"/>Nouvelle CV
+                                </button>
+                                <button class="btn btn-sm btn-link" t-on-click="openCVActive">Voir tout →</button>
                             </div>
                         </div>
-                        <div class="col">
-                            <div class="text-center p-2 rounded bg-info bg-opacity-10 cursor-pointer" 
-                                 t-on-click="() => this.openOTs('confirmed')">
-                                <div class="fs-4 fw-bold text-info"><t t-esc="state.ot_states.confirmed"/></div>
-                                <small>Confirmé</small>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="text-center p-2 rounded bg-primary bg-opacity-10 cursor-pointer" 
-                                 t-on-click="() => this.openOTs('in_progress')">
-                                <div class="fs-4 fw-bold text-primary"><t t-esc="state.ot_states.in_progress"/></div>
-                                <small>En cours</small>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="text-center p-2 rounded bg-warning bg-opacity-10 cursor-pointer" 
-                                 t-on-click="() => this.openOTs('ready_validation')">
-                                <div class="fs-4 fw-bold text-warning"><t t-esc="state.ot_states.ready_validation"/></div>
-                                <small>À valider</small>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="text-center p-2 rounded bg-success bg-opacity-10 cursor-pointer" 
-                                 t-on-click="() => this.openOTs('done')">
-                                <div class="fs-4 fw-bold text-success"><t t-esc="state.ot_states.done"/></div>
-                                <small>Terminé</small>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-3 text-center">
+                                    <div class="fs-3 fw-bold text-primary cursor-pointer" t-on-click="openCVActive">
+                                        <t t-esc="state.cv.active"/>
+                                    </div>
+                                    <small class="text-muted">CV actives</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small>Tonnage utilisé</small>
+                                        <small class="fw-bold"><t t-esc="formatNumber(cvUsagePercent, 1)"/>%</small>
+                                    </div>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" t-attf-style="width: #{cvUsagePercent}%">
+                                            <t t-esc="formatNumber(state.cv.tonnage_utilise, 0)"/> T
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-1 small text-muted">
+                                        <span>0 T</span>
+                                        <span><t t-esc="formatNumber(state.cv.tonnage_autorise, 0)"/> T autorisé</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <t t-if="state.cv.expiring_soon > 0">
+                                        <div class="text-warning cursor-pointer" t-on-click="openCVExpiring">
+                                            <i class="fa fa-exclamation-triangle fa-2x"/>
+                                            <div class="fw-bold"><t t-esc="state.cv.expiring_soon"/></div>
+                                            <small>expirent bientôt</small>
+                                        </div>
+                                    </t>
+                                    <t t-else="">
+                                        <div class="text-success"><i class="fa fa-check-circle fa-2x"/></div>
+                                        <small class="text-muted">Aucune alerte</small>
+                                    </t>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </t>
 
-            <!-- ========== RACCOURCIS RAPIDES ========== -->
-            <div class="card">
-                <div class="card-header py-2 bg-light">
-                    <strong><i class="fa fa-bolt me-2"/>Actions rapides</strong>
-                </div>
-                <div class="card-body">
-                    <div class="row g-2">
-                        <div class="col-md-3 col-6">
-                            <button class="btn btn-outline-primary w-100" t-on-click="createContract">
-                                <i class="fa fa-plus me-1"/>Nouveau contrat
-                            </button>
+                <!-- ========== SECTION OT PIPELINE ========== -->
+                <t t-if="showOTManager">
+                    <div class="card mb-4">
+                        <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="fa fa-truck me-2"/>Pipeline des Ordres de Transit (<t t-esc="otTotal"/>)</strong>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm" t-on-click="createOT">
+                                    <i class="fa fa-plus me-1"/>Nouvel OT
+                                </button>
+                                <button class="btn btn-sm btn-link" t-on-click="openAllOT">Voir tout →</button>
+                            </div>
                         </div>
-                        <div class="col-md-3 col-6">
-                            <button class="btn btn-outline-info w-100" t-on-click="createOT">
-                                <i class="fa fa-truck me-1"/>Nouvel OT
-                            </button>
+                        <div class="card-body">
+                            <!-- Pipeline visuel horizontal -->
+                            <div class="d-flex flex-wrap gap-1 mb-3">
+                                <t t-foreach="otPipelineStages" t-as="stage" t-key="stage.key">
+                                    <div class="flex-fill text-center p-2 rounded cursor-pointer pipeline-stage"
+                                         t-attf-class="border border-#{stage.color}"
+                                         t-on-click="() => this.openOTsByState(stage.key)"
+                                         style="min-width: 80px;">
+                                        <div t-attf-class="fs-4 fw-bold text-#{stage.color}">
+                                            <t t-esc="stage.count"/>
+                                        </div>
+                                        <small class="text-muted" style="font-size: 0.7rem;" t-esc="stage.label"/>
+                                    </div>
+                                </t>
+                            </div>
+                            <!-- Barre de progression simplifiée -->
+                            <t t-if="otTotal > 0">
+                                <div class="progress" style="height: 8px;">
+                                    <t t-foreach="otPipelineStages" t-as="stage" t-key="stage.key">
+                                        <div t-attf-class="progress-bar bg-#{stage.color}"
+                                             t-attf-style="width: #{Math.round((stage.count / otTotal) * 100)}%"
+                                             t-att-title="stage.label"/>
+                                    </t>
+                                </div>
+                            </t>
                         </div>
-                        <div class="col-md-3 col-6">
-                            <button class="btn btn-outline-success w-100" t-on-click="addProduction">
-                                <i class="fa fa-industry me-1"/>Production rapide
-                            </button>
+                    </div>
+                </t>
+
+                <!-- ========== SECTION LOGISTIQUE (Shipping) ========== -->
+                <t t-if="showShipping">
+                    <div class="row g-3 mb-4">
+                        <!-- Lots -->
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                                    <strong><i class="fa fa-cubes me-2"/>Lots</strong>
+                                    <button class="btn btn-sm btn-link" t-on-click="openAllLots">Voir →</button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <div class="text-center p-2 border rounded cursor-pointer"
+                                                 t-on-click="() => this.openLotsByState('draft')">
+                                                <div class="fs-5 fw-bold text-secondary"><t t-esc="state.lots.draft"/></div>
+                                                <small class="text-muted">Brouillon</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-center p-2 border rounded cursor-pointer border-warning"
+                                                 t-on-click="() => this.openLotsByState('in_production')">
+                                                <div class="fs-5 fw-bold text-warning"><t t-esc="state.lots.in_production"/></div>
+                                                <small class="text-muted">Production</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-center p-2 border rounded cursor-pointer border-info"
+                                                 t-on-click="() => this.openLotsByState('ready')">
+                                                <div class="fs-5 fw-bold text-info"><t t-esc="state.lots.ready"/></div>
+                                                <small class="text-muted">Prêt</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-center p-2 border rounded cursor-pointer border-success"
+                                                 t-on-click="() => this.openLotsByState('potted')">
+                                                <div class="fs-5 fw-bold text-success"><t t-esc="state.lots.potted"/></div>
+                                                <small class="text-muted">Empoté</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Production du jour -->
+                                    <div class="border-top pt-2 mt-2 d-flex justify-content-between align-items-center">
+                                        <span class="text-muted"><i class="fa fa-calendar me-1"/>Production aujourd'hui</span>
+                                        <strong class="text-primary"><t t-esc="formatNumber(state.production_today, 2)"/> T</strong>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-3 col-6">
-                            <button class="btn btn-outline-secondary w-100" t-on-click="openReports">
-                                <i class="fa fa-file-pdf-o me-1"/>Rapports
-                            </button>
+                        <!-- Conteneurs -->
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                                    <strong><i class="fa fa-ship me-2"/>Conteneurs</strong>
+                                    <button class="btn btn-sm btn-link" t-on-click="openContainers">Voir →</button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <div class="text-center p-2 border rounded cursor-pointer"
+                                                 t-on-click="() => this.openContainersByState('available')">
+                                                <div class="fs-5 fw-bold text-secondary"><t t-esc="state.containers.available"/></div>
+                                                <small class="text-muted">Disponible</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-center p-2 border rounded cursor-pointer border-warning"
+                                                 t-on-click="() => this.openContainersByState('loading')">
+                                                <div class="fs-5 fw-bold text-warning"><t t-esc="state.containers.loading"/></div>
+                                                <small class="text-muted">Chargement</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-center p-2 border rounded cursor-pointer border-info"
+                                                 t-on-click="() => this.openContainersByState('loaded')">
+                                                <div class="fs-5 fw-bold text-info"><t t-esc="state.containers.loaded"/></div>
+                                                <small class="text-muted">Chargé</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-center p-2 border rounded cursor-pointer border-success"
+                                                 t-on-click="() => this.openContainersByState('shipped')">
+                                                <div class="fs-5 fw-bold text-success"><t t-esc="state.containers.shipped"/></div>
+                                                <small class="text-muted">Expédié</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- BL -->
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                                    <strong><i class="fa fa-file-text-o me-2"/>Bons de Livraison</strong>
+                                    <button class="btn btn-sm btn-link" t-on-click="openDeliveryNotes">Voir →</button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-4">
+                                            <div class="text-center p-2 border rounded cursor-pointer"
+                                                 t-on-click="() => this.openDeliveryNotesByState('draft')">
+                                                <div class="fs-5 fw-bold text-secondary"><t t-esc="state.delivery_notes.draft"/></div>
+                                                <small class="text-muted">Brouillon</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="text-center p-2 border rounded cursor-pointer border-info"
+                                                 t-on-click="() => this.openDeliveryNotesByState('confirmed')">
+                                                <div class="fs-5 fw-bold text-info"><t t-esc="state.delivery_notes.confirmed"/></div>
+                                                <small class="text-muted">Confirmé</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="text-center p-2 border rounded cursor-pointer border-success"
+                                                 t-on-click="() => this.openDeliveryNotesByState('delivered')">
+                                                <div class="fs-5 fw-bold text-success"><t t-esc="state.delivery_notes.delivered"/></div>
+                                                <small class="text-muted">Livré</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-success btn-sm w-100" t-on-click="createDeliveryNote">
+                                        <i class="fa fa-plus me-1"/>Créer un BL
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+
+                <!-- ========== SECTION FORMULES ========== -->
+                <t t-if="showFormuleManager">
+                    <div class="card mb-4">
+                        <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="fa fa-file-text me-2"/>Formules (FO)</strong>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm" t-on-click="createFormule">
+                                    <i class="fa fa-plus me-1"/>Nouvelle FO
+                                </button>
+                                <button class="btn btn-sm btn-link" t-on-click="openAllFormules">Voir tout →</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-2 col-4">
+                                    <div class="text-center p-2 border rounded">
+                                        <div class="fs-4 fw-bold text-secondary"><t t-esc="state.formules.draft"/></div>
+                                        <small class="text-muted">Brouillon</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-4">
+                                    <div class="text-center p-2 border rounded border-warning cursor-pointer" t-on-click="openFormulesToPay">
+                                        <div class="fs-4 fw-bold text-warning"><t t-esc="state.formules.validated"/></div>
+                                        <small class="text-muted">À payer</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-4">
+                                    <div class="text-center p-2 border rounded border-success">
+                                        <div class="fs-4 fw-bold text-success"><t t-esc="state.formules.paid"/></div>
+                                        <small class="text-muted">Payées</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="p-2 bg-light rounded text-center">
+                                        <small class="text-muted d-block">Taxes prélevées</small>
+                                        <strong class="text-primary"><t t-esc="formatCurrency(state.formules.total_taxes)"/> FCFA</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="p-2 bg-warning bg-opacity-10 rounded text-center">
+                                        <small class="text-muted d-block">Reste à payer</small>
+                                        <strong class="text-danger"><t t-esc="formatCurrency(state.formules.unpaid_amount)"/> FCFA</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+
+                <!-- ========== SECTION FINANCES (Comptable) ========== -->
+                <t t-if="showAccountant">
+                    <div class="card mb-4">
+                        <div class="card-header py-2 bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="fa fa-calculator me-2"/>Finances</strong>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-warning btn-sm" t-on-click="openInvoicesToValidate">
+                                    <i class="fa fa-check me-1"/>Valider (<t t-esc="state.finances.invoices_to_validate"/>)
+                                </button>
+                                <button class="btn btn-success btn-sm" t-on-click="openInvoicesReady">
+                                    <i class="fa fa-money me-1"/>Payer (<t t-esc="state.finances.invoices_ready"/>)
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- KPIs financiers -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-3 col-6">
+                                    <div class="p-2 bg-light rounded text-center">
+                                        <small class="text-muted d-block">Total facturé</small>
+                                        <strong class="text-primary"><t t-esc="formatCurrency(state.finances.total_invoiced)"/> FCFA</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="p-2 bg-success bg-opacity-10 rounded text-center">
+                                        <small class="text-muted d-block">Déjà payé</small>
+                                        <strong class="text-success"><t t-esc="formatCurrency(state.finances.total_paid)"/> FCFA</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="p-2 bg-warning bg-opacity-10 rounded text-center cursor-pointer" t-on-click="openPayments">
+                                        <small class="text-muted d-block">Paiements en attente</small>
+                                        <strong class="text-warning"><t t-esc="formatCurrency(state.finances.payments_pending_amount)"/> FCFA</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="p-2 bg-danger bg-opacity-10 rounded text-center cursor-pointer" t-on-click="openOTWaitingDUS">
+                                        <small class="text-muted d-block">OT en attente DUS</small>
+                                        <strong class="text-danger"><t t-esc="state.finances.ot_waiting_dus"/></strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Factures par état -->
+                            <div class="row g-2">
+                                <div class="col">
+                                    <div class="text-center p-2 border rounded cursor-pointer"
+                                         t-on-click="() => this.openInvoicesByState('draft')">
+                                        <div class="fs-5 fw-bold text-secondary"><t t-esc="state.finances.invoices_draft"/></div>
+                                        <small class="text-muted">Brouillon</small>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="text-center p-2 border rounded cursor-pointer border-info"
+                                         t-on-click="openInvoicesToValidate">
+                                        <div class="fs-5 fw-bold text-info"><t t-esc="state.finances.invoices_to_validate"/></div>
+                                        <small class="text-muted">À valider</small>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="text-center p-2 border rounded cursor-pointer border-warning"
+                                         t-on-click="openInvoicesReady">
+                                        <div class="fs-5 fw-bold text-warning"><t t-esc="state.finances.invoices_ready"/></div>
+                                        <small class="text-muted">À payer</small>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="text-center p-2 border rounded border-success cursor-pointer"
+                                         t-on-click="() => this.openInvoicesByState('paid')">
+                                        <div class="fs-5 fw-bold text-success"><t t-esc="state.finances.invoices_paid"/></div>
+                                        <small class="text-muted">Payées</small>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="text-center p-2 border rounded border-danger cursor-pointer"
+                                         t-on-click="() => this.openInvoicesByState('rejected')">
+                                        <div class="fs-5 fw-bold text-danger"><t t-esc="state.finances.invoices_rejected"/></div>
+                                        <small class="text-muted">Rejetées</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+
+                <!-- ========== ACTIONS RAPIDES PAR RÔLE ========== -->
+                <div class="card">
+                    <div class="card-header py-2 bg-light">
+                        <strong><i class="fa fa-bolt me-2"/>Actions rapides</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <t t-if="showCommercial">
+                                <div class="col-md-2 col-4">
+                                    <button class="btn btn-outline-primary w-100 btn-sm" t-on-click="createContract">
+                                        <i class="fa fa-plus me-1"/>Contrat
+                                    </button>
+                                </div>
+                            </t>
+                            <t t-if="showAgentCCC">
+                                <div class="col-md-2 col-4">
+                                    <button class="btn btn-outline-info w-100 btn-sm" t-on-click="createCV">
+                                        <i class="fa fa-plus me-1"/>CV
+                                    </button>
+                                </div>
+                            </t>
+                            <t t-if="showOTManager">
+                                <div class="col-md-2 col-4">
+                                    <button class="btn btn-outline-primary w-100 btn-sm" t-on-click="createOT">
+                                        <i class="fa fa-truck me-1"/>OT
+                                    </button>
+                                </div>
+                            </t>
+                            <t t-if="showFormuleManager">
+                                <div class="col-md-2 col-4">
+                                    <button class="btn btn-outline-warning w-100 btn-sm" t-on-click="createFormule">
+                                        <i class="fa fa-file-text me-1"/>Formule
+                                    </button>
+                                </div>
+                            </t>
+                            <t t-if="showShipping">
+                                <div class="col-md-2 col-4">
+                                    <button class="btn btn-outline-success w-100 btn-sm" t-on-click="addQuickProduction">
+                                        <i class="fa fa-industry me-1"/>Production
+                                    </button>
+                                </div>
+                                <div class="col-md-2 col-4">
+                                    <button class="btn btn-outline-info w-100 btn-sm" t-on-click="createDeliveryNote">
+                                        <i class="fa fa-file-text-o me-1"/>BL
+                                    </button>
+                                </div>
+                            </t>
+                            <t t-if="showCEOAgent">
+                                <div class="col-md-2 col-4">
+                                    <button class="btn btn-outline-secondary w-100 btn-sm" t-on-click="openDailyReport">
+                                        <i class="fa fa-bar-chart me-1"/>Rapport
+                                    </button>
+                                </div>
+                                <div class="col-md-2 col-4">
+                                    <button class="btn btn-outline-secondary w-100 btn-sm" t-on-click="openSendReport">
+                                        <i class="fa fa-envelope me-1"/>Email
+                                    </button>
+                                </div>
+                            </t>
                         </div>
                     </div>
                 </div>
-            </div>
+            </t>
         </div>
     </t>
 </templates>

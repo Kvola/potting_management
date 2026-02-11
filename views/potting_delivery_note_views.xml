@@ -16,6 +16,8 @@
                 <field name="company_id" column_invisible="1"/>
                 <field name="bl_external_number" optional="show" string="N° BL Maritime"/>
                 <field name="transit_order_id"/>
+                <field name="customer_order_id" optional="show"/>
+                <field name="contract_number_display" string="N° Contrat" optional="show"/>
                 <field name="customer_id"/>
                 <field name="consignee_id"/>
                 <field name="shipping_company_id" optional="show"/>
@@ -77,6 +79,12 @@
                         <button name="action_view_containers" type="object" class="oe_stat_button" icon="fa-truck">
                             <field name="container_count" widget="statinfo" string="Conteneurs"/>
                         </button>
+                        <button name="action_view_invoice" type="object" class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="not is_invoiced">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Facture</span>
+                            </div>
+                        </button>
                         <button name="action_view_attachments" type="object" class="oe_stat_button" icon="fa-paperclip">
                             <field name="bl_attachment_count" widget="statinfo" string="Documents"/>
                         </button>
@@ -116,18 +124,39 @@
                             <field name="customer_id" readonly="1"/>
                             <field name="consignee_id" readonly="1"/>
                         </group>
+                        <group string="Informations Contrat">
+                            <field name="contract_number_display" string="N° Contrat"/>
+                            <field name="contract_currency_id" invisible="1"/>
+                            <field name="contract_unit_price"/>
+                            <field name="contract_tonnage"/>
+                            <field name="ot_tonnage" string="Tonnage OT"/>
+                            <field name="ot_formule_reference" string="Réf. Formule"/>
+                        </group>
+                    </group>
+                    <group>
                         <group string="💳 Facturation Client">
                             <field name="invoice_id" options="{'no_create': True}"
-                                   context="{'form_view_ref': 'account.view_move_form'}"/>
+                                   context="{'form_view_ref': 'account.view_move_form'}"
+                                   readonly="state == 'delivered'"/>
                             <field name="invoice_state" widget="badge"
                                    decoration-info="invoice_state == 'draft'"
                                    decoration-warning="invoice_state == 'posted'"
                                    decoration-success="invoice_state in ('paid', 'done')"
                                    invisible="not is_invoiced"/>
+                            <button name="action_create_invoice" type="object"
+                                    string="📄 Générer la facture" class="btn-primary btn-sm"
+                                    invisible="is_invoiced or state == 'cancelled'"
+                                    groups="potting_management.group_potting_ot_manager,potting_management.group_potting_manager"/>
+                        </group>
+                        <group string="📦 Récapitulatif Cargaison">
+                            <field name="product_type" widget="badge" readonly="1"/>
+                            <field name="product_id" readonly="1"/>
+                            <field name="total_tonnage" widget="float" class="fw-bold text-primary" readonly="1"/>
+                            <field name="total_units" class="fw-bold" readonly="1"/>
                         </group>
                     </group>
                     <group>
-                        <group string="🚢 Bill of Lading (Compagnie maritime)">
+                        <group string="Bill of Lading (Compagnie maritime)">
                             <field name="bl_external_number" placeholder="Ex: MSCUXXX123456"/>
                             <field name="shipping_company_id" options="{'no_create': True}"/>
                             <field name="vessel_id" readonly="1"/>
@@ -135,22 +164,20 @@
                             <field name="port_of_loading"/>
                             <field name="port_of_discharge"/>
                         </group>
-                        <group string="📦 Cargaison">
+                        <group string="Cargaison">
                             <field name="shipped_weight"/>
                             <field name="number_of_bags"/>
-                            <field name="total_tonnage" widget="float" class="fw-bold text-primary" readonly="1"/>
-                            <field name="total_units" class="fw-bold" readonly="1"/>
                         </group>
                     </group>
                     <group>
-                        <group string="🚚 Livraison">
+                        <group string="Livraison">
                             <field name="date_delivery"/>
                             <field name="bl_number" string="Référence interne"/>
                             <field name="bl_date"/>
                             <field name="contract_number"/>
                             <field name="destination"/>
                         </group>
-                        <group string="🚛 Transport">
+                        <group string="Transport">
                             <field name="transport_mode"/>
                             <field name="carrier_name"/>
                             <field name="driver_name"/>

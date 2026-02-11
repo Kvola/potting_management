@@ -37,6 +37,9 @@
                        decoration-warning="delivery_status == 'partial'"
                        decoration-success="delivery_status == 'fully_delivered'"
                        decoration-muted="delivery_status == 'not_delivered'"/>
+                <field name="delivery_note_count" string="BL" optional="show"/>
+                <field name="invoice_count" string="Factures" optional="show"/>
+                <field name="is_invoiced" widget="boolean_toggle" string="Facturé" readonly="1" optional="show"/>
                 <field name="state" widget="badge" 
                        decoration-info="state == 'draft'" 
                        decoration-primary="state == 'lots_generated'" 
@@ -260,7 +263,7 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="📦 Lots" name="lots" badge="lot_count">
+                        <page string="Lots" name="lots" badge="lot_count">
                             <div class="alert alert-info mb-3" role="alert" invisible="state != 'draft'">
                                 <i class="fa fa-lightbulb-o me-2"/>
                                 <strong>Conseil:</strong> Les lots seront générés automatiquement en fonction du tonnage et du type de produit.
@@ -280,9 +283,61 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="💰 Paiements &amp; Taxes" name="payments">
+                        <page string="Bons de Livraison" name="delivery_notes" badge="delivery_note_count">
+                            <field name="delivery_note_ids" readonly="1">
+                                <tree string="Bons de Livraison" 
+                                      decoration-info="state == 'draft'" 
+                                      decoration-warning="state == 'confirmed'" 
+                                      decoration-success="state == 'delivered'"
+                                      decoration-muted="state == 'cancelled'">
+                                    <field name="name" decoration-bf="1"/>
+                                    <field name="bl_external_number" string="N° BL Maritime"/>
+                                    <field name="total_tonnage" sum="Total" decoration-bf="1"/>
+                                    <field name="total_units" sum="Total"/>
+                                    <field name="lot_count"/>
+                                    <field name="container_count"/>
+                                    <field name="date_delivery"/>
+                                    <field name="destination"/>
+                                    <field name="is_invoiced" widget="boolean_toggle" string="Facturé" readonly="1"/>
+                                    <field name="invoice_id" optional="show"/>
+                                    <field name="state" widget="badge" 
+                                           decoration-info="state == 'draft'" 
+                                           decoration-warning="state == 'confirmed'" 
+                                           decoration-success="state == 'delivered'" 
+                                           decoration-danger="state == 'cancelled'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Facturation" name="invoicing">
                             <group>
-                                <group string="📊 État des paiements Formule">
+                                <group string="Progression facturation">
+                                    <field name="invoice_count" readonly="1"/>
+                                    <field name="invoiced_tonnage" readonly="1"/>
+                                    <field name="remaining_to_invoice" readonly="1" class="text-warning fw-bold"/>
+                                    <field name="invoicing_progress" widget="progressbar" options="{'editable': false}"/>
+                                    <field name="is_fully_invoiced" widget="boolean_toggle" readonly="1"
+                                           decoration-success="is_fully_invoiced"/>
+                                </group>
+                                <group string="Factures">
+                                    <field name="invoice_ids" readonly="1" nolabel="1">
+                                        <tree string="Factures" create="0" delete="0">
+                                            <field name="name" decoration-bf="1"/>
+                                            <field name="potting_delivery_note_id" string="BL"/>
+                                            <field name="potting_invoiced_tonnage" string="Tonnage" sum="Total"/>
+                                            <field name="amount_total" sum="Total"/>
+                                            <field name="currency_id"/>
+                                            <field name="invoice_date"/>
+                                            <field name="state" widget="badge"
+                                                   decoration-info="state == 'draft'"
+                                                   decoration-success="state == 'posted'"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Paiements et Taxes" name="payments">
+                            <group>
+                                <group string="État des paiements Formule">
                                     <field name="formule_avant_vente_paye" readonly="1" widget="boolean_toggle"
                                            string="Producteurs payés"
                                            decoration-success="formule_avant_vente_paye"/>
@@ -291,7 +346,7 @@
                                            decoration-success="taxes_paid"/>
                                     <field name="taxes_payment_date" readonly="1" invisible="not taxes_paid"/>
                                 </group>
-                                <group string="💳 DUS (Droit Unique de Sortie)">
+                                <group string="DUS (Droit Unique de Sortie)">
                                     <field name="dus_paid" readonly="1" widget="boolean_toggle"
                                            decoration-success="dus_paid"/>
                                     <field name="dus_payment_date" readonly="1" invisible="not dus_paid"/>
@@ -300,7 +355,7 @@
                                 </group>
                             </group>
                         </page>
-                        <page string="📝 Notes" name="notes">
+                        <page string="Notes" name="notes">
                             <field name="note" placeholder="Ajoutez des notes ici..."/>
                         </page>
                     </notebook>
